@@ -1,0 +1,306 @@
+import Foundation
+import simd
+import UIKit
+
+/// Represents a complete scanning session with all captured data
+@Observable
+final class ScanSession: Identifiable, @unchecked Sendable {
+    let id: UUID
+    var name: String
+    let createdAt: Date
+    private(set) var updatedAt: Date
+    private(set) var state: ScanState
+
+    // Scan data
+    var pointCloud: PointCloud?
+    let combinedMesh: CombinedMesh
+    private(set) var textureFrames: [TextureFrame]
+    private(set) var measurements: [Measurement]
+
+    // Statistics
+    private(set) var scanDuration: TimeInterval
+    private(set) var deviceTrajectory: [simd_float4x4]
+    private var scanStartTime: Date?
+
+    // Device info
+    let deviceModel: String
+    let appVersion: String
+    var notes: String
+
+    init(
+        id: UUID = UUID(),
+        name: String = "New Scan"
+    ) {
+        self.id = id
+        self.name = name
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.state = .idle
+        self.combinedMesh = CombinedMesh()
+        self.textureFrames = []
+        self.measurements = []
+        self.scanDuration = 0
+        self.deviceTrajectory = []
+        self.deviceModel = UIDevice.current.modelIdentifier
+        self.appVersion = Bundle.main.appVersion
+        self.notes = ""
+    }
+
+    // MARK: - State Management
+
+    func startScanning() {
+        guard state == .idle || state == .paused else { return }
+        state = .scanning
+        scanStartTime = Date()
+    }
+
+    func pauseScanning() {
+        guard state == .scanning else { return }
+        state = .paused
+        updateDuration()
+    }
+
+    func resumeScanning() {
+        guard state == .paused else { return }
+        state = .scanning
+        scanStartTime = Date()
+    }
+
+    func stopScanning() {
+        state = .completed
+        updateDuration()
+        updatedAt = Date()
+    }
+
+    func markProcessing() {
+        state = .processing
+    }
+
+    func markFailed() {
+        state = .failed
+    }
+
+    private func updateDuration() {
+        if let startTime = scanStartTime {
+            scanDuration += Date().timeIntervalSince(startTime)
+            scanStartTime = nil
+        }
+    }
+
+    // MARK: - Data Management
+
+    func addMesh(_ mesh: MeshData) {
+        combinedMesh.addOrUpdate(mesh)
+        updatedAt = Date()
+    }
+
+    func removeMesh(identifier: UUID) {
+        combinedMesh.remove(identifier: identifier)
+        updatedAt = Date()
+    }
+
+    func addTextureFrame(_ frame: TextureFrame) {
+        textureFrames.append(frame)
+        updatedAt = Date()
+    }
+
+    func addCameraPosition(_ transform: simd_float4x4) {
+        deviceTrajectory.append(transform)
+    }
+
+    func addMeasurement(_ measurement: Measurement) {
+        measurements.append(measurement)
+        updatedAt = Date()
+    }
+
+    func removeMeasurement(_ measurement: Measurement) {
+        measurements.removeAll { $0.id == measurement.id }
+        updatedAt = Date()
+    }
+
+    // MARK: - Computed Properties
+
+    var areaScanned: Float {
+        combinedMesh.totalSurfaceArea
+    }
+
+    var vertexCount: Int {
+        combinedMesh.totalVertexCount
+    }
+
+    var faceCount: Int {
+        combinedMesh.totalFaceCount
+    }
+
+    var formattedDuration: String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.minute, .second]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: scanDuration) ?? "0s"
+    }
+}
+
+// MARK: - Supporting Types
+
+enum ScanState: String, Sendable {
+    case idle
+    case scanning
+    case paused
+    case processing
+    case completed
+    case failed
+
+    var displayName: String {
+        switch self {
+        case .idle: return "Ready"
+        case .scanning: return "Scanning"
+        case .paused: return "Paused"
+        case .processing: return "Processing"
+        case .completed: return "Completed"
+        case .failed: return "Failed"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .idle: return "circle"
+        case .scanning: return "record.circle"
+        case .paused: return "pause.circle"
+        case .processing: return "gearshape.2"
+        case .completed: return "checkmark.circle"
+        case .failed: return "xmark.circle"
+        }
+    }
+}
+
+/// Represents a captured camera frame with metadata
+struct TextureFrame: Identifiable, Sendable {
+    let id: UUID
+    let timestamp: TimeInterval
+    let imageData: Data
+    let resolution: CGSize
+    let intrinsics: simd_float3x3
+    let cameraTransform: simd_float4x4
+    let exposureDuration: TimeInterval?
+    let iso: Float?
+
+    init(
+        id: UUID = UUID(),
+        timestamp: TimeInterval,
+        imageData: Data,
+        resolution: CGSize,
+        intrinsics: simd_float3x3,
+        cameraTransform: simd_float4x4,
+        exposureDuration: TimeInterval? = nil,
+        iso: Float? = nil
+    ) {
+        self.id = id
+        self.timestamp = timestamp
+        self.imageData = imageData
+        self.resolution = resolution
+        self.intrinsics = intrinsics
+        self.cameraTransform = cameraTransform
+        self.exposureDuration = exposureDuration
+        self.iso = iso
+    }
+}
+
+/// Represents a measurement in the scanned environment
+struct Measurement: Identifiable, Sendable {
+    let id: UUID
+    let type: MeasurementType
+    let points: [simd_float3]
+    let value: Float
+    let unit: MeasurementUnit
+    let label: String?
+    let createdAt: Date
+
+    init(
+        id: UUID = UUID(),
+        type: MeasurementType,
+        points: [simd_float3],
+        value: Float,
+        unit: MeasurementUnit = .meters,
+        label: String? = nil
+    ) {
+        self.id = id
+        self.type = type
+        self.points = points
+        self.value = value
+        self.unit = unit
+        self.label = label
+        self.createdAt = Date()
+    }
+
+    var formattedValue: String {
+        let converted = unit.convert(value, from: .meters)
+        return String(format: "%.2f %@", converted, unit.symbol)
+    }
+}
+
+enum MeasurementType: String, Sendable {
+    case distance
+    case area
+    case volume
+    case angle
+}
+
+enum MeasurementUnit: String, CaseIterable, Sendable {
+    case meters
+    case centimeters
+    case feet
+    case inches
+
+    var symbol: String {
+        switch self {
+        case .meters: return "m"
+        case .centimeters: return "cm"
+        case .feet: return "ft"
+        case .inches: return "in"
+        }
+    }
+
+    func convert(_ value: Float, from: MeasurementUnit) -> Float {
+        // Convert to meters first
+        let inMeters: Float
+        switch from {
+        case .meters: inMeters = value
+        case .centimeters: inMeters = value / 100
+        case .feet: inMeters = value * 0.3048
+        case .inches: inMeters = value * 0.0254
+        }
+
+        // Convert from meters to target unit
+        switch self {
+        case .meters: return inMeters
+        case .centimeters: return inMeters * 100
+        case .feet: return inMeters / 0.3048
+        case .inches: return inMeters / 0.0254
+        }
+    }
+}
+
+// MARK: - Extensions
+
+extension UIDevice {
+    var modelIdentifier: String {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let machineMirror = Mirror(reflecting: systemInfo.machine)
+        let identifier = machineMirror.children.reduce("") { identifier, element in
+            guard let value = element.value as? Int8, value != 0 else { return identifier }
+            return identifier + String(UnicodeScalar(UInt8(value)))
+        }
+        return identifier
+    }
+}
+
+extension Bundle {
+    var appVersion: String {
+        infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    }
+
+    var buildNumber: String {
+        infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    }
+}
