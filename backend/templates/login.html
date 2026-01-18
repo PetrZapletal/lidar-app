@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="cs" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - LiDAR Scanner Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+    </style>
+</head>
+<body class="h-full gradient-bg">
+    <div class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <!-- Floating 3D cube decoration -->
+        <div class="absolute top-20 left-20 opacity-20 float-animation hidden lg:block">
+            <i class="fas fa-cube text-primary-400 text-8xl"></i>
+        </div>
+        <div class="absolute bottom-20 right-20 opacity-10 float-animation hidden lg:block" style="animation-delay: -3s;">
+            <i class="fas fa-cubes text-primary-400 text-9xl"></i>
+        </div>
+
+        <div class="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+            <!-- Logo -->
+            <div class="flex justify-center">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-2xl">
+                    <i class="fas fa-cube text-white text-4xl"></i>
+                </div>
+            </div>
+
+            <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-white">
+                LiDAR Scanner
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-400">
+                Admin Dashboard
+            </p>
+        </div>
+
+        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+            <div class="glass-card py-8 px-4 shadow-2xl rounded-2xl sm:px-10 border border-gray-700">
+                {% if error %}
+                <div class="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle text-red-400 mr-3"></i>
+                        <p class="text-red-400 text-sm">
+                            {% if error == 'invalid' %}
+                            Neplatné přihlašovací údaje
+                            {% else %}
+                            Přihlášení selhalo
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <form class="space-y-6" action="/login" method="POST">
+                    <input type="hidden" name="next" value="{{ next }}">
+
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-300">
+                            Uživatelské jméno
+                        </label>
+                        <div class="mt-1 relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-500"></i>
+                            </div>
+                            <input id="username"
+                                   name="username"
+                                   type="text"
+                                   autocomplete="username"
+                                   required
+                                   class="block w-full pl-10 pr-3 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                   placeholder="admin">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-300">
+                            Heslo
+                        </label>
+                        <div class="mt-1 relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-gray-500"></i>
+                            </div>
+                            <input id="password"
+                                   name="password"
+                                   type="password"
+                                   autocomplete="current-password"
+                                   required
+                                   class="block w-full pl-10 pr-3 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                   placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit"
+                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Přihlásit se
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-6 pt-6 border-t border-gray-700">
+                    <p class="text-center text-xs text-gray-500">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Výchozí přihlášení: admin / lidar2024
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-8 text-center">
+            <p class="text-gray-500 text-sm">
+                LiDAR 3D Scanner Backend v1.0.0
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

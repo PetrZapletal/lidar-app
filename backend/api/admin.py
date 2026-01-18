@@ -10,11 +10,13 @@ from typing import Optional
 from pathlib import Path
 
 from fastapi import APIRouter, Request, HTTPException, Depends
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from services.storage import StorageService
 from utils.logger import get_logger
+from utils.gpu_monitor import get_gpu_info as get_real_gpu_info, get_system_info as get_real_system_info
+from api.auth import get_current_user
 
 logger = get_logger(__name__)
 
@@ -33,40 +35,14 @@ storage = StorageService()
 # Helper Functions
 # ============================================================================
 
-def get_mock_gpu_data():
-    """Get GPU data (mock for demo, replace with nvidia-smi in production)"""
-    return [
-        {
-            "name": "NVIDIA RTX 4090",
-            "status": "active",
-            "utilization": 78,
-            "memory_used": 18.2,
-            "memory_total": 24,
-            "memory_percent": 76,
-            "temp": 72,
-            "power": 320,
-            "power_limit": 450,
-            "current_job": {
-                "name": "Office Scan",
-                "stage": "3D Gaussian Splatting"
-            }
-        }
-    ]
+def get_gpu_data():
+    """Get GPU data from nvidia-smi or mock if unavailable"""
+    return get_real_gpu_info()
 
 
-def get_mock_system_data():
-    """Get system data (mock for demo)"""
-    return {
-        "cpu": 45,
-        "memory_used": 28,
-        "memory_total": 64,
-        "memory_percent": 44,
-        "disk_used": 450,
-        "disk_total": 2000,
-        "disk_percent": 23,
-        "uptime": "5d 12h 34m",
-        "started_at": "13.01.2026"
-    }
+def get_system_data():
+    """Get real system data using psutil"""
+    return get_real_system_info()
 
 
 def get_mock_services():
@@ -133,12 +109,28 @@ async def get_dashboard_stats():
 
 
 # ============================================================================
+# Authentication Helper
+# ============================================================================
+
+async def check_auth(request: Request):
+    """Check if user is authenticated, redirect to login if not"""
+    user = await get_current_user(request)
+    if not user:
+        return None
+    return user
+
+
+# ============================================================================
 # Dashboard Routes
 # ============================================================================
 
 @router.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
     """Main dashboard page"""
+    user = await check_auth(request)
+    if not user:
+        return RedirectResponse(url="/login?next=/admin", status_code=303)
+
     stats = await get_dashboard_stats()
     all_scans = await storage.list_scans()
 
@@ -173,7 +165,7 @@ async def dashboard(request: Request):
         "stats": stats,
         "active_scans": active_scans,
         "recent_scans": recent_scans,
-        "gpus": get_mock_gpu_data(),
+        "gpus": get_gpu_data(),
         "chart_labels": chart_labels,
         "chart_data": chart_data
     })
@@ -188,6 +180,10 @@ async def scans_list(
     search: Optional[str] = None
 ):
     """Scans list page"""
+    user = await check_auth(request)
+    if not user:
+        return RedirectResponse(url="/login?next=/admin/scans", status_code=303)
+
     all_scans = await storage.list_scans()
 
     # Filter by status
@@ -241,6 +237,10 @@ async def scans_list(
 @router.get("/scans/{scan_id}", response_class=HTMLResponse)
 async def scan_detail(request: Request, scan_id: str):
     """Scan detail page"""
+    user = await check_auth(request)
+    if not user:
+        return RedirectResponse(url=f"/login?next=/admin/scans/{scan_id}", status_code=303)
+
     scan = await storage.get_scan_metadata(scan_id)
 
     if not scan:
@@ -286,6 +286,10 @@ async def scan_detail(request: Request, scan_id: str):
 @router.get("/processing", response_class=HTMLResponse)
 async def processing_queue(request: Request):
     """Processing queue page"""
+    user = await check_auth(request)
+    if not user:
+        return RedirectResponse(url="/login?next=/admin/processing", status_code=303)
+
     all_scans = await storage.list_scans()
 
     # Queue stats
@@ -331,11 +335,15 @@ async def processing_queue(request: Request):
 @router.get("/system", response_class=HTMLResponse)
 async def system_status(request: Request):
     """System status page"""
+    user = await check_auth(request)
+    if not user:
+        return RedirectResponse(url="/login?next=/admin/system", status_code=303)
+
     return templates.TemplateResponse("system.html", {
         "request": request,
         "active_page": "system",
-        "system": get_mock_system_data(),
-        "gpus": get_mock_gpu_data(),
+        "system": get_system_data(),
+        "gpus": get_gpu_data(),
         "services": get_mock_services(),
         "recent_errors": [],  # TODO: Get from logs
         "config": {
@@ -391,8 +399,8 @@ async def get_processing_status():
 async def get_system_status_api():
     """Get system status for dashboard refresh"""
     return {
-        "system": get_mock_system_data(),
-        "gpus": get_mock_gpu_data(),
+        "system": get_system_data(),
+        "gpus": get_gpu_data(),
         "timestamp": datetime.utcnow().isoformat()
     }
 

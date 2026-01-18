@@ -23,6 +23,7 @@ from services.storage import StorageService
 from services.websocket_manager import WebSocketManager
 from utils.logger import get_logger
 from api.admin import router as admin_router
+from api.auth import router as auth_router
 
 # Initialize logger
 logger = get_logger(__name__)
@@ -48,7 +49,8 @@ storage = StorageService()
 processor = ScanProcessor()
 ws_manager = WebSocketManager()
 
-# Include admin dashboard router
+# Include routers
+app.include_router(auth_router)
 app.include_router(admin_router)
 
 
