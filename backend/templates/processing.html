@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Zpracování{% endblock %}
+
+{% block content %}
+<!-- Page header -->
+<div class="flex items-center justify-between mb-8">
+    <div>
+        <h1 class="text-3xl font-bold text-white">Zpracování</h1>
+        <p class="text-gray-400 mt-1">Fronta a aktivní zpracování</p>
+    </div>
+    <div class="flex items-center space-x-3">
+        <span class="text-gray-400">Auto-refresh:</span>
+        <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="auto-refresh" class="sr-only peer" checked>
+            <div class="w-11 h-6 bg-gray-700 peer-focus:ring-2 peer-focus:ring-primary-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+        </label>
+    </div>
+</div>
+
+<!-- Pipeline Stats -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+    <div class="card-gradient rounded-xl p-4 border border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-400 text-sm">Ve frontě</p>
+                <p class="text-2xl font-bold text-white">{{ queue.pending }}</p>
+            </div>
+            <i class="fas fa-clock text-gray-500 text-xl"></i>
+        </div>
+    </div>
+    <div class="card-gradient rounded-xl p-4 border border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-400 text-sm">Preprocessing</p>
+                <p class="text-2xl font-bold text-blue-400">{{ queue.preprocessing }}</p>
+            </div>
+            <i class="fas fa-filter text-blue-400 text-xl"></i>
+        </div>
+    </div>
+    <div class="card-gradient rounded-xl p-4 border border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-400 text-sm">3D GS</p>
+                <p class="text-2xl font-bold text-purple-400">{{ queue.gaussian_splatting }}</p>
+            </div>
+            <i class="fas fa-atom text-purple-400 text-xl"></i>
+        </div>
+    </div>
+    <div class="card-gradient rounded-xl p-4 border border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-400 text-sm">Mesh</p>
+                <p class="text-2xl font-bold text-cyan-400">{{ queue.mesh_extraction }}</p>
+            </div>
+            <i class="fas fa-shapes text-cyan-400 text-xl"></i>
+        </div>
+    </div>
+    <div class="card-gradient rounded-xl p-4 border border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-400 text-sm">Texturing</p>
+                <p class="text-2xl font-bold text-yellow-400">{{ queue.texture_baking }}</p>
+            </div>
+            <i class="fas fa-palette text-yellow-400 text-xl"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Active Processing -->
+<div class="card-gradient rounded-xl p-6 border border-gray-700 mb-8">
+    <h2 class="text-xl font-semibold text-white mb-6">Aktivní zpracování</h2>
+
+    {% if active_jobs %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="active-jobs">
+        {% for job in active_jobs %}
+        <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700" data-job-id="{{ job.id }}">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-xl bg-primary-500/20 flex items-center justify-center">
+                        <i class="fas fa-cube text-primary-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <a href="/admin/scans/{{ job.id }}" class="text-white font-medium hover:text-primary-400">
+                            {{ job.name }}
+                        </a>
+                        <p class="text-gray-500 text-xs">{{ job.id[:12] }}...</p>
+                    </div>
+                </div>
+                <span class="text-xs px-2 py-1 rounded-full
+                    {% if job.stage == 'preprocessing' %}bg-blue-500/20 text-blue-400
+                    {% elif job.stage == 'gaussian_splatting' %}bg-purple-500/20 text-purple-400
+                    {% elif job.stage == 'mesh_extraction' %}bg-cyan-500/20 text-cyan-400
+                    {% elif job.stage == 'texture_baking' %}bg-yellow-500/20 text-yellow-400
+                    {% else %}bg-gray-500/20 text-gray-400{% endif %}">
+                    {{ job.stage }}
+                </span>
+            </div>
+
+            <!-- Progress -->
+            <div class="mb-4">
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-gray-400">Celkový průběh</span>
+                    <span class="text-white font-medium">{{ (job.progress * 100)|round(1) }}%</span>
+                </div>
+                <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-all duration-500"
+                         style="width: {{ job.progress * 100 }}%"></div>
+                </div>
+            </div>
+
+            <!-- Stage Progress Bars -->
+            <div class="grid grid-cols-5 gap-1 mb-4">
+                {% set stages = ['preprocessing', 'gaussian_splatting', 'mesh_extraction', 'texture_baking', 'export'] %}
+                {% for stage in stages %}
+                <div class="h-1 rounded-full
+                    {% if job.completed_stages and stage in job.completed_stages %}bg-green-500
+                    {% elif job.stage == stage %}bg-primary-500
+                    {% else %}bg-gray-700{% endif %}">
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div>
+                    <p class="text-gray-500 text-xs">Čas</p>
+                    <p class="text-white text-sm font-mono">{{ job.elapsed }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-xs">ETA</p>
+                    <p class="text-white text-sm font-mono">{{ job.eta }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-xs">GPU</p>
+                    <p class="text-white text-sm">{{ job.gpu_usage }}%</p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end space-x-2 mt-4 pt-4 border-t border-gray-700">
+                <a href="/admin/scans/{{ job.id }}" class="px-3 py-1.5 text-sm rounded-lg bg-gray-700 text-gray-300 hover:text-white">
+                    <i class="fas fa-eye mr-1"></i>Detail
+                </a>
+                <button onclick="cancelJob('{{ job.id }}')" class="px-3 py-1.5 text-sm rounded-lg bg-red-500/20 text-red-400 hover:bg-red-600 hover:text-white">
+                    <i class="fas fa-stop mr-1"></i>Zastavit
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-check-circle text-gray-600 text-3xl"></i>
+        </div>
+        <p class="text-gray-400 text-lg">Žádné aktivní zpracování</p>
+        <p class="text-gray-500 text-sm mt-1">Fronta je prázdná</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Pending Queue -->
+<div class="card-gradient rounded-xl p-6 border border-gray-700">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold text-white">Fronta čekajících</h2>
+        {% if pending_jobs %}
+        <span class="text-gray-400 text-sm">{{ pending_jobs|length }} úloh</span>
+        {% endif %}
+    </div>
+
+    {% if pending_jobs %}
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="text-gray-400 text-xs uppercase border-b border-gray-700">
+                    <th class="text-left pb-3">Pořadí</th>
+                    <th class="text-left pb-3">Sken</th>
+                    <th class="text-left pb-3">Přidáno</th>
+                    <th class="text-left pb-3">Odhadovaný čas</th>
+                    <th class="text-right pb-3">Akce</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700">
+                {% for job in pending_jobs %}
+                <tr class="hover:bg-gray-800/30">
+                    <td class="py-4">
+                        <span class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white font-medium">
+                            {{ loop.index }}
+                        </span>
+                    </td>
+                    <td class="py-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
+                                <i class="fas fa-cube text-gray-400"></i>
+                            </div>
+                            <div>
+                                <a href="/admin/scans/{{ job.id }}" class="text-white hover:text-primary-400">{{ job.name }}</a>
+                                <p class="text-gray-500 text-xs">{{ job.point_count|default('N/A') }} bodů</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 text-gray-400 text-sm">{{ job.queued_at }}</td>
+                    <td class="py-4 text-gray-400 text-sm">~{{ job.estimated_time }}</td>
+                    <td class="py-4 text-right">
+                        <button onclick="removeFromQueue('{{ job.id }}')"
+                                class="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded-lg">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-8">
+        <p class="text-gray-500">Fronta je prázdná</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let autoRefresh = true;
+    let refreshInterval;
+
+    document.getElementById('auto-refresh').addEventListener('change', function() {
+        autoRefresh = this.checked;
+        if (autoRefresh) {
+            startRefresh();
+        } else {
+            stopRefresh();
+        }
+    });
+
+    function startRefresh() {
+        refreshInterval = setInterval(refreshData, 3000);
+    }
+
+    function stopRefresh() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+    }
+
+    async function refreshData() {
+        try {
+            const response = await fetch('/admin/api/processing-status');
+            const data = await response.json();
+
+            // Update active jobs
+            data.active_jobs.forEach(job => {
+                const jobEl = document.querySelector(`[data-job-id="${job.id}"]`);
+                if (jobEl) {
+                    // Update progress
+                    const progressBar = jobEl.querySelector('.bg-gradient-to-r');
+                    if (progressBar) {
+                        progressBar.style.width = `${job.progress * 100}%`;
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('Refresh failed:', e);
+        }
+    }
+
+    async function cancelJob(id) {
+        if (!confirm('Opravdu chcete zrušit toto zpracování?')) return;
+
+        try {
+            const response = await fetch(`/admin/api/scans/${id}/cancel`, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function removeFromQueue(id) {
+        if (!confirm('Opravdu chcete odstranit z fronty?')) return;
+
+        try {
+            const response = await fetch(`/admin/api/queue/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // Start auto-refresh
+    startRefresh();
+</script>
+{% endblock %}

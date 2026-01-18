@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+
+{% block title %}{{ scan.name }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="mb-6">
+    <ol class="flex items-center space-x-2 text-sm">
+        <li><a href="/admin" class="text-gray-400 hover:text-white">Dashboard</a></li>
+        <li class="text-gray-600">/</li>
+        <li><a href="/admin/scans" class="text-gray-400 hover:text-white">Scany</a></li>
+        <li class="text-gray-600">/</li>
+        <li class="text-white">{{ scan.name }}</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="flex items-start justify-between mb-8">
+    <div class="flex items-center space-x-4">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-primary-500/20 to-primary-600/20 flex items-center justify-center">
+            <i class="fas fa-cube text-primary-400 text-2xl"></i>
+        </div>
+        <div>
+            <h1 class="text-3xl font-bold text-white">{{ scan.name }}</h1>
+            <p class="text-gray-400 font-mono text-sm">{{ scan.id }}</p>
+        </div>
+    </div>
+    <div class="flex items-center space-x-3">
+        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium
+            {% if scan.status == 'completed' %}bg-green-500/20 text-green-400
+            {% elif scan.status == 'processing' %}bg-yellow-500/20 text-yellow-400
+            {% elif scan.status == 'uploaded' %}bg-blue-500/20 text-blue-400
+            {% elif scan.status == 'failed' %}bg-red-500/20 text-red-400
+            {% else %}bg-gray-500/20 text-gray-400{% endif %}">
+            {% if scan.status == 'processing' %}
+            <i class="fas fa-spinner fa-spin mr-2"></i>
+            {% endif %}
+            {{ scan.status }}
+        </span>
+        {% if scan.status == 'uploaded' %}
+        <button onclick="startProcessing()" class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500">
+            <i class="fas fa-play mr-2"></i>Spustit zpracování
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Processing Progress -->
+        {% if scan.status == 'processing' %}
+        <div class="card-gradient rounded-xl p-6 border border-gray-700">
+            <h2 class="text-xl font-semibold text-white mb-6">Průběh zpracování</h2>
+            <div class="space-y-4" id="processing-stages">
+                {% set stages = [
+                    ('preprocessing', 'Preprocessing', 'fas fa-filter', 0.1),
+                    ('gaussian_splatting', '3D Gaussian Splatting', 'fas fa-atom', 0.5),
+                    ('mesh_extraction', 'SuGaR Mesh', 'fas fa-shapes', 0.75),
+                    ('texture_baking', 'Texture Baking', 'fas fa-palette', 0.9),
+                    ('export', 'Export', 'fas fa-file-export', 1.0)
+                ] %}
+
+                {% for stage_id, stage_name, icon, threshold in stages %}
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center
+                        {% if scan.progress >= threshold %}bg-green-500/20
+                        {% elif scan.stage == stage_id %}bg-primary-500/20
+                        {% else %}bg-gray-700{% endif %}">
+                        {% if scan.progress >= threshold %}
+                        <i class="fas fa-check text-green-400"></i>
+                        {% elif scan.stage == stage_id %}
+                        <i class="{{ icon }} text-primary-400 fa-spin"></i>
+                        {% else %}
+                        <i class="{{ icon }} text-gray-500"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-white font-medium
+                            {% if scan.stage == stage_id %}text-primary-400{% endif %}">
+                            {{ stage_name }}
+                        </p>
+                        {% if scan.stage == stage_id %}
+                        <div class="w-full bg-gray-700 rounded-full h-1.5 mt-2">
+                            <div class="bg-primary-500 h-1.5 rounded-full transition-all"
+                                 style="width: {{ ((scan.progress - (threshold - 0.1)) / 0.1) * 100 }}%"></div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        {% if scan.progress >= threshold %}
+                        <i class="fas fa-check-circle text-green-400"></i>
+                        {% elif scan.stage == stage_id %}
+                        {{ (scan.progress * 100)|round(1) }}%
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 3D Preview -->
+        {% if scan.status == 'completed' %}
+        <div class="card-gradient rounded-xl p-6 border border-gray-700">
+            <h2 class="text-xl font-semibold text-white mb-4">3D Náhled</h2>
+            <div class="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
+                <div class="text-center text-gray-500">
+                    <i class="fas fa-cube text-6xl mb-4"></i>
+                    <p>3D viewer bude dostupný brzy</p>
+                    <p class="text-sm mt-2">Prozatím stáhněte model a zobrazte lokálně</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Error Details -->
+        {% if scan.status == 'failed' and scan.error %}
+        <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-6">
+            <div class="flex items-start space-x-4">
+                <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-red-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-red-400 font-semibold">Chyba zpracování</h3>
+                    <p class="text-gray-300 mt-2 font-mono text-sm">{{ scan.error }}</p>
+                    <button onclick="retryProcessing()" class="mt-4 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500">
+                        <i class="fas fa-redo mr-2"></i>Zkusit znovu
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Input Files -->
+        <div class="card-gradient rounded-xl p-6 border border-gray-700">
+            <h2 class="text-xl font-semibold text-white mb-4">Vstupní soubory</h2>
+            <div class="space-y-3">
+                {% if scan.files %}
+                {% for file in scan.files %}
+                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
+                            {% if file.type == 'pointcloud' %}
+                            <i class="fas fa-cloud text-blue-400"></i>
+                            {% elif file.type == 'texture' %}
+                            <i class="fas fa-image text-purple-400"></i>
+                            {% else %}
+                            <i class="fas fa-file text-gray-400"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <p class="text-white">{{ file.name }}</p>
+                            <p class="text-gray-500 text-xs">{{ file.size }}</p>
+                        </div>
+                    </div>
+                    <a href="{{ file.url }}" class="text-primary-400 hover:text-primary-300">
+                        <i class="fas fa-download"></i>
+                    </a>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-gray-500 text-center py-4">Žádné soubory</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Processing Log -->
+        <div class="card-gradient rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-white">Log zpracování</h2>
+                <button onclick="refreshLogs()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm max-h-64 overflow-y-auto" id="processing-log">
+                {% if scan.logs %}
+                {% for log in scan.logs %}
+                <div class="flex items-start space-x-2 mb-2">
+                    <span class="text-gray-500">{{ log.timestamp }}</span>
+                    <span class="{% if log.level == 'error' %}text-red-400{% elif log.level == 'warning' %}text-yellow-400{% else %}text-gray-300{% endif %}">
+                        {{ log.message }}
+                    </span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-gray-500">Žádné záznamy</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Info Card -->
+        <div class="card-gradient rounded-xl p-6 border border-gray-700">
+            <h2 class="text-lg font-semibold text-white mb-4">Informace</h2>
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-gray-500 text-sm">Vytvořeno</dt>
+                    <dd class="text-white mt-1">{{ scan.created_at.strftime('%d.%m.%Y %H:%M') }}</dd>
+                </div>
+                <div>
+                    <dt class="text-gray-500 text-sm">Aktualizováno</dt>
+                    <dd class="text-white mt-1">{{ scan.updated_at.strftime('%d.%m.%Y %H:%M') }}</dd>
+                </div>
+                {% if scan.description %}
+                <div>
+                    <dt class="text-gray-500 text-sm">Popis</dt>
+                    <dd class="text-white mt-1">{{ scan.description }}</dd>
+                </div>
+                {% endif %}
+                {% if scan.device_info %}
+                <div>
+                    <dt class="text-gray-500 text-sm">Zařízení</dt>
+                    <dd class="text-white mt-1">
+                        {{ scan.device_info.model }}<br>
+                        <span class="text-gray-400 text-sm">iOS {{ scan.device_info.ios_version }}</span>
+                    </dd>
+                </div>
+                {% endif %}
+                {% if scan.point_count %}
+                <div>
+                    <dt class="text-gray-500 text-sm">Počet bodů</dt>
+                    <dd class="text-white mt-1">{{ "{:,}".format(scan.point_count) }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </div>
+
+        <!-- Downloads -->
+        {% if scan.status == 'completed' and scan.result_urls %}
+        <div class="card-gradient rounded-xl p-6 border border-gray-700">
+            <h2 class="text-lg font-semibold text-white mb-4">Stáhnout</h2>
+            <div class="space-y-2">
+                {% for format, url in scan.result_urls.items() %}
+                <a href="/api/v1/scans/{{ scan.id }}/download?format={{ format }}"
+                   class="flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
+                            <i class="fas fa-cube text-primary-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-white font-medium uppercase">{{ format }}</p>
+                            <p class="text-gray-500 text-xs">
+                                {% if format == 'usdz' %}Apple AR
+                                {% elif format == 'gltf' %}Web/Universal
+                                {% elif format == 'obj' %}3D Software
+                                {% else %}{{ format }}{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <i class="fas fa-download text-gray-400 group-hover:text-primary-400 transition-colors"></i>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="card-gradient rounded-xl p-6 border border-gray-700">
+            <h2 class="text-lg font-semibold text-white mb-4">Akce</h2>
+            <div class="space-y-2">
+                {% if scan.status == 'uploaded' %}
+                <button onclick="startProcessing()"
+                        class="w-full flex items-center justify-center px-4 py-3 rounded-lg bg-primary-600 text-white hover:bg-primary-500 transition-colors">
+                    <i class="fas fa-play mr-2"></i>Spustit zpracování
+                </button>
+                {% endif %}
+
+                {% if scan.status == 'processing' %}
+                <button onclick="cancelProcessing()"
+                        class="w-full flex items-center justify-center px-4 py-3 rounded-lg bg-yellow-600 text-white hover:bg-yellow-500 transition-colors">
+                    <i class="fas fa-stop mr-2"></i>Zastavit zpracování
+                </button>
+                {% endif %}
+
+                {% if scan.status == 'failed' %}
+                <button onclick="retryProcessing()"
+                        class="w-full flex items-center justify-center px-4 py-3 rounded-lg bg-primary-600 text-white hover:bg-primary-500 transition-colors">
+                    <i class="fas fa-redo mr-2"></i>Zkusit znovu
+                </button>
+                {% endif %}
+
+                <button onclick="deleteScan()"
+                        class="w-full flex items-center justify-center px-4 py-3 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white transition-colors">
+                    <i class="fas fa-trash mr-2"></i>Smazat sken
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const scanId = '{{ scan.id }}';
+
+    {% if scan.status == 'processing' %}
+    // WebSocket for real-time updates
+    const ws = new WebSocket(`ws://${window.location.host}/ws/scans/${scanId}`);
+
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.type === 'processing_update') {
+            updateProgress(data.data);
+        }
+    };
+
+    ws.onclose = function() {
+        console.log('WebSocket closed, will reload...');
+        setTimeout(() => window.location.reload(), 5000);
+    };
+
+    function updateProgress(data) {
+        // Update progress in UI
+        const stages = document.getElementById('processing-stages');
+        // Reload page if status changed
+        if (data.status !== 'processing') {
+            window.location.reload();
+        }
+    }
+    {% endif %}
+
+    async function startProcessing() {
+        try {
+            const response = await fetch(`/api/v1/scans/${scanId}/process`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    enable_gaussian_splatting: true,
+                    enable_mesh_extraction: true,
+                    enable_texture_baking: true,
+                    mesh_resolution: 'high',
+                    texture_resolution: 4096,
+                    output_formats: ['usdz', 'gltf', 'obj']
+                })
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const error = await response.json();
+                alert('Chyba: ' + error.detail);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Chyba při spuštění zpracování');
+        }
+    }
+
+    async function retryProcessing() {
+        await startProcessing();
+    }
+
+    async function cancelProcessing() {
+        if (!confirm('Opravdu chcete zastavit zpracování?')) return;
+
+        try {
+            const response = await fetch(`/admin/api/scans/${scanId}/cancel`, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function deleteScan() {
+        if (!confirm('Opravdu chcete smazat tento sken? Tato akce je nevratná.')) return;
+
+        try {
+            const response = await fetch(`/admin/api/scans/${scanId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                window.location.href = '/admin/scans';
+            } else {
+                alert('Smazání se nezdařilo');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Chyba při mazání');
+        }
+    }
+
+    async function refreshLogs() {
+        try {
+            const response = await fetch(`/admin/api/scans/${scanId}/logs`);
+            const logs = await response.json();
+
+            const container = document.getElementById('processing-log');
+            container.innerHTML = logs.map(log => `
+                <div class="flex items-start space-x-2 mb-2">
+                    <span class="text-gray-500">${log.timestamp}</span>
+                    <span class="${log.level === 'error' ? 'text-red-400' : log.level === 'warning' ? 'text-yellow-400' : 'text-gray-300'}">
+                        ${log.message}
+                    </span>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error(e);
+        }
+    }
+</script>
+{% endblock %}

@@ -22,6 +22,7 @@ from services.scan_processor import ScanProcessor
 from services.storage import StorageService
 from services.websocket_manager import WebSocketManager
 from utils.logger import get_logger
+from api.admin import router as admin_router
 
 # Initialize logger
 logger = get_logger(__name__)
@@ -46,6 +47,9 @@ app.add_middleware(
 storage = StorageService()
 processor = ScanProcessor()
 ws_manager = WebSocketManager()
+
+# Include admin dashboard router
+app.include_router(admin_router)
 
 
 # ============================================================================

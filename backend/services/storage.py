@@ -116,6 +116,10 @@ class StorageService:
         logger.info(f"Deleted scan: {scan_id}")
         return True
 
+    def get_scan_directory(self, scan_id: str) -> Path:
+        """Get the directory path for a scan"""
+        return self.base_path / scan_id
+
     # ========================================================================
     # File Upload
     # ========================================================================

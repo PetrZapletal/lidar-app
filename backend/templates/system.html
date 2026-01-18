@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Systém{% endblock %}
+
+{% block content %}
+<!-- Page header -->
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-white">Systém</h1>
+    <p class="text-gray-400 mt-1">Stav serveru a GPU</p>
+</div>
+
+<!-- System Overview -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="card-gradient rounded-xl p-6 border border-gray-700">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-400 text-sm">CPU</h3>
+            <span class="w-3 h-3 rounded-full {% if system.cpu < 80 %}bg-green-400{% elif system.cpu < 95 %}bg-yellow-400{% else %}bg-red-400{% endif %}"></span>
+        </div>
+        <p class="text-3xl font-bold text-white">{{ system.cpu }}%</p>
+        <div class="mt-3 h-2 bg-gray-700 rounded-full overflow-hidden">
+            <div class="h-full {% if system.cpu < 80 %}bg-green-500{% elif system.cpu < 95 %}bg-yellow-500{% else %}bg-red-500{% endif %}"
+                 style="width: {{ system.cpu }}%"></div>
+        </div>
+    </div>
+
+    <div class="card-gradient rounded-xl p-6 border border-gray-700">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-400 text-sm">Paměť RAM</h3>
+            <span class="text-gray-500 text-xs">{{ system.memory_used }}/{{ system.memory_total }} GB</span>
+        </div>
+        <p class="text-3xl font-bold text-white">{{ system.memory_percent }}%</p>
+        <div class="mt-3 h-2 bg-gray-700 rounded-full overflow-hidden">
+            <div class="h-full bg-purple-500" style="width: {{ system.memory_percent }}%"></div>
+        </div>
+    </div>
+
+    <div class="card-gradient rounded-xl p-6 border border-gray-700">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-400 text-sm">Disk</h3>
+            <span class="text-gray-500 text-xs">{{ system.disk_used }}/{{ system.disk_total }} GB</span>
+        </div>
+        <p class="text-3xl font-bold text-white">{{ system.disk_percent }}%</p>
+        <div class="mt-3 h-2 bg-gray-700 rounded-full overflow-hidden">
+            <div class="h-full bg-blue-500" style="width: {{ system.disk_percent }}%"></div>
+        </div>
+    </div>
+
+    <div class="card-gradient rounded-xl p-6 border border-gray-700">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-400 text-sm">Uptime</h3>
+            <span class="w-3 h-3 rounded-full bg-green-400 status-pulse"></span>
+        </div>
+        <p class="text-3xl font-bold text-white">{{ system.uptime }}</p>
+        <p class="text-gray-500 text-sm mt-2">Spuštěno: {{ system.started_at }}</p>
+    </div>
+</div>
+
+<!-- GPU Section -->
+<div class="card-gradient rounded-xl p-6 border border-gray-700 mb-8">
+    <h2 class="text-xl font-semibold text-white mb-6">GPU Monitoring</h2>
+
+    {% if gpus %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% for gpu in gpus %}
+        <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                        <i class="fas fa-microchip text-green-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-medium">{{ gpu.name }}</h3>
+                        <p class="text-gray-500 text-sm">GPU {{ loop.index0 }}</p>
+                    </div>
+                </div>
+                <span class="px-2 py-1 rounded-full text-xs
+                    {% if gpu.status == 'active' %}bg-green-500/20 text-green-400
+                    {% else %}bg-gray-500/20 text-gray-400{% endif %}">
+                    {{ gpu.status }}
+                </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <!-- Utilization -->
+                <div class="text-center">
+                    <div class="relative inline-flex items-center justify-center">
+                        <svg class="w-24 h-24 progress-ring">
+                            <circle class="text-gray-700" stroke-width="8" stroke="currentColor" fill="transparent" r="40" cx="48" cy="48"/>
+                            <circle class="text-primary-500" stroke-width="8" stroke-dasharray="{{ gpu.utilization * 2.51 }} 251" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="48" cy="48"/>
+                        </svg>
+                        <span class="absolute text-xl font-bold text-white">{{ gpu.utilization }}%</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Využití</p>
+                </div>
+
+                <!-- Temperature -->
+                <div class="text-center">
+                    <div class="relative inline-flex items-center justify-center">
+                        <svg class="w-24 h-24 progress-ring">
+                            <circle class="text-gray-700" stroke-width="8" stroke="currentColor" fill="transparent" r="40" cx="48" cy="48"/>
+                            <circle class="{% if gpu.temp > 80 %}text-red-500{% elif gpu.temp > 60 %}text-yellow-500{% else %}text-green-500{% endif %}"
+                                    stroke-width="8" stroke-dasharray="{{ gpu.temp * 2.51 }} 251" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="48" cy="48"/>
+                        </svg>
+                        <span class="absolute text-xl font-bold text-white">{{ gpu.temp }}°C</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Teplota</p>
+                </div>
+            </div>
+
+            <!-- Memory -->
+            <div class="mb-4">
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-gray-400">VRAM</span>
+                    <span class="text-white">{{ gpu.memory_used }} / {{ gpu.memory_total }} GB</span>
+                </div>
+                <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-yellow-500 to-yellow-400" style="width: {{ gpu.memory_percent }}%"></div>
+                </div>
+            </div>
+
+            <!-- Power -->
+            <div>
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-gray-400">Spotřeba</span>
+                    <span class="text-white">{{ gpu.power }} / {{ gpu.power_limit }} W</span>
+                </div>
+                <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-cyan-500 to-cyan-400" style="width: {{ (gpu.power / gpu.power_limit * 100)|round }}%"></div>
+                </div>
+            </div>
+
+            <!-- Current Job -->
+            {% if gpu.current_job %}
+            <div class="mt-4 pt-4 border-t border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-cube text-primary-400"></i>
+                        <span class="text-white text-sm">{{ gpu.current_job.name }}</span>
+                    </div>
+                    <span class="text-gray-400 text-sm">{{ gpu.current_job.stage }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-microchip text-gray-600 text-3xl"></i>
+        </div>
+        <p class="text-gray-400 text-lg">Žádná GPU detekována</p>
+        <p class="text-gray-500 text-sm mt-1">Pro zpracování je vyžadována NVIDIA GPU s CUDA</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Services Status -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Services -->
+    <div class="card-gradient rounded-xl p-6 border border-gray-700">
+        <h2 class="text-xl font-semibold text-white mb-6">Služby</h2>
+        <div class="space-y-4">
+            {% for service in services %}
+            <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg
+                        {% if service.status == 'running' %}bg-green-500/20
+                        {% elif service.status == 'warning' %}bg-yellow-500/20
+                        {% else %}bg-red-500/20{% endif %} flex items-center justify-center">
+                        <i class="{{ service.icon }}
+                            {% if service.status == 'running' %}text-green-400
+                            {% elif service.status == 'warning' %}text-yellow-400
+                            {% else %}text-red-400{% endif %}"></i>
+                    </div>
+                    <div>
+                        <p class="text-white font-medium">{{ service.name }}</p>
+                        <p class="text-gray-500 text-xs">{{ service.description }}</p>
+                    </div>
+                </div>
+                <span class="px-2 py-1 rounded-full text-xs
+                    {% if service.status == 'running' %}bg-green-500/20 text-green-400
+                    {% elif service.status == 'warning' %}bg-yellow-500/20 text-yellow-400
+                    {% else %}bg-red-500/20 text-red-400{% endif %}">
+                    {{ service.status }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Errors -->
+    <div class="card-gradient rounded-xl p-6 border border-gray-700">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-semibold text-white">Nedávné chyby</h2>
+            <a href="/admin/logs" class="text-primary-400 hover:text-primary-300 text-sm">Všechny logy</a>
+        </div>
+        <div class="space-y-3">
+            {% for error in recent_errors %}
+            <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
+                        <div>
+                            <p class="text-red-400 text-sm">{{ error.message }}</p>
+                            <p class="text-gray-500 text-xs mt-1">{{ error.timestamp }}</p>
+                        </div>
+                    </div>
+                    {% if error.scan_id %}
+                    <a href="/admin/scans/{{ error.scan_id }}" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-external-link-alt text-xs"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <i class="fas fa-check-circle text-green-400 text-3xl mb-2"></i>
+                <p class="text-gray-500">Žádné nedávné chyby</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Configuration -->
+<div class="card-gradient rounded-xl p-6 border border-gray-700">
+    <h2 class="text-xl font-semibold text-white mb-6">Konfigurace</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for key, value in config.items() %}
+        <div class="p-4 bg-gray-800/50 rounded-lg">
+            <p class="text-gray-400 text-xs uppercase mb-1">{{ key }}</p>
+            <p class="text-white font-mono text-sm truncate" title="{{ value }}">{{ value }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Auto-refresh system stats every 5 seconds
+    setInterval(async () => {
+        try {
+            const response = await fetch('/admin/api/system-status');
+            const data = await response.json();
+            // Update UI with new data
+            // TODO: Implement UI updates
+        } catch (e) {
+            console.error('Failed to refresh system status:', e);
+        }
+    }, 5000);
+</script>
+{% endblock %}
