@@ -4,6 +4,8 @@ import RealityKit
 /// Main scanning interface view
 struct ScanningView: View {
     @State private var viewModel = ScanningViewModel()
+    @State private var showSettings = false
+    @State private var showStopOptions = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -14,14 +16,26 @@ struct ScanningView: View {
 
             // Overlay UI
             VStack(spacing: 0) {
-                // Top status bar
-                ScanningStatusBar(
-                    trackingState: viewModel.trackingStateText,
-                    worldMappingStatus: viewModel.worldMappingStatusText,
-                    pointCount: viewModel.pointCount,
-                    meshFaceCount: viewModel.meshFaceCount,
-                    scanDuration: viewModel.session.formattedDuration
-                )
+                // Top bar with status and settings
+                HStack {
+                    ScanningStatusBar(
+                        trackingState: viewModel.trackingStateText,
+                        worldMappingStatus: viewModel.worldMappingStatusText,
+                        pointCount: viewModel.pointCount,
+                        meshFaceCount: viewModel.meshFaceCount,
+                        fusedFrameCount: viewModel.fusedFrameCount,
+                        scanDuration: viewModel.session.formattedDuration
+                    )
+
+                    Button(action: { showSettings = true }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.title3)
+                            .foregroundStyle(.white)
+                            .padding(10)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                    .padding(.trailing)
+                }
                 .padding(.top, 8)
 
                 Spacer()
@@ -39,7 +53,7 @@ struct ScanningView: View {
                     showMesh: viewModel.showMeshVisualization,
                     onStart: { viewModel.startScanning() },
                     onPause: { viewModel.pauseScanning() },
-                    onStop: { viewModel.stopScanning() },
+                    onStop: { showStopOptions = true },
                     onToggleMesh: { viewModel.toggleMeshVisualization() },
                     onClose: { dismiss() }
                 )
@@ -51,8 +65,29 @@ struct ScanningView: View {
         } message: {
             Text(viewModel.errorMessage ?? "Unknown error")
         }
+        .confirmationDialog("Dokončit skenování", isPresented: $showStopOptions) {
+            Button("Uložit lokálně") {
+                viewModel.stopScanning()
+            }
+            Button("Zpracovat s AI (cloud)") {
+                Task {
+                    await viewModel.stopAndProcess()
+                }
+            }
+            Button("Pokračovat ve skenování", role: .cancel) {
+                viewModel.resumeScanning()
+            }
+        } message: {
+            Text("Jak chcete zpracovat sken?")
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+        }
         .fullScreenCover(isPresented: $viewModel.showPreview) {
             ModelPreviewPlaceholder(session: viewModel.session)
+        }
+        .fullScreenCover(isPresented: $viewModel.showProcessing) {
+            ProcessingProgressView(processingService: viewModel.processingService)
         }
     }
 }
@@ -90,6 +125,7 @@ struct ScanningStatusBar: View {
     let worldMappingStatus: String
     let pointCount: Int
     let meshFaceCount: Int
+    let fusedFrameCount: Int
     let scanDuration: String
 
     var body: some View {
@@ -105,17 +141,29 @@ struct ScanningStatusBar: View {
             Spacer()
 
             // Center - duration
-            Text(scanDuration)
-                .font(.title2.monospacedDigit())
-                .fontWeight(.semibold)
+            VStack(spacing: 2) {
+                Text(scanDuration)
+                    .font(.title2.monospacedDigit())
+                    .fontWeight(.semibold)
+
+                if fusedFrameCount > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "wand.and.stars")
+                            .font(.caption2)
+                        Text("\(fusedFrameCount) AI")
+                            .font(.caption2)
+                    }
+                    .foregroundStyle(.cyan)
+                }
+            }
 
             Spacer()
 
             // Right side - statistics
             VStack(alignment: .trailing, spacing: 4) {
-                Text("\(pointCount.formatted()) pts")
+                Text(formatNumber(pointCount) + " pts")
                     .font(.caption)
-                Text("\(meshFaceCount.formatted()) faces")
+                Text(formatNumber(meshFaceCount) + " faces")
                     .font(.caption)
             }
         }
@@ -123,7 +171,7 @@ struct ScanningStatusBar: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .padding(.horizontal)
+        .padding(.leading)
     }
 
     private var trackingStateIcon: String {
@@ -132,6 +180,15 @@ struct ScanningStatusBar: View {
         case _ where trackingState.contains("Limited"): return "exclamationmark.triangle.fill"
         default: return "xmark.circle.fill"
         }
+    }
+
+    private func formatNumber(_ number: Int) -> String {
+        if number >= 1_000_000 {
+            return String(format: "%.1fM", Double(number) / 1_000_000)
+        } else if number >= 1_000 {
+            return String(format: "%.0fK", Double(number) / 1_000)
+        }
+        return "\(number)"
     }
 }
 
