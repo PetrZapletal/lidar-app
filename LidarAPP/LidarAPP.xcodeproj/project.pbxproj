@@ -32,6 +32,12 @@
 		A10000001111111100000023 /* FrameSynchronizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000023 /* FrameSynchronizer.swift */; };
 		A10000001111111100000024 /* MeshCorrectionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000024 /* MeshCorrectionModel.swift */; };
 		A10000001111111100000025 /* OnDeviceProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000025 /* OnDeviceProcessor.swift */; };
+		A10000001111111100000036 /* DepthAnythingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000036 /* DepthAnythingModel.swift */; };
+		A10000001111111100000037 /* DepthFusionProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000037 /* DepthFusionProcessor.swift */; };
+		A10000001111111100000038 /* HighResPointCloudExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000038 /* HighResPointCloudExtractor.swift */; };
+		A10000001111111100000039 /* ScanProcessingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000039 /* ScanProcessingService.swift */; };
+		A10000001111111100000040 /* ProcessingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000040 /* ProcessingProgressView.swift */; };
+		A10000001111111100000041 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000041 /* SettingsView.swift */; };
 		A10000001111111100000026 /* AreaCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000026 /* AreaCalculator.swift */; };
 		A10000001111111100000027 /* DistanceCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000027 /* DistanceCalculator.swift */; };
 		A10000001111111100000028 /* MeasurementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000028 /* MeasurementService.swift */; };
@@ -71,6 +77,12 @@
 		A20000001111111100000023 /* FrameSynchronizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameSynchronizer.swift; sourceTree = "<group>"; };
 		A20000001111111100000024 /* MeshCorrectionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshCorrectionModel.swift; sourceTree = "<group>"; };
 		A20000001111111100000025 /* OnDeviceProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceProcessor.swift; sourceTree = "<group>"; };
+		A20000001111111100000036 /* DepthAnythingModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepthAnythingModel.swift; sourceTree = "<group>"; };
+		A20000001111111100000037 /* DepthFusionProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepthFusionProcessor.swift; sourceTree = "<group>"; };
+		A20000001111111100000038 /* HighResPointCloudExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HighResPointCloudExtractor.swift; sourceTree = "<group>"; };
+		A20000001111111100000039 /* ScanProcessingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanProcessingService.swift; sourceTree = "<group>"; };
+		A20000001111111100000040 /* ProcessingProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingProgressView.swift; sourceTree = "<group>"; };
+		A20000001111111100000041 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A20000001111111100000026 /* AreaCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaCalculator.swift; sourceTree = "<group>"; };
 		A20000001111111100000027 /* DistanceCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DistanceCalculator.swift; sourceTree = "<group>"; };
 		A20000001111111100000028 /* MeasurementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeasurementService.swift; sourceTree = "<group>"; };
@@ -186,9 +198,27 @@
 				A50000001111111100000014 /* Auth */,
 				A50000001111111100000015 /* Export */,
 				A50000001111111100000016 /* Preview */,
+				A50000001111111100000032 /* Processing */,
 				A50000001111111100000017 /* Scanning */,
+				A50000001111111100000033 /* Settings */,
 			);
 			path = Presentation;
+			sourceTree = "<group>";
+		};
+		A50000001111111100000032 /* Processing */ = {
+			isa = PBXGroup;
+			children = (
+				A20000001111111100000040 /* ProcessingProgressView.swift */,
+			);
+			path = Processing;
+			sourceTree = "<group>";
+		};
+		A50000001111111100000033 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				A20000001111111100000041 /* SettingsView.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 		A50000001111111100000014 /* Auth */ = {
@@ -284,9 +314,18 @@
 				A50000001111111100000027 /* EdgeML */,
 				A50000001111111100000028 /* Measurement */,
 				A50000001111111100000029 /* Network */,
+				A50000001111111100000031 /* Processing */,
 				A50000001111111100000030 /* Rendering */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		A50000001111111100000031 /* Processing */ = {
+			isa = PBXGroup;
+			children = (
+				A20000001111111100000039 /* ScanProcessingService.swift */,
+			);
+			path = Processing;
 			sourceTree = "<group>";
 		};
 		A50000001111111100000024 /* ARKit */ = {
@@ -320,6 +359,9 @@
 		A50000001111111100000027 /* EdgeML */ = {
 			isa = PBXGroup;
 			children = (
+				A20000001111111100000036 /* DepthAnythingModel.swift */,
+				A20000001111111100000037 /* DepthFusionProcessor.swift */,
+				A20000001111111100000038 /* HighResPointCloudExtractor.swift */,
 				A20000001111111100000024 /* MeshCorrectionModel.swift */,
 				A20000001111111100000025 /* OnDeviceProcessor.swift */,
 			);
@@ -469,6 +511,12 @@
 				A10000001111111100000023 /* FrameSynchronizer.swift in Sources */,
 				A10000001111111100000024 /* MeshCorrectionModel.swift in Sources */,
 				A10000001111111100000025 /* OnDeviceProcessor.swift in Sources */,
+				A10000001111111100000036 /* DepthAnythingModel.swift in Sources */,
+				A10000001111111100000037 /* DepthFusionProcessor.swift in Sources */,
+				A10000001111111100000038 /* HighResPointCloudExtractor.swift in Sources */,
+				A10000001111111100000039 /* ScanProcessingService.swift in Sources */,
+				A10000001111111100000040 /* ProcessingProgressView.swift in Sources */,
+				A10000001111111100000041 /* SettingsView.swift in Sources */,
 				A10000001111111100000026 /* AreaCalculator.swift in Sources */,
 				A10000001111111100000027 /* DistanceCalculator.swift in Sources */,
 				A10000001111111100000028 /* MeasurementService.swift in Sources */,

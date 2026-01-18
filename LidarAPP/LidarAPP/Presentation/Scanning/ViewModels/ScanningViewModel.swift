@@ -13,12 +13,14 @@ final class ScanningViewModel {
     var isScanning: Bool = false
     var showMeshVisualization: Bool = true
     var showPreview: Bool = false
+    var showProcessing: Bool = false
     var showError: Bool = false
     var errorMessage: String?
 
     // Statistics
     var pointCount: Int = 0
     var meshFaceCount: Int = 0
+    var fusedFrameCount: Int = 0
     var trackingStateText: String = "Initializing"
     var worldMappingStatusText: String = "Not Available"
     var scanQuality: ScanQuality = .poor
@@ -26,6 +28,11 @@ final class ScanningViewModel {
     var canStartScanning: Bool {
         arSessionManager.sessionState == .running &&
         arSessionManager.trackingState == .normal
+    }
+
+    // Processing state
+    var processingState: ScanProcessingState {
+        processingService.state
     }
 
     // MARK: - Session
@@ -37,14 +44,28 @@ final class ScanningViewModel {
     private let arSessionManager: ARSessionManager
     private let meshProcessor = MeshAnchorProcessor()
     private let pointCloudExtractor = PointCloudExtractor()
+    let processingService: ScanProcessingService
+
+    // Depth fusion components
+    private let depthFusionProcessor: DepthFusionProcessor
+    private let highResExtractor: HighResPointCloudExtractor
 
     private var scanStartTime: Date?
+    private var frameCounter: Int = 0
+    private let depthFusionEnabled: Bool
 
     // MARK: - Initialization
 
-    init(session: ScanSession = ScanSession()) {
+    init(
+        session: ScanSession = ScanSession(),
+        depthFusionEnabled: Bool = true
+    ) {
         self.session = session
         self.arSessionManager = ARSessionManager()
+        self.processingService = ScanProcessingService()
+        self.depthFusionProcessor = DepthFusionProcessor()
+        self.highResExtractor = HighResPointCloudExtractor()
+        self.depthFusionEnabled = depthFusionEnabled
     }
 
     // MARK: - AR Session Setup
@@ -92,7 +113,9 @@ final class ScanningViewModel {
 
         isScanning = true
         scanStartTime = Date()
+        frameCounter = 0
         session.startScanning()
+        processingService.startScanning()
     }
 
     func pauseScanning() {
@@ -117,6 +140,31 @@ final class ScanningViewModel {
         showPreview = true
     }
 
+    /// Stop scanning and start full processing pipeline (local + backend)
+    func stopAndProcess() async {
+        isScanning = false
+        session.stopScanning()
+        showProcessing = true
+
+        do {
+            // Local processing
+            let result = try await processingService.stopScanning()
+            session.pointCloud = result.pointCloud
+
+            // Upload to backend
+            let scanId = try await processingService.uploadToBackend(result)
+
+            // Start server processing
+            try await processingService.startServerProcessing(scanId: scanId)
+
+            // Download will be triggered by WebSocket when complete
+        } catch {
+            errorMessage = error.localizedDescription
+            showError = true
+            showProcessing = false
+        }
+    }
+
     func cancelScanning() {
         isScanning = false
         arSessionManager.stopSession()
@@ -135,6 +183,30 @@ final class ScanningViewModel {
 
         // Update scan quality
         updateScanQuality(frame)
+
+        // Process depth fusion (every 3rd frame for performance)
+        frameCounter += 1
+        if depthFusionEnabled && frameCounter % 3 == 0 {
+            Task {
+                await processFrameWithDepthFusion(frame)
+            }
+        }
+    }
+
+    private func processFrameWithDepthFusion(_ frame: ARFrame) async {
+        do {
+            // Process frame through depth fusion pipeline
+            try await processingService.processFrame(frame)
+
+            // Update UI stats
+            if let stats = processingService.processingStats {
+                fusedFrameCount = stats.fusedFrameCount
+                pointCount = stats.pointCount
+            }
+        } catch {
+            // Log error but don't interrupt scanning
+            print("Depth fusion error: \(error.localizedDescription)")
+        }
     }
 
     private func handleMeshUpdate(_ meshAnchor: ARMeshAnchor) {
