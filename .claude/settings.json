@@ -1,0 +1,103 @@
+{
+  "projectName": "LidarApp",
+  "description": "iOS LiDAR 3D Scanner with ARKit, Metal, and AI processing",
+
+  "enabledPlugins": {
+    "swift-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true
+  },
+
+  "lspServers": {
+    "swift": {
+      "command": "sourcekit-lsp",
+      "args": [],
+      "extensionToLanguage": {
+        ".swift": "swift"
+      },
+      "rootMarkers": ["Package.swift", "*.xcodeproj", "*.xcworkspace"],
+      "startupTimeout": 60000
+    },
+    "python": {
+      "command": "pyright-langserver",
+      "args": ["--stdio"],
+      "extensionToLanguage": {
+        ".py": "python"
+      },
+      "rootMarkers": ["pyproject.toml", "requirements.txt"],
+      "startupTimeout": 30000
+    }
+  },
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ \"$(git branch --show-current)\" != \"main\" ] || { echo '{\"block\": true, \"message\": \"Cannot edit on main branch. Create a feature branch first.\"}' >&2; exit 2; }",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [[ \"$CLAUDE_FILE_PATH\" == *.swift ]]; then swiftlint lint --path \"$CLAUDE_FILE_PATH\" --quiet 2>/dev/null || true; fi",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "if [[ \"$CLAUDE_FILE_PATH\" == *.py ]]; then ruff check \"$CLAUDE_FILE_PATH\" --quiet 2>/dev/null || true; fi",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  },
+
+  "codeReview": {
+    "autoReviewOnPR": true,
+    "confidenceThreshold": 80,
+    "agents": ["security", "performance", "readability", "testing"]
+  },
+
+  "featureDev": {
+    "requireArchitectureReview": true,
+    "requireTestCoverage": true,
+    "phases": ["explore", "architect", "implement", "review"]
+  },
+
+  "paths": {
+    "ios": "LidarAPP/",
+    "backend": "backend/",
+    "docs": "docs/",
+    "tests": {
+      "ios": "LidarAPP/LidarAPPTests/",
+      "backend": "backend/tests/"
+    }
+  },
+
+  "ignorePatterns": [
+    "*.xcodeproj/*",
+    "*.xcworkspace/*",
+    "Pods/*",
+    "DerivedData/*",
+    ".build/*",
+    "__pycache__/*",
+    "*.pyc",
+    "node_modules/*",
+    ".git/*"
+  ]
+}
