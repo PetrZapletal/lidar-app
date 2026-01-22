@@ -318,6 +318,154 @@ async def _process_raw_scan_async(
 
 
 # ============================================================================
+# Simple Pipeline Tasks (Apple Silicon compatible)
+# ============================================================================
+
+@celery_app.task(
+    bind=True,
+    name="worker.tasks.process_scan_simple",
+    max_retries=2,
+    default_retry_delay=30,
+    time_limit=3600,  # 1 hour max
+    soft_time_limit=3300
+)
+def process_scan_simple(
+    self,
+    scan_id: str,
+    lraw_path: str
+) -> Dict[str, Any]:
+    """
+    Process raw scan using SimplePipeline (MPS/CPU compatible).
+
+    This task bypasses Gaussian Splatting and uses:
+    1. Parse LRAW
+    2. AI Depth Enhancement (Depth Anything V2)
+    3. Point Cloud Extraction
+    4. Poisson Reconstruction (Open3D)
+    5. Export (PLY, GLB, OBJ)
+
+    Args:
+        scan_id: Unique scan identifier
+        lraw_path: Path to LRAW file
+
+    Returns:
+        Processing result with paths to generated files
+    """
+    logger.info(f"Starting simple pipeline processing: {scan_id}")
+
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        try:
+            result = loop.run_until_complete(
+                _process_scan_simple_async(self, scan_id, lraw_path)
+            )
+            return result
+        finally:
+            loop.close()
+
+    except Exception as e:
+        logger.error(f"Simple pipeline failed for {scan_id}: {e}")
+        import traceback
+        traceback.print_exc()
+
+        # Update scan status
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(
+                _update_scan_status(scan_id, "failed", error=str(e))
+            )
+        finally:
+            loop.close()
+
+        raise self.retry(exc=e)
+
+
+async def _process_scan_simple_async(
+    task,
+    scan_id: str,
+    lraw_path: str
+) -> Dict[str, Any]:
+    """Async implementation of simple pipeline processing"""
+    from services.simple_pipeline import SimplePipeline
+
+    async def on_progress(progress: float, stage: str, message: str = ""):
+        """Progress callback"""
+        await _update_scan_status(scan_id, "processing", progress=progress, stage=stage)
+
+        # Update Celery task state
+        task.update_state(
+            state="PROGRESS",
+            meta={
+                "progress": progress,
+                "stage": stage,
+                "message": message,
+                "scan_id": scan_id
+            }
+        )
+
+        # Notify WebSocket clients
+        try:
+            await ws_manager.broadcast(scan_id, {
+                "type": "processing_update",
+                "data": {
+                    "scan_id": scan_id,
+                    "progress": progress,
+                    "stage": stage,
+                    "message": message,
+                    "status": "processing"
+                }
+            })
+        except Exception as e:
+            logger.debug(f"WebSocket broadcast failed: {e}")
+
+    # Run simple pipeline
+    pipeline = SimplePipeline()
+    result = await pipeline.process(
+        scan_id=scan_id,
+        lraw_path=lraw_path,
+        progress_callback=on_progress
+    )
+
+    if result.status == "error":
+        raise Exception(result.error)
+
+    # Update final status
+    await _update_scan_status(
+        scan_id,
+        "completed",
+        progress=1.0,
+        stage="completed",
+        result_urls=result.exports
+    )
+
+    # Notify completion
+    await ws_manager.broadcast(scan_id, {
+        "type": "processing_update",
+        "data": {
+            "scan_id": scan_id,
+            "progress": 1.0,
+            "stage": "completed",
+            "status": "completed",
+            "result_urls": result.exports
+        }
+    })
+
+    logger.info(f"Simple pipeline completed: {scan_id}")
+
+    return {
+        "scan_id": scan_id,
+        "status": "completed",
+        "pointcloud_path": result.pointcloud_path,
+        "mesh_path": result.mesh_path,
+        "exports": result.exports,
+        "stats": result.stats
+    }
+
+
+# ============================================================================
 # Export Tasks
 # ============================================================================
 

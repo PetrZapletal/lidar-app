@@ -221,21 +221,36 @@ class RawDataProcessor:
 
             for i in range(mesh_count):
                 anchor = self._parse_mesh_anchor(f, has_classifications)
-                mesh_anchors.append(anchor)
-                total_vertices += len(anchor.vertices)
-                total_faces += len(anchor.faces)
+                if anchor is not None:
+                    mesh_anchors.append(anchor)
+                    total_vertices += len(anchor.vertices)
+                    total_faces += len(anchor.faces)
+                else:
+                    logger.warning(f"Skipping invalid mesh anchor {i}")
 
             # Parse texture frames
             texture_frames = []
             for i in range(texture_count):
-                frame = self._parse_texture_frame(f)
-                texture_frames.append(frame)
+                try:
+                    pos = f.tell()
+                    frame = self._parse_texture_frame(f)
+                    texture_frames.append(frame)
+                    logger.debug(f"Parsed texture frame {i}/{texture_count} at position {pos}")
+                except Exception as e:
+                    logger.warning(f"Failed to parse texture frame {i}/{texture_count} at position {f.tell()}: {e}")
+                    break  # Stop parsing more texture frames
 
             # Parse depth frames
             depth_frames = []
             for i in range(depth_count):
-                frame = self._parse_depth_frame(f, has_confidence)
-                depth_frames.append(frame)
+                try:
+                    pos = f.tell()
+                    frame = self._parse_depth_frame(f, has_confidence)
+                    depth_frames.append(frame)
+                    logger.debug(f"Parsed depth frame {i}/{depth_count} at position {pos}")
+                except Exception as e:
+                    logger.warning(f"Failed to parse depth frame {i}/{depth_count} at position {f.tell()}: {e}")
+                    break  # Stop parsing more depth frames
 
             return LRAWData(
                 version=version,
@@ -247,50 +262,119 @@ class RawDataProcessor:
                 total_faces=total_faces
             )
 
-    def _parse_mesh_anchor(self, f, has_classifications: bool) -> MeshAnchorData:
-        """Parse a single mesh anchor from binary stream"""
-        # UUID (16 bytes)
-        uuid = f.read(16)
+    def _parse_mesh_anchor(self, f, has_classifications: bool) -> Optional[MeshAnchorData]:
+        """Parse a single mesh anchor from binary stream with robust error handling"""
+        try:
+            # UUID (16 bytes)
+            uuid = f.read(16)
+            if len(uuid) < 16:
+                logger.warning("Incomplete UUID in mesh anchor")
+                return None
 
-        # Transform (64 bytes - 4x4 float32)
-        transform_data = f.read(64)
-        transform = np.frombuffer(transform_data, dtype=np.float32).reshape(4, 4)
+            # Transform (64 bytes - 4x4 float32)
+            transform_data = f.read(64)
+            if len(transform_data) < 64:
+                logger.warning("Incomplete transform in mesh anchor")
+                return None
+            transform = np.frombuffer(transform_data, dtype=np.float32).reshape(4, 4)
 
-        # Vertex count (4 bytes)
-        vertex_count = struct.unpack("<I", f.read(4))[0]
+            # Vertex count (4 bytes)
+            vertex_count = struct.unpack("<I", f.read(4))[0]
 
-        # Face count (4 bytes)
-        face_count = struct.unpack("<I", f.read(4))[0]
+            # Face count (4 bytes)
+            face_count = struct.unpack("<I", f.read(4))[0]
 
-        # Classification flag (1 byte)
-        has_class = struct.unpack("<B", f.read(1))[0]
+            # Classification flag (1 byte)
+            has_class = struct.unpack("<B", f.read(1))[0]
 
-        # Vertices (vertex_count * 12 bytes)
-        vertices_data = f.read(vertex_count * 12)
-        vertices = np.frombuffer(vertices_data, dtype=np.float32).reshape(-1, 3)
+            logger.debug(f"Parsing mesh anchor: {vertex_count} vertices, {face_count} faces, has_class={has_class}")
 
-        # Normals (vertex_count * 12 bytes)
-        normals_data = f.read(vertex_count * 12)
-        normals = np.frombuffer(normals_data, dtype=np.float32).reshape(-1, 3)
+            # NOTE: iOS uses simd_float3 which is 16 bytes (not 12) due to SIMD alignment
+            # Each vertex/normal is stored as 4 floats (xyz + padding), but only first 3 are used
+            SIMD_FLOAT3_STRIDE = 16  # Swift simd_float3 is 16 bytes, not 12
 
-        # Faces (face_count * 12 bytes - 3 uint32 per face)
-        faces_data = f.read(face_count * 12)
-        faces = np.frombuffer(faces_data, dtype=np.uint32).reshape(-1, 3)
+            # Vertices (vertex_count * 16 bytes) - with SIMD stride
+            expected_vert_size = vertex_count * SIMD_FLOAT3_STRIDE
+            vertices_data = f.read(expected_vert_size)
+            if len(vertices_data) < expected_vert_size:
+                logger.warning(f"Incomplete vertices: got {len(vertices_data)}/{expected_vert_size} bytes")
+                # Adjust to what we actually have
+                valid_verts = len(vertices_data) // SIMD_FLOAT3_STRIDE
+                vertices_data = vertices_data[:valid_verts * SIMD_FLOAT3_STRIDE]
+                vertex_count = valid_verts
 
-        # Classifications (optional)
-        classifications = None
-        if has_class and has_classifications:
-            class_data = f.read(vertex_count)
-            classifications = np.frombuffer(class_data, dtype=np.uint8)
+            if len(vertices_data) >= SIMD_FLOAT3_STRIDE:
+                # Parse as float4 (16 bytes each) and extract first 3 components
+                vertices_f4 = np.frombuffer(vertices_data, dtype=np.float32).reshape(-1, 4)
+                vertices = vertices_f4[:, :3].copy()  # Drop 4th component (padding)
+            else:
+                logger.warning("No valid vertices in mesh anchor")
+                return None
 
-        return MeshAnchorData(
-            uuid=uuid,
-            transform=transform,
-            vertices=vertices,
-            normals=normals,
-            faces=faces,
-            classifications=classifications
-        )
+            # Normals (vertex_count * 16 bytes) - with SIMD stride
+            expected_norm_size = vertex_count * SIMD_FLOAT3_STRIDE
+            normals_data = f.read(expected_norm_size)
+
+            if len(normals_data) >= SIMD_FLOAT3_STRIDE:
+                # Parse as float4 and extract first 3 components
+                normals_f4 = np.frombuffer(normals_data, dtype=np.float32).reshape(-1, 4)
+                normals = normals_f4[:, :3].copy()
+
+                # Pad if normals count doesn't match vertices
+                if len(normals) < len(vertices):
+                    logger.warning(f"Normals count mismatch: {len(normals)} vs {len(vertices)} vertices, padding")
+                    padding = np.zeros((len(vertices) - len(normals), 3), dtype=np.float32)
+                    padding[:, 1] = 1.0  # Default up vector
+                    normals = np.vstack([normals, padding])
+                elif len(normals) > len(vertices):
+                    normals = normals[:len(vertices)]
+            else:
+                # Create default normals (pointing up)
+                logger.warning("No valid normals, using defaults")
+                normals = np.zeros((len(vertices), 3), dtype=np.float32)
+                normals[:, 1] = 1.0
+
+            # Faces (face_count * 16 bytes - simd_uint3 is also 16 bytes in Swift!)
+            # Each face is stored as 4 uint32 (xyz indices + padding)
+            SIMD_UINT3_STRIDE = 16
+            expected_face_size = face_count * SIMD_UINT3_STRIDE
+            faces_data = f.read(expected_face_size)
+
+            if len(faces_data) >= SIMD_UINT3_STRIDE:
+                # Parse as uint4 (16 bytes each) and extract first 3 components
+                faces_u4 = np.frombuffer(faces_data, dtype=np.uint32).reshape(-1, 4)
+                faces = faces_u4[:, :3].copy()  # Drop 4th component (padding)
+            else:
+                # Empty faces - point cloud only
+                faces = np.zeros((0, 3), dtype=np.uint32)
+
+            # Classifications (optional) - NOTE: Classifications are per-face, not per-vertex!
+            classifications = None
+            if has_class:
+                # iOS writes classification.count bytes which equals face_count (per-face classification)
+                class_count = len(faces)  # Same as face_count
+                class_data = f.read(class_count)
+                if len(class_data) == class_count:
+                    classifications = np.frombuffer(class_data, dtype=np.uint8)
+                else:
+                    logger.warning(f"Classification data incomplete: {len(class_data)}/{class_count}")
+
+            logger.debug(f"Parsed mesh anchor: {len(vertices)} verts, {len(normals)} normals, {len(faces)} faces")
+
+            return MeshAnchorData(
+                uuid=uuid,
+                transform=transform,
+                vertices=vertices,
+                normals=normals,
+                faces=faces,
+                classifications=classifications
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to parse mesh anchor: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
 
     def _parse_texture_frame(self, f) -> TextureFrameData:
         """Parse a single texture frame from binary stream"""
@@ -300,13 +384,15 @@ class RawDataProcessor:
         # Timestamp (8 bytes)
         timestamp = struct.unpack("<d", f.read(8))[0]
 
-        # Transform (64 bytes)
+        # Transform (64 bytes - simd_float4x4 = 4 x simd_float4)
         transform_data = f.read(64)
         transform = np.frombuffer(transform_data, dtype=np.float32).reshape(4, 4)
 
-        # Intrinsics (36 bytes - 3x3 float32)
-        intrinsics_data = f.read(36)
-        intrinsics = np.frombuffer(intrinsics_data, dtype=np.float32).reshape(3, 3)
+        # Intrinsics (48 bytes - simd_float3x3 = 3 x simd_float3 = 3 x 16 bytes)
+        # NOTE: Swift simd_float3x3 is 48 bytes (not 36) due to SIMD alignment
+        intrinsics_data = f.read(48)
+        intrinsics_f4 = np.frombuffer(intrinsics_data, dtype=np.float32).reshape(3, 4)
+        intrinsics = intrinsics_f4[:, :3].copy()  # Extract 3x3 from 3x4
 
         # Resolution (8 bytes - 2 uint32)
         width = struct.unpack("<I", f.read(4))[0]
@@ -335,13 +421,15 @@ class RawDataProcessor:
         # Timestamp (8 bytes)
         timestamp = struct.unpack("<d", f.read(8))[0]
 
-        # Transform (64 bytes)
+        # Transform (64 bytes - simd_float4x4)
         transform_data = f.read(64)
         transform = np.frombuffer(transform_data, dtype=np.float32).reshape(4, 4)
 
-        # Intrinsics (36 bytes)
-        intrinsics_data = f.read(36)
-        intrinsics = np.frombuffer(intrinsics_data, dtype=np.float32).reshape(3, 3)
+        # Intrinsics (48 bytes - simd_float3x3 = 3 x 16 bytes)
+        # NOTE: Swift simd_float3x3 is 48 bytes due to SIMD alignment
+        intrinsics_data = f.read(48)
+        intrinsics_f4 = np.frombuffer(intrinsics_data, dtype=np.float32).reshape(3, 4)
+        intrinsics = intrinsics_f4[:, :3].copy()  # Extract 3x3 from 3x4
 
         # Dimensions (8 bytes)
         width = struct.unpack("<I", f.read(4))[0]
@@ -372,7 +460,7 @@ class RawDataProcessor:
         )
 
     async def _reconstruct_mesh(self, lraw_data: LRAWData, output_dir: Path) -> Path:
-        """Reconstruct combined mesh from all anchors"""
+        """Reconstruct combined mesh from all anchors with robust error handling"""
         output_path = output_dir / "reconstructed_mesh.ply"
 
         # Combine all mesh anchors
@@ -381,31 +469,59 @@ class RawDataProcessor:
         all_faces = []
         vertex_offset = 0
 
-        for anchor in lraw_data.mesh_anchors:
-            # Transform vertices to world space
-            transform = anchor.transform
-            vertices = anchor.vertices
+        for i, anchor in enumerate(lraw_data.mesh_anchors):
+            try:
+                # Transform vertices to world space
+                transform = anchor.transform
+                vertices = anchor.vertices
 
-            # Apply transformation (homogeneous coordinates)
-            ones = np.ones((len(vertices), 1), dtype=np.float32)
-            homogeneous = np.hstack([vertices, ones])
-            transformed = (transform @ homogeneous.T).T[:, :3]
+                # Apply transformation (homogeneous coordinates)
+                ones = np.ones((len(vertices), 1), dtype=np.float32)
+                homogeneous = np.hstack([vertices, ones])
+                transformed = (transform @ homogeneous.T).T[:, :3]
 
-            all_vertices.append(transformed)
+                all_vertices.append(transformed)
 
-            # Transform normals (rotation only)
-            rotation = transform[:3, :3]
-            transformed_normals = (rotation @ anchor.normals.T).T
-            all_normals.append(transformed_normals)
+                # Transform normals (rotation only) - with validation
+                if anchor.normals is not None and len(anchor.normals) == len(vertices):
+                    rotation = transform[:3, :3]
+                    try:
+                        transformed_normals = (rotation @ anchor.normals.T).T
+                        # Normalize to unit vectors
+                        norms = np.linalg.norm(transformed_normals, axis=1, keepdims=True)
+                        norms = np.where(norms > 0, norms, 1.0)  # Avoid division by zero
+                        transformed_normals = transformed_normals / norms
+                    except Exception as e:
+                        logger.warning(f"Normal transformation failed for anchor {i}: {e}")
+                        transformed_normals = np.zeros_like(transformed)
+                        transformed_normals[:, 1] = 1.0
+                else:
+                    # Create default normals
+                    transformed_normals = np.zeros_like(transformed)
+                    transformed_normals[:, 1] = 1.0
 
-            # Offset face indices
-            all_faces.append(anchor.faces + vertex_offset)
-            vertex_offset += len(vertices)
+                all_normals.append(transformed_normals)
 
-        # Concatenate all data
-        combined_vertices = np.vstack(all_vertices)
-        combined_normals = np.vstack(all_normals)
-        combined_faces = np.vstack(all_faces)
+                # Offset face indices
+                if len(anchor.faces) > 0:
+                    all_faces.append(anchor.faces + vertex_offset)
+                vertex_offset += len(vertices)
+
+            except Exception as e:
+                logger.error(f"Failed to process mesh anchor {i}: {e}")
+                continue
+
+        if not all_vertices:
+            logger.error("No valid mesh data to reconstruct")
+            # Create minimal empty mesh
+            combined_vertices = np.zeros((1, 3), dtype=np.float32)
+            combined_normals = np.array([[0, 1, 0]], dtype=np.float32)
+            combined_faces = np.zeros((0, 3), dtype=np.uint32)
+        else:
+            # Concatenate all data
+            combined_vertices = np.vstack(all_vertices)
+            combined_normals = np.vstack(all_normals)
+            combined_faces = np.vstack(all_faces) if all_faces else np.zeros((0, 3), dtype=np.uint32)
 
         # Write PLY file
         self._write_ply(

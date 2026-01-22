@@ -212,8 +212,80 @@ from api.ios_auth import router as ios_auth_router
 app.include_router(ios_auth_router)
 ```
 
+## 3D Processing Pipeline (SimplePipeline)
+
+Backend processing pipeline pro Apple Silicon (bez CUDA):
+
+### Pipeline Stages
+
+```
+LRAW Upload → Parse → AI Depth → Point Cloud → Poisson Mesh → Export
+    ↓            ↓         ↓           ↓             ↓           ↓
+  iOS App    SIMD Parse  Depth     Open3D      Reconstruction   GLB/OBJ/PLY
+              stride=16  Anything V2
+```
+
+### LRAW Format (iOS → Backend)
+
+**Důležité:** Swift SIMD typy mají 16-byte alignment:
+
+| Typ | Swift velikost | Poznámka |
+|-----|----------------|----------|
+| `simd_float3` | 16 bytes | Ne 12! (xyz + padding) |
+| `simd_uint3` | 16 bytes | Ne 12! (xyz + padding) |
+| `simd_float3x3` | 48 bytes | Ne 36! (3 × 16 bytes) |
+| `simd_float4x4` | 64 bytes | 4 × 16 bytes |
+
+### API Endpointy
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/debug/scans/{id}/process` | Spustit SimplePipeline |
+| GET | `/api/v1/debug/scans/{id}/model.glb` | Stáhnout GLB model |
+| GET | `/api/v1/debug/scans/{id}/model.obj` | Stáhnout OBJ model |
+| GET | `/api/v1/debug/scans/{id}/pointcloud/preview` | JSON point cloud pro viewer |
+
+### Admin Dashboard (3D Viewer)
+
+Three.js point cloud viewer na `/admin/scans/{id}`:
+- Interaktivní 3D vizualizace
+- Orbit controls (rotace, zoom, pan)
+- Barevné módy: výška, RGB, vzdálenost
+
+### Celery Task
+
+```python
+# Spuštění zpracování
+from worker.tasks import process_scan_simple
+task = process_scan_simple.delay(scan_id, lraw_path)
+```
+
+### Výstupní soubory
+
+```
+/data/scans/processed/{scan_id}/
+├── pointcloud.ply   # Point cloud
+├── mesh.ply         # Poisson mesh
+├── model.glb        # Binary glTF (pro web)
+└── model.obj        # Wavefront OBJ
+```
+
+### Testování pipeline
+
+```bash
+# Spustit zpracování
+curl -k -X POST "https://100.96.188.18:8444/api/v1/debug/scans/{scan_id}/process"
+
+# Stáhnout výsledek
+curl -k "https://100.96.188.18:8444/api/v1/debug/scans/{scan_id}/model.glb" -o model.glb
+
+# Preview point cloudu (JSON)
+curl -k "https://100.96.188.18:8444/api/v1/debug/scans/{scan_id}/pointcloud/preview?max_points=1000"
+```
+
 ## Development Notes
 
 - Auth is **mock-only** - accepts any credentials, returns test user
 - JWT tokens are real but not persisted (in-memory)
 - Chunked uploads stored in-memory (not Redis) - for testing only
+- SimplePipeline běží na CPU/MPS (Apple Silicon), nepotřebuje CUDA

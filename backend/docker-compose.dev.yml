@@ -39,6 +39,8 @@ services:
       - ./api:/app/api:ro              # Hot reload API code
       - ./utils:/app/utils:ro          # Hot reload utils
       - ./services:/app/services:ro    # Hot reload services
+      - ./static:/app/static:ro        # Hot reload static files
+      - ./templates:/app/templates:ro  # Hot reload templates
     depends_on:
       - redis
     healthcheck:

@@ -687,13 +687,22 @@ async def get_pointcloud_preview(scan_id: str, max_points: int = 50000):
     """
     import numpy as np
 
-    ply_path = Path(storage.base_path) / "processed" / scan_id / "pointcloud.ply"
+    # Search in multiple locations (prioritize enhanced/processed)
+    possible_paths = [
+        Path(storage.base_path) / "processed" / scan_id / "enhanced_pointcloud.ply",
+        Path(storage.base_path) / "processed" / scan_id / "pointcloud.ply",
+        Path(storage.base_path) / "raw_scans" / scan_id / "enhanced_pointcloud.ply",
+        Path(storage.base_path) / "raw_scans" / scan_id / "pointcloud.ply",
+    ]
 
-    if not ply_path.exists():
-        # Try raw scans location
-        ply_path = Path(storage.base_path) / "raw_scans" / scan_id / "pointcloud.ply"
+    ply_path = None
+    for path in possible_paths:
+        if path.exists():
+            ply_path = path
+            logger.debug(f"Found point cloud at: {ply_path}")
+            break
 
-    if not ply_path.exists():
+    if not ply_path:
         raise HTTPException(status_code=404, detail="Point cloud not found")
 
     # Simple PLY parser for ASCII format
@@ -716,6 +725,14 @@ async def get_pointcloud_preview(scan_id: str, max_points: int = 50000):
 
         points = np.array(points)
         colors = np.array(colors) if colors else None
+
+        # Filter out garbage points (extreme values, NaN, Inf)
+        valid_mask = np.all(np.isfinite(points), axis=1) & np.all(np.abs(points) < 100, axis=1)
+        if not np.all(valid_mask):
+            logger.debug(f"Filtering {np.sum(~valid_mask)} garbage points out of {len(points)}")
+            points = points[valid_mask]
+            if colors is not None and len(colors) == len(valid_mask):
+                colors = colors[valid_mask]
 
         # Downsample if too many points
         if len(points) > max_points:
@@ -886,6 +903,205 @@ async def get_intermediate_output(scan_id: str, stage: str):
             })
 
     return result
+
+
+# ============================================================================
+# Simple Pipeline Processing Endpoints
+# ============================================================================
+
+@router.post("/scans/{scan_id}/process")
+async def start_simple_processing(scan_id: str):
+    """
+    Start SimplePipeline processing for a scan.
+
+    This uses the simplified pipeline that works on Apple Silicon (MPS/CPU):
+    1. Parse LRAW
+    2. AI Depth Enhancement (Depth Anything V2)
+    3. Point Cloud Extraction
+    4. Poisson Reconstruction (Open3D)
+    5. Export (PLY, GLB, OBJ)
+
+    Returns task_id for progress tracking.
+    """
+    scan_data = await storage.get_scan_metadata(scan_id)
+    if not scan_data:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    # Find LRAW file
+    raw_dir = Path(storage.base_path) / "raw_scans" / scan_id
+    lraw_path = raw_dir / "raw_data.lraw"
+
+    if not lraw_path.exists():
+        raise HTTPException(status_code=404, detail="LRAW file not found - upload raw data first")
+
+    # Check status
+    status = scan_data.get("status")
+    if status == "processing":
+        raise HTTPException(status_code=400, detail="Processing already in progress")
+
+    try:
+        from worker.tasks import process_scan_simple
+
+        # Queue the processing task
+        task = process_scan_simple.delay(scan_id, str(lraw_path))
+
+        # Update scan status
+        scan_data["status"] = "processing"
+        scan_data["task_id"] = task.id
+        scan_data["updated_at"] = datetime.utcnow().isoformat()
+        await storage.save_scan_metadata(scan_id, scan_data)
+
+        logger.info(f"Started simple pipeline processing for scan {scan_id}, task_id={task.id}")
+
+        return {
+            "status": "processing_started",
+            "scan_id": scan_id,
+            "task_id": task.id,
+            "message": "SimplePipeline processing queued"
+        }
+
+    except ImportError:
+        # Celery not available - process synchronously
+        logger.warning("Celery not available, will process synchronously")
+
+        try:
+            import asyncio
+            from services.simple_pipeline import SimplePipeline
+
+            scan_data["status"] = "processing"
+            await storage.save_scan_metadata(scan_id, scan_data)
+
+            # Run synchronously
+            pipeline = SimplePipeline()
+            result = await pipeline.process(scan_id, str(lraw_path))
+
+            if result.status == "success":
+                scan_data["status"] = "completed"
+                scan_data["result_urls"] = result.exports
+            else:
+                scan_data["status"] = "failed"
+                scan_data["error"] = result.error
+
+            scan_data["updated_at"] = datetime.utcnow().isoformat()
+            await storage.save_scan_metadata(scan_id, scan_data)
+
+            return {
+                "status": scan_data["status"],
+                "scan_id": scan_id,
+                "result": {
+                    "pointcloud_path": result.pointcloud_path,
+                    "mesh_path": result.mesh_path,
+                    "exports": result.exports
+                } if result.status == "success" else None,
+                "error": result.error if result.status == "error" else None
+            }
+
+        except Exception as e:
+            scan_data["status"] = "failed"
+            scan_data["error"] = str(e)
+            await storage.save_scan_metadata(scan_id, scan_data)
+            raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/scans/{scan_id}/model.glb")
+async def download_glb_model(scan_id: str):
+    """
+    Download GLB (binary glTF) model.
+
+    Returns the processed 3D model in GLB format for Three.js/WebGL viewing.
+    """
+    from fastapi.responses import FileResponse
+
+    # Check multiple possible locations
+    possible_paths = [
+        Path(storage.base_path) / "processed" / scan_id / "model.glb",
+        Path(storage.base_path) / "raw_scans" / scan_id / "model.glb",
+    ]
+
+    glb_path = None
+    for path in possible_paths:
+        if path.exists():
+            glb_path = path
+            break
+
+    if not glb_path:
+        raise HTTPException(
+            status_code=404,
+            detail="GLB model not found. Run /process endpoint first to generate the model."
+        )
+
+    return FileResponse(
+        path=glb_path,
+        filename=f"{scan_id}.glb",
+        media_type="model/gltf-binary"
+    )
+
+
+@router.get("/scans/{scan_id}/model.obj")
+async def download_obj_model(scan_id: str):
+    """
+    Download OBJ model.
+
+    Returns the processed 3D model in OBJ format for 3D software.
+    """
+    from fastapi.responses import FileResponse
+
+    possible_paths = [
+        Path(storage.base_path) / "processed" / scan_id / "model.obj",
+        Path(storage.base_path) / "raw_scans" / scan_id / "model.obj",
+    ]
+
+    obj_path = None
+    for path in possible_paths:
+        if path.exists():
+            obj_path = path
+            break
+
+    if not obj_path:
+        raise HTTPException(
+            status_code=404,
+            detail="OBJ model not found. Run /process endpoint first to generate the model."
+        )
+
+    return FileResponse(
+        path=obj_path,
+        filename=f"{scan_id}.obj",
+        media_type="application/x-obj"
+    )
+
+
+@router.get("/scans/{scan_id}/mesh.ply")
+async def download_mesh_ply(scan_id: str):
+    """
+    Download mesh in PLY format.
+
+    Returns the reconstructed mesh (Poisson reconstruction result).
+    """
+    from fastapi.responses import FileResponse
+
+    possible_paths = [
+        Path(storage.base_path) / "processed" / scan_id / "mesh.ply",
+        Path(storage.base_path) / "raw_scans" / scan_id / "mesh.ply",
+        Path(storage.base_path) / "processed" / scan_id / "reconstructed_mesh.ply",
+    ]
+
+    ply_path = None
+    for path in possible_paths:
+        if path.exists():
+            ply_path = path
+            break
+
+    if not ply_path:
+        raise HTTPException(
+            status_code=404,
+            detail="Mesh PLY not found. Run /process endpoint first."
+        )
+
+    return FileResponse(
+        path=ply_path,
+        filename=f"{scan_id}_mesh.ply",
+        media_type="application/x-ply"
+    )
 
 
 @router.get("/scans")
