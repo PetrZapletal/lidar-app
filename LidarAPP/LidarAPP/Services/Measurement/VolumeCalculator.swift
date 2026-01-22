@@ -105,7 +105,7 @@ final class VolumeCalculator: Sendable {
 
         // Simple approach: compute convex hull and then volume
         let hull = computeConvexHull(points: points)
-        return meshVolume(hull)
+        return meshVolume(mesh: hull)
     }
 
     /// Compute convex hull of point set (simplified incremental algorithm)

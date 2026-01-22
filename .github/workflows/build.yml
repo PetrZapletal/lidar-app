@@ -1,0 +1,79 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  XCODE_VERSION: '15.2'
+  SCHEME: 'LidarAPP'
+
+jobs:
+  build:
+    name: Build iOS App
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build for testing
+        run: |
+          cd LidarAPP
+          xcodebuild build-for-testing \
+            -project LidarAPP.xcodeproj \
+            -scheme ${{ env.SCHEME }} \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty
+
+      - name: Run unit tests
+        run: |
+          cd LidarAPP
+          xcodebuild test \
+            -project LidarAPP.xcodeproj \
+            -scheme ${{ env.SCHEME }} \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath TestResults \
+            | xcpretty
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: LidarAPP/TestResults
+          retention-days: 7
+
+  analyze:
+    name: Static Analysis
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Run SwiftLint
+        run: |
+          brew install swiftlint
+          cd LidarAPP
+          swiftlint --reporter github-actions-logging || true

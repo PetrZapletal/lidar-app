@@ -87,10 +87,10 @@ final class PointCloudExtractor: Sendable {
         let scaleY = Float(depthHeight) / Float(resolution.height)
 
         // Stride for downsampling
-        let stride = configuration.downsampleStride
+        let downsampleStep = configuration.downsampleStride
 
-        for y in stride(from: 0, to: depthHeight, by: stride) {
-            for x in stride(from: 0, to: depthWidth, by: stride) {
+        for y in Swift.stride(from: 0, to: depthHeight, by: downsampleStep) {
+            for x in Swift.stride(from: 0, to: depthWidth, by: downsampleStep) {
                 let index = y * depthWidth + x
                 let depth = depthData[index]
 
@@ -313,7 +313,7 @@ extension PointCloudExtractor {
 
         let depthWidth = CVPixelBufferGetWidth(depthMap)
         let depthHeight = CVPixelBufferGetHeight(depthMap)
-        let depthData = CVPixelBufferGetBaseAddress(depthMap)!
+        let depthBuffer = CVPixelBufferGetBaseAddress(depthMap)!
             .assumingMemoryBound(to: Float32.self)
 
         let imageWidth = CVPixelBufferGetWidth(capturedImage)
@@ -331,12 +331,12 @@ extension PointCloudExtractor {
         let scaleX = Float(depthWidth) / Float(imageWidth)
         let scaleY = Float(depthHeight) / Float(imageHeight)
 
-        let stride = configuration.downsampleStride
+        let downsampleStep = configuration.downsampleStride
 
-        for y in stride(from: 0, to: depthHeight, by: stride) {
-            for x in stride(from: 0, to: depthWidth, by: stride) {
+        for y in Swift.stride(from: 0, to: depthHeight, by: downsampleStep) {
+            for x in Swift.stride(from: 0, to: depthWidth, by: downsampleStep) {
                 let index = y * depthWidth + x
-                let depth = depthData[index]
+                let depth = depthBuffer[index]
 
                 guard depth > configuration.minDepth && depth < configuration.maxDepth else { continue }
 

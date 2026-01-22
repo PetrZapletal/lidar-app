@@ -1,4 +1,5 @@
 import Foundation
+import simd
 
 /// Handles chunked upload of large files with resume capability
 actor ChunkedUploader {
@@ -73,7 +74,18 @@ actor ChunkedUploader {
         sessionConfig.timeoutIntervalForRequest = configuration.timeout
         sessionConfig.httpMaximumConnectionsPerHost = configuration.maxConcurrentChunks
 
-        self.session = URLSession(configuration: sessionConfig)
+        self.session = URLSession(configuration: sessionConfig, delegate: SelfSignedCertDelegate.shared, delegateQueue: nil)
+    }
+
+    init(configuration: Configuration = Configuration()) {
+        self.baseURL = URL(string: "https://api.lidarapp.com/v1")!
+        self.configuration = configuration
+
+        let sessionConfig = URLSessionConfiguration.default
+        sessionConfig.timeoutIntervalForRequest = configuration.timeout
+        sessionConfig.httpMaximumConnectionsPerHost = configuration.maxConcurrentChunks
+
+        self.session = URLSession(configuration: sessionConfig, delegate: SelfSignedCertDelegate.shared, delegateQueue: nil)
     }
 
     // MARK: - Authentication

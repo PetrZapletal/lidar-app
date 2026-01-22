@@ -204,8 +204,8 @@ struct MeshPreviewView: UIViewRepresentable {
         let scene = SCNScene()
 
         // Create mesh from session data
-        if let combinedMesh = session.combinedMesh {
-            let meshNode = createMeshNode(from: combinedMesh)
+        if !session.combinedMesh.meshes.isEmpty {
+            let meshNode = createMeshNode(from: session.combinedMesh)
             scene.rootNode.addChildNode(meshNode)
         }
 
@@ -503,72 +503,11 @@ struct MeasurementsSheet: View {
     }
 
     private func formatMeasurement(_ measurement: Measurement) -> String {
-        let value = measurement.value
-        switch measurement.unit {
-        case .meters:
-            return String(format: "%.2f m", value)
-        case .squareMeters:
-            return String(format: "%.2f m²", value)
-        case .cubicMeters:
-            return String(format: "%.2f m³", value)
-        case .degrees:
-            return String(format: "%.1f°", value)
-        }
+        return measurement.formattedValue
     }
 }
 
-// MARK: - Export Format
-
-enum ExportFormat: String, CaseIterable {
-    case usdz
-    case gltf
-    case obj
-    case stl
-    case ply
-    case json
-    case csv
-
-    var displayName: String {
-        switch self {
-        case .usdz: return "USDZ"
-        case .gltf: return "glTF"
-        case .obj: return "OBJ"
-        case .stl: return "STL"
-        case .ply: return "PLY"
-        case .json: return "JSON"
-        case .csv: return "CSV"
-        }
-    }
-
-    var description: String {
-        switch self {
-        case .usdz: return "Apple AR format"
-        case .gltf: return "Cross-platform 3D"
-        case .obj: return "Universal 3D format"
-        case .stl: return "3D printing format"
-        case .ply: return "Point cloud format"
-        case .json: return "Measurements data"
-        case .csv: return "Spreadsheet data"
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .usdz: return "arkit"
-        case .gltf, .obj, .stl: return "cube"
-        case .ply: return "circle.grid.3x3"
-        case .json, .csv: return "doc.text"
-        }
-    }
-
-    static var meshFormats: [ExportFormat] {
-        [.usdz, .gltf, .obj, .stl, .ply]
-    }
-
-    static var dataFormats: [ExportFormat] {
-        [.json, .csv]
-    }
-}
+// Note: ExportFormat is now defined in ExportView.swift
 
 // MARK: - Preview
 

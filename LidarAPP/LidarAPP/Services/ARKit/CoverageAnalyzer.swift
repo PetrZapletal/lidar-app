@@ -1,0 +1,701 @@
+import Foundation
+import ARKit
+import simd
+
+/// Analyzes scan coverage and identifies gaps for user guidance
+@MainActor
+@Observable
+final class CoverageAnalyzer {
+
+    // MARK: - Configuration
+
+    struct Configuration {
+        /// Size of each coverage cell in meters
+        var gridResolution: Float = 0.1 // 10cm cells
+
+        /// Minimum number of views required for "good" coverage
+        var minimumViewsForGood: Int = 3
+
+        /// Minimum number of views required for "excellent" coverage
+        var minimumViewsForExcellent: Int = 5
+
+        /// Minimum angle between views to count as different view (degrees)
+        var angleThresholdDegrees: Float = 30
+
+        /// Maximum distance from camera for coverage update
+        var maxUpdateDistance: Float = 5.0
+
+        /// Maximum number of gaps to report
+        var maxGapsToShow: Int = 5
+
+        /// Minimum gap size (in cells) to report
+        var minGapSizeCells: Int = 3
+
+        static let `default` = Configuration()
+    }
+
+    // MARK: - Coverage Data Structures
+
+    struct CoverageCell: Identifiable, Sendable {
+        let id: Int
+        let gridPosition: SIMD3<Int>
+        let worldPosition: simd_float3
+        var coverage: Float // 0.0 - 1.0
+        var quality: QualityLevel
+        var viewCount: Int
+        var viewDirections: [simd_float3]
+        var lastUpdated: Date
+
+        init(id: Int, gridPosition: SIMD3<Int>, worldPosition: simd_float3) {
+            self.id = id
+            self.gridPosition = gridPosition
+            self.worldPosition = worldPosition
+            self.coverage = 0
+            self.quality = .none
+            self.viewCount = 0
+            self.viewDirections = []
+            self.lastUpdated = Date()
+        }
+    }
+
+    enum QualityLevel: Int, Comparable, Sendable {
+        case none = 0
+        case poor = 1
+        case fair = 2
+        case good = 3
+        case excellent = 4
+
+        var displayName: String {
+            switch self {
+            case .none: return "Not scanned"
+            case .poor: return "Poor"
+            case .fair: return "Fair"
+            case .good: return "Good"
+            case .excellent: return "Excellent"
+            }
+        }
+
+        var color: simd_float4 {
+            switch self {
+            case .none: return simd_float4(1, 0, 0, 0.5) // Red
+            case .poor: return simd_float4(1, 0.5, 0, 0.5) // Orange
+            case .fair: return simd_float4(1, 1, 0, 0.5) // Yellow
+            case .good: return simd_float4(0, 1, 0, 0.5) // Green
+            case .excellent: return simd_float4(0, 0.5, 1, 0.5) // Blue
+            }
+        }
+
+        static func < (lhs: QualityLevel, rhs: QualityLevel) -> Bool {
+            lhs.rawValue < rhs.rawValue
+        }
+    }
+
+    struct Gap: Identifiable, Sendable {
+        let id: UUID
+        let center: simd_float3
+        let cellCount: Int
+        let estimatedArea: Float
+        let suggestedViewDirection: simd_float3
+        let suggestedCameraPosition: simd_float3
+        let priority: Int
+        let cellIds: [Int]
+    }
+
+    struct CoverageStatistics: Sendable {
+        let totalCells: Int
+        let coveredCells: Int
+        let coveragePercentage: Float
+        let averageQuality: Float
+        let gapCount: Int
+        let estimatedCompletion: Float
+        let scannedAreaM2: Float
+    }
+
+    // MARK: - Published State
+
+    private(set) var coverageGrid: [Int: CoverageCell] = [:]
+    private(set) var detectedGaps: [Gap] = []
+    private(set) var statistics: CoverageStatistics?
+    private(set) var suggestedDirection: simd_float3?
+    private(set) var suggestedCameraPosition: simd_float3?
+
+    // MARK: - Internal State
+
+    private let configuration: Configuration
+    private var gridBounds: (min: SIMD3<Int>, max: SIMD3<Int>)?
+    private var cameraTrajectory: [simd_float4x4] = []
+    private var lastUpdateTime: Date = Date.distantPast
+    private let updateInterval: TimeInterval = 0.2 // 5 Hz update rate
+
+    // MARK: - Initialization
+
+    init(configuration: Configuration = .default) {
+        self.configuration = configuration
+    }
+
+    // MARK: - Public Methods
+
+    /// Update coverage based on current mesh anchors and camera position
+    func updateCoverage(meshAnchors: [ARMeshAnchor], cameraTransform: simd_float4x4) {
+        // Rate limit updates
+        let now = Date()
+        guard now.timeIntervalSince(lastUpdateTime) >= updateInterval else { return }
+        lastUpdateTime = now
+
+        // Store camera position in trajectory
+        cameraTrajectory.append(cameraTransform)
+
+        let cameraPosition = simd_float3(
+            cameraTransform.columns.3.x,
+            cameraTransform.columns.3.y,
+            cameraTransform.columns.3.z
+        )
+
+        let cameraForward = -simd_float3(
+            cameraTransform.columns.2.x,
+            cameraTransform.columns.2.y,
+            cameraTransform.columns.2.z
+        )
+
+        // Process mesh anchors to update coverage grid
+        for anchor in meshAnchors {
+            updateCoverageFromMeshAnchor(anchor, cameraPosition: cameraPosition, cameraForward: cameraForward)
+        }
+
+        // Detect gaps
+        detectGaps(cameraPosition: cameraPosition)
+
+        // Update statistics
+        updateStatistics()
+
+        // Calculate suggested direction
+        updateSuggestedDirection(cameraPosition: cameraPosition, cameraForward: cameraForward)
+    }
+
+    /// Update coverage from depth map (alternative method)
+    func updateFromDepth(
+        depthMap: CVPixelBuffer,
+        confidenceMap: CVPixelBuffer?,
+        camera: ARCamera
+    ) {
+        let cameraTransform = camera.transform
+        let cameraPosition = simd_float3(
+            cameraTransform.columns.3.x,
+            cameraTransform.columns.3.y,
+            cameraTransform.columns.3.z
+        )
+
+        let cameraForward = -simd_float3(
+            cameraTransform.columns.2.x,
+            cameraTransform.columns.2.y,
+            cameraTransform.columns.2.z
+        )
+
+        // Process depth map to extract surface points
+        let width = CVPixelBufferGetWidth(depthMap)
+        let height = CVPixelBufferGetHeight(depthMap)
+
+        CVPixelBufferLockBaseAddress(depthMap, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(depthMap, .readOnly) }
+
+        guard let baseAddress = CVPixelBufferGetBaseAddress(depthMap) else { return }
+        let depthData = baseAddress.assumingMemoryBound(to: Float32.self)
+
+        // Sample depth map at regular intervals
+        let stepSize = 10 // Sample every 10th pixel
+        for y in stride(from: 0, to: height, by: stepSize) {
+            for x in stride(from: 0, to: width, by: stepSize) {
+                let index = y * width + x
+                let depth = depthData[index]
+
+                if depth > 0.1 && depth < configuration.maxUpdateDistance {
+                    // Back-project to 3D
+                    if let worldPoint = backProject(
+                        pixelX: x, pixelY: y,
+                        depth: depth,
+                        camera: camera,
+                        imageWidth: width,
+                        imageHeight: height
+                    ) {
+                        updateCellFromPoint(worldPoint, cameraPosition: cameraPosition, cameraForward: cameraForward)
+                    }
+                }
+            }
+        }
+
+        // Update trajectory
+        cameraTrajectory.append(cameraTransform)
+
+        // Update gaps and stats
+        detectGaps(cameraPosition: cameraPosition)
+        updateStatistics()
+        updateSuggestedDirection(cameraPosition: cameraPosition, cameraForward: cameraForward)
+    }
+
+    /// Get gaps visible from current camera position
+    func getGapsInView(camera: ARCamera, maxDistance: Float = 3.0) -> [Gap] {
+        let cameraPosition = simd_float3(
+            camera.transform.columns.3.x,
+            camera.transform.columns.3.y,
+            camera.transform.columns.3.z
+        )
+
+        let cameraForward = -simd_float3(
+            camera.transform.columns.2.x,
+            camera.transform.columns.2.y,
+            camera.transform.columns.2.z
+        )
+
+        return detectedGaps.filter { gap in
+            let toGap = gap.center - cameraPosition
+            let distance = simd_length(toGap)
+
+            // Check distance
+            guard distance < maxDistance else { return false }
+
+            // Check if roughly in front of camera (within 90 degrees)
+            let dotProduct = simd_dot(simd_normalize(toGap), cameraForward)
+            return dotProduct > 0
+        }
+    }
+
+    /// Reset coverage data
+    func reset() {
+        coverageGrid.removeAll()
+        detectedGaps.removeAll()
+        cameraTrajectory.removeAll()
+        statistics = nil
+        suggestedDirection = nil
+        suggestedCameraPosition = nil
+        gridBounds = nil
+    }
+
+    /// Serialize coverage grid for persistence
+    func serializeCoverageGrid() throws -> Data {
+        let encoder = JSONEncoder()
+        let serializableCells = coverageGrid.values.map { SerializableCoverageCell(from: $0) }
+        return try encoder.encode(serializableCells)
+    }
+
+    /// Restore coverage grid from serialized data
+    func restoreCoverageGrid(from data: Data) throws {
+        let decoder = JSONDecoder()
+        let serializableCells = try decoder.decode([SerializableCoverageCell].self, from: data)
+
+        coverageGrid.removeAll()
+        for cell in serializableCells {
+            coverageGrid[cell.id] = cell.toCoverageCell()
+        }
+
+        updateStatistics()
+    }
+
+    // MARK: - Private Methods
+
+    private func updateCoverageFromMeshAnchor(_ anchor: ARMeshAnchor, cameraPosition: simd_float3, cameraForward: simd_float3) {
+        let geometry = anchor.geometry
+        let transform = anchor.transform
+
+        // Get vertex data from ARGeometrySource
+        let vertexSource = geometry.vertices
+        let vertexCount = vertexSource.count
+
+        // Early exit if no vertices
+        guard vertexCount > 0 else { return }
+
+        // Sample every Nth vertex for performance
+        let sampleStep = max(1, vertexCount / 1000)
+
+        // IMPORTANT: Use stride and offset from ARGeometrySource
+        // The buffer may have a different layout than a simple simd_float3 array
+        let vertexStride = vertexSource.stride
+        let vertexOffset = vertexSource.offset
+        let bufferContents = vertexSource.buffer.contents()
+
+        // Validate buffer access won't exceed bounds
+        let requiredSize = vertexOffset + (vertexCount - 1) * vertexStride + MemoryLayout<simd_float3>.size
+        guard vertexSource.buffer.length >= requiredSize else {
+            print("CoverageAnalyzer: Buffer too small for vertex data")
+            return
+        }
+
+        for i in Swift.stride(from: 0, to: vertexCount, by: sampleStep) {
+            // Calculate the byte offset for this vertex
+            let byteOffset = vertexOffset + i * vertexStride
+
+            // Safely access vertex data using the correct offset
+            let vertexPtr = bufferContents.advanced(by: byteOffset)
+            let localPosition = vertexPtr.assumingMemoryBound(to: simd_float3.self).pointee
+
+            // Transform to world coordinates
+            let worldPosition4 = transform * simd_float4(localPosition, 1)
+            let worldPosition = simd_float3(worldPosition4.x, worldPosition4.y, worldPosition4.z)
+
+            // Check distance from camera
+            let distance = simd_length(worldPosition - cameraPosition)
+            if distance < configuration.maxUpdateDistance {
+                updateCellFromPoint(worldPosition, cameraPosition: cameraPosition, cameraForward: cameraForward)
+            }
+        }
+    }
+
+    private func updateCellFromPoint(_ worldPoint: simd_float3, cameraPosition: simd_float3, cameraForward: simd_float3) {
+        let gridPos = worldToGrid(worldPoint)
+        let cellId = gridPositionToId(gridPos)
+
+        // Update or create cell
+        if var cell = coverageGrid[cellId] {
+            // Check if this is a new view direction
+            let viewDirection = simd_normalize(cameraPosition - worldPoint)
+
+            var isNewView = true
+            for existingDir in cell.viewDirections {
+                let angle = acos(simd_clamp(simd_dot(viewDirection, existingDir), -1, 1))
+                if angle < (configuration.angleThresholdDegrees * .pi / 180) {
+                    isNewView = false
+                    break
+                }
+            }
+
+            if isNewView {
+                cell.viewCount += 1
+                cell.viewDirections.append(viewDirection)
+                cell.quality = qualityForViewCount(cell.viewCount)
+                cell.coverage = Float(cell.viewCount) / Float(configuration.minimumViewsForExcellent)
+                cell.lastUpdated = Date()
+            }
+
+            coverageGrid[cellId] = cell
+        } else {
+            // Create new cell
+            var newCell = CoverageCell(
+                id: cellId,
+                gridPosition: gridPos,
+                worldPosition: worldPoint
+            )
+            let viewDirection = simd_normalize(cameraPosition - worldPoint)
+            newCell.viewCount = 1
+            newCell.viewDirections = [viewDirection]
+            newCell.quality = .poor
+            newCell.coverage = 0.2
+            coverageGrid[cellId] = newCell
+
+            // Update bounds
+            updateGridBounds(gridPos)
+        }
+    }
+
+    private func detectGaps(cameraPosition: simd_float3) {
+        guard let bounds = gridBounds else {
+            detectedGaps = []
+            return
+        }
+
+        // Find cells with no coverage or poor coverage
+        var lowCoverageCells: [Int: CoverageCell] = [:]
+
+        for (id, cell) in coverageGrid {
+            if cell.quality < .good {
+                lowCoverageCells[id] = cell
+            }
+        }
+
+        // Also check for cells that should exist but don't (holes in the grid)
+        var missingCells: [Int] = []
+        for x in bounds.min.x...bounds.max.x {
+            for y in bounds.min.y...bounds.max.y {
+                for z in bounds.min.z...bounds.max.z {
+                    let gridPos = SIMD3<Int>(x, y, z)
+                    let cellId = gridPositionToId(gridPos)
+
+                    // Check if cell has neighbors with coverage
+                    let neighbors = getNeighborIds(gridPos)
+                    let hasScannedNeighbor = neighbors.contains { id in
+                        if let cell = coverageGrid[id] {
+                            return cell.quality >= .fair
+                        }
+                        return false
+                    }
+
+                    if hasScannedNeighbor && coverageGrid[cellId] == nil {
+                        missingCells.append(cellId)
+                    }
+                }
+            }
+        }
+
+        // Cluster low coverage cells into gaps using flood fill
+        var visited = Set<Int>()
+        var gaps: [Gap] = []
+
+        func floodFill(startId: Int) -> [Int] {
+            var cluster: [Int] = []
+            var stack: [Int] = [startId]
+
+            while !stack.isEmpty {
+                let cellId = stack.removeLast()
+                guard !visited.contains(cellId) else { continue }
+                visited.insert(cellId)
+
+                if lowCoverageCells[cellId] != nil || missingCells.contains(cellId) {
+                    cluster.append(cellId)
+
+                    // Get neighbors
+                    if let cell = coverageGrid[cellId] {
+                        let neighbors = getNeighborIds(cell.gridPosition)
+                        for neighbor in neighbors {
+                            if !visited.contains(neighbor) {
+                                stack.append(neighbor)
+                            }
+                        }
+                    }
+                }
+            }
+
+            return cluster
+        }
+
+        // Find all clusters
+        for (cellId, _) in lowCoverageCells {
+            if !visited.contains(cellId) {
+                let cluster = floodFill(startId: cellId)
+                if cluster.count >= configuration.minGapSizeCells {
+                    if let gap = createGap(from: cluster, cameraPosition: cameraPosition) {
+                        gaps.append(gap)
+                    }
+                }
+            }
+        }
+
+        // Sort gaps by priority (size and proximity to camera)
+        gaps.sort { $0.priority > $1.priority }
+
+        detectedGaps = Array(gaps.prefix(configuration.maxGapsToShow))
+    }
+
+    private func createGap(from cellIds: [Int], cameraPosition: simd_float3) -> Gap? {
+        guard !cellIds.isEmpty else { return nil }
+
+        // Calculate center
+        var sumPosition = simd_float3.zero
+        var count = 0
+
+        for cellId in cellIds {
+            if let cell = coverageGrid[cellId] {
+                sumPosition += cell.worldPosition
+                count += 1
+            }
+        }
+
+        guard count > 0 else { return nil }
+        let center = sumPosition / Float(count)
+
+        // Calculate suggested view direction (from gap toward nearby scanned areas)
+        let suggestedDirection = simd_normalize(cameraPosition - center)
+
+        // Estimate area
+        let cellArea = configuration.gridResolution * configuration.gridResolution
+        let estimatedArea = Float(cellIds.count) * cellArea
+
+        // Calculate priority based on size and distance
+        let distanceToCamera = simd_length(center - cameraPosition)
+        let sizeFactor = Float(cellIds.count)
+        let distanceFactor = max(0, 5 - distanceToCamera) // Prefer closer gaps
+        let priority = Int(sizeFactor * distanceFactor)
+
+        // Suggested camera position (step back from gap center)
+        let suggestedCameraPos = center + suggestedDirection * 1.5
+
+        return Gap(
+            id: UUID(),
+            center: center,
+            cellCount: cellIds.count,
+            estimatedArea: estimatedArea,
+            suggestedViewDirection: -suggestedDirection, // Point toward the gap
+            suggestedCameraPosition: suggestedCameraPos,
+            priority: priority,
+            cellIds: cellIds
+        )
+    }
+
+    private func updateStatistics() {
+        let totalCells = coverageGrid.count
+        guard totalCells > 0 else {
+            statistics = nil
+            return
+        }
+
+        let coveredCells = coverageGrid.values.filter { $0.quality >= .fair }.count
+        let coveragePercentage = Float(coveredCells) / Float(totalCells) * 100
+
+        let averageQuality = coverageGrid.values.reduce(0.0) { $0 + Float($1.quality.rawValue) } / Float(totalCells)
+
+        let gapCount = detectedGaps.count
+
+        // Estimate completion based on gaps
+        let estimatedCompletion = min(100, coveragePercentage + (gapCount == 0 ? 0 : -Float(gapCount) * 2))
+
+        // Calculate scanned area
+        let cellArea = configuration.gridResolution * configuration.gridResolution
+        let scannedAreaM2 = Float(coveredCells) * cellArea
+
+        statistics = CoverageStatistics(
+            totalCells: totalCells,
+            coveredCells: coveredCells,
+            coveragePercentage: coveragePercentage,
+            averageQuality: averageQuality,
+            gapCount: gapCount,
+            estimatedCompletion: estimatedCompletion,
+            scannedAreaM2: scannedAreaM2
+        )
+    }
+
+    private func updateSuggestedDirection(cameraPosition: simd_float3, cameraForward: simd_float3) {
+        // Find the highest priority gap
+        guard let topGap = detectedGaps.first else {
+            suggestedDirection = nil
+            suggestedCameraPosition = nil
+            return
+        }
+
+        suggestedDirection = topGap.suggestedViewDirection
+        suggestedCameraPosition = topGap.suggestedCameraPosition
+    }
+
+    // MARK: - Grid Helpers
+
+    private func worldToGrid(_ position: simd_float3) -> SIMD3<Int> {
+        return SIMD3<Int>(
+            Int(floor(position.x / configuration.gridResolution)),
+            Int(floor(position.y / configuration.gridResolution)),
+            Int(floor(position.z / configuration.gridResolution))
+        )
+    }
+
+    private func gridToWorld(_ gridPos: SIMD3<Int>) -> simd_float3 {
+        return simd_float3(
+            Float(gridPos.x) * configuration.gridResolution + configuration.gridResolution / 2,
+            Float(gridPos.y) * configuration.gridResolution + configuration.gridResolution / 2,
+            Float(gridPos.z) * configuration.gridResolution + configuration.gridResolution / 2
+        )
+    }
+
+    private func gridPositionToId(_ pos: SIMD3<Int>) -> Int {
+        // Simple spatial hash
+        let prime1 = 73856093
+        let prime2 = 19349663
+        let prime3 = 83492791
+        return abs((pos.x * prime1) ^ (pos.y * prime2) ^ (pos.z * prime3))
+    }
+
+    private func updateGridBounds(_ gridPos: SIMD3<Int>) {
+        if var bounds = gridBounds {
+            bounds.min = SIMD3<Int>(
+                min(bounds.min.x, gridPos.x),
+                min(bounds.min.y, gridPos.y),
+                min(bounds.min.z, gridPos.z)
+            )
+            bounds.max = SIMD3<Int>(
+                max(bounds.max.x, gridPos.x),
+                max(bounds.max.y, gridPos.y),
+                max(bounds.max.z, gridPos.z)
+            )
+            gridBounds = bounds
+        } else {
+            gridBounds = (min: gridPos, max: gridPos)
+        }
+    }
+
+    private func getNeighborIds(_ gridPos: SIMD3<Int>) -> [Int] {
+        var neighbors: [Int] = []
+        for dx in -1...1 {
+            for dy in -1...1 {
+                for dz in -1...1 {
+                    if dx == 0 && dy == 0 && dz == 0 { continue }
+                    let neighborPos = SIMD3<Int>(gridPos.x + dx, gridPos.y + dy, gridPos.z + dz)
+                    neighbors.append(gridPositionToId(neighborPos))
+                }
+            }
+        }
+        return neighbors
+    }
+
+    private func qualityForViewCount(_ count: Int) -> QualityLevel {
+        switch count {
+        case 0: return .none
+        case 1: return .poor
+        case 2: return .fair
+        case 3..<configuration.minimumViewsForExcellent: return .good
+        default: return .excellent
+        }
+    }
+
+    private func backProject(
+        pixelX: Int,
+        pixelY: Int,
+        depth: Float,
+        camera: ARCamera,
+        imageWidth: Int,
+        imageHeight: Int
+    ) -> simd_float3? {
+        let intrinsics = camera.intrinsics
+
+        // Camera intrinsics
+        let fx = intrinsics[0][0]
+        let fy = intrinsics[1][1]
+        let cx = intrinsics[2][0]
+        let cy = intrinsics[2][1]
+
+        // Back-project to camera space
+        let x = (Float(pixelX) - cx) * depth / fx
+        let y = (Float(pixelY) - cy) * depth / fy
+        let z = depth
+
+        let cameraSpacePoint = simd_float4(x, y, z, 1)
+
+        // Transform to world space
+        let worldPoint = camera.transform * cameraSpacePoint
+
+        return simd_float3(worldPoint.x, worldPoint.y, worldPoint.z)
+    }
+}
+
+// MARK: - Serialization Support
+
+private struct SerializableCoverageCell: Codable {
+    let id: Int
+    let gridX: Int
+    let gridY: Int
+    let gridZ: Int
+    let worldX: Float
+    let worldY: Float
+    let worldZ: Float
+    let coverage: Float
+    let quality: Int
+    let viewCount: Int
+
+    init(from cell: CoverageAnalyzer.CoverageCell) {
+        self.id = cell.id
+        self.gridX = cell.gridPosition.x
+        self.gridY = cell.gridPosition.y
+        self.gridZ = cell.gridPosition.z
+        self.worldX = cell.worldPosition.x
+        self.worldY = cell.worldPosition.y
+        self.worldZ = cell.worldPosition.z
+        self.coverage = cell.coverage
+        self.quality = cell.quality.rawValue
+        self.viewCount = cell.viewCount
+    }
+
+    func toCoverageCell() -> CoverageAnalyzer.CoverageCell {
+        var cell = CoverageAnalyzer.CoverageCell(
+            id: id,
+            gridPosition: SIMD3<Int>(gridX, gridY, gridZ),
+            worldPosition: simd_float3(worldX, worldY, worldZ)
+        )
+        cell.coverage = coverage
+        cell.quality = CoverageAnalyzer.QualityLevel(rawValue: quality) ?? .none
+        cell.viewCount = viewCount
+        return cell
+    }
+}

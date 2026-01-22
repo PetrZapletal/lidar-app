@@ -1,0 +1,96 @@
+# Maestro Test Flow for LiDAR Scanner App
+# Run with: maestro test scripts/maestro/scan_flow.yaml
+#
+# Prerequisites:
+# - Maestro installed: curl -Ls "https://get.maestro.mobile.dev" | bash
+# - App installed on simulator
+# - Simulator booted
+
+appId: com.petrzapletal.lidarscanner
+
+---
+
+# Test: Basic Scanning Flow
+- launchApp
+
+# Wait for app to load
+- waitForAnimationToEnd
+
+# Take initial screenshot
+- takeScreenshot: screenshots/01_home
+
+# Check if we're on the main screen
+- assertVisible: "Skenovat"
+
+# Navigate to Settings first to check diagnostics
+- tapOn: "Nastavení"
+- waitForAnimationToEnd
+- takeScreenshot: screenshots/02_settings
+
+# Check diagnostics section exists
+- scrollUntilVisible:
+    element: "Testování komponent"
+
+- tapOn: "Testování komponent"
+- waitForAnimationToEnd
+- takeScreenshot: screenshots/03_diagnostics
+
+# Run diagnostics
+- tapOn: "Spustit všechny testy"
+- waitForAnimationToEnd:
+    timeout: 10000
+
+- takeScreenshot: screenshots/04_diagnostics_results
+
+# Go back
+- tapOn:
+    text: "Nastavení"
+- back
+
+# Now test scanning
+- tapOn: "Skenovat"
+- waitForAnimationToEnd
+
+# Select scan mode
+- assertVisible: "Exteriér"
+- takeScreenshot: screenshots/05_mode_selection
+
+# Select exterior mode
+- tapOn: "Exteriér"
+- waitForAnimationToEnd
+- takeScreenshot: screenshots/06_exterior_scan
+
+# Wait a moment for AR session
+- extendedWaitUntil:
+    visible: "Start"
+    timeout: 5000
+
+# Take screenshot of AR view
+- takeScreenshot: screenshots/07_ar_ready
+
+# Go back to try another mode
+- back
+- waitForAnimationToEnd
+
+# Try Interior mode
+- tapOn: "Interiér"
+- waitForAnimationToEnd
+- takeScreenshot: screenshots/08_interior_scan
+
+- back
+
+# Try Object mode
+- tapOn: "Objekt"
+- waitForAnimationToEnd
+- takeScreenshot: screenshots/09_object_scan
+
+- back
+
+# Final screenshot
+- takeScreenshot: screenshots/10_final
+
+# Report success
+- runScript:
+    script: |
+      console.log("Scan flow test completed successfully!")
+      console.log("Screenshots saved to: screenshots/")

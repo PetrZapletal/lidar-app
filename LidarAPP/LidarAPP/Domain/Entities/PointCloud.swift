@@ -1,5 +1,6 @@
 import Foundation
 import simd
+import QuartzCore
 
 /// Represents a 3D point cloud captured from LiDAR
 struct PointCloud: Identifiable, Sendable {

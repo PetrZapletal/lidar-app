@@ -1,9 +1,24 @@
 import SwiftUI
+import SceneKit
 
 @main
 struct LidarAPPApp: App {
     @State private var authService = AuthService()
     @State private var scanStore = ScanStore()
+
+    init() {
+        // Start crash reporting with MetricKit
+        CrashReporter.shared.start()
+
+        // Start debug streaming if raw data mode is enabled
+        #if DEBUG
+        if DebugSettings.shared.rawDataModeEnabled {
+            DebugSettings.shared.debugStreamEnabled = true
+            DebugStreamService.shared.startStreaming()
+            print("Debug: Auto-started debug streaming (rawDataModeEnabled)")
+        }
+        #endif
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -18,11 +33,63 @@ struct LidarAPPApp: App {
 
 // MARK: - Main Tab View
 
+/// Scan mode selection per LUMISCAN specification
+enum ScanMode: String, CaseIterable {
+    case exterior   // Buildings, facades, outdoor - ARKit with gravityAndHeading
+    case interior   // Rooms - RoomPlan API
+    case object     // Standalone objects - ObjectCaptureSession
+
+    var displayName: String {
+        switch self {
+        case .exterior: return "Exteriér"
+        case .interior: return "Interiér"
+        case .object: return "Objekt"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .exterior: return "building.2"
+        case .interior: return "house.fill"
+        case .object: return "cube.fill"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .exterior: return "Budovy a fasády"
+        case .interior: return "Místnosti (RoomPlan)"
+        case .object: return "Samostatné předměty"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .exterior:
+            return "Skenování exteriérů, budov a fasád. Využívá GPS pro přesné umístění."
+        case .interior:
+            return "Automatická detekce stěn, dveří a oken. Optimalizované pro interiéry."
+        case .object:
+            return "Skenování objektů na stole nebo vozu. Chodíte kolem objektu dokola."
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .exterior: return .green
+        case .interior: return .blue
+        case .object: return .orange
+        }
+    }
+}
+
 struct MainTabView: View {
     let authService: AuthService
     let scanStore: ScanStore
     @State private var selectedTab: Tab = .gallery
     @State private var showScanning = false
+    @State private var showActiveScan = false
+    @State private var selectedScanMode: ScanMode = .exterior
 
     enum Tab: Int {
         case gallery
@@ -36,30 +103,176 @@ struct MainTabView: View {
                 // Gallery Tab
                 GalleryView(scanStore: scanStore)
                     .tag(Tab.gallery)
+                    .toolbar(.hidden, for: .tabBar)
 
                 // Capture placeholder (hidden, accessed via FAB)
                 Color.clear
                     .tag(Tab.capture)
+                    .toolbar(.hidden, for: .tabBar)
 
                 // Profile Tab
                 ProfileTabView(authService: authService)
                     .tag(Tab.profile)
+                    .toolbar(.hidden, for: .tabBar)
             }
 
             // Custom Tab Bar with floating capture button
             CustomTabBar(
                 selectedTab: $selectedTab,
                 onCaptureTap: {
-                    if DeviceCapabilities.hasLiDAR {
+                    // Allow scanning with real LiDAR or in mock mode (for simulator testing)
+                    if DeviceCapabilities.hasLiDAR || MockDataProvider.isMockModeEnabled {
                         showScanning = true
                     }
                 }
             )
         }
         .ignoresSafeArea(.keyboard)
-        .fullScreenCover(isPresented: $showScanning) {
-            ScanningView()
+        .sheet(isPresented: $showScanning) {
+            ScanModeSelector { mode in
+                showScanning = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    selectedScanMode = mode
+                    showActiveScan = true
+                }
+            }
+            .presentationDetents([.height(400)])
         }
+        .fullScreenCover(isPresented: $showActiveScan) {
+            switch selectedScanMode {
+            case .exterior:
+                // Exterior uses LiDAR scanning with GPS/heading alignment
+                ScanningView(mode: .exterior) { savedScan, session in
+                    scanStore.addScan(savedScan, session: session)
+                }
+            case .interior:
+                // Interior uses RoomPlan API
+                RoomPlanScanningView { savedScan, session in
+                    scanStore.addScan(savedScan, session: session)
+                }
+            case .object:
+                // Object uses ObjectCaptureSession API
+                ObjectCaptureScanningView { savedScan, session in
+                    scanStore.addScan(savedScan, session: session)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Scan Mode Selector
+
+struct ScanModeSelector: View {
+    let onModeSelected: (ScanMode) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                Text("Vyberte režim skenování")
+                    .font(.headline)
+                    .padding(.top)
+
+                // Exterior Scanning
+                ScanModeCard(
+                    icon: ScanMode.exterior.icon,
+                    title: ScanMode.exterior.displayName,
+                    subtitle: ScanMode.exterior.subtitle,
+                    description: ScanMode.exterior.description,
+                    color: ScanMode.exterior.color,
+                    isSupported: DeviceCapabilities.hasLiDAR || MockDataProvider.isMockModeEnabled
+                ) {
+                    onModeSelected(.exterior)
+                }
+
+                // Interior Scanning (RoomPlan)
+                ScanModeCard(
+                    icon: ScanMode.interior.icon,
+                    title: ScanMode.interior.displayName,
+                    subtitle: ScanMode.interior.subtitle,
+                    description: ScanMode.interior.description,
+                    color: ScanMode.interior.color,
+                    isSupported: RoomPlanService.shared.isSupported || MockDataProvider.isMockModeEnabled
+                ) {
+                    onModeSelected(.interior)
+                }
+
+                // Object Scanning
+                ScanModeCard(
+                    icon: ScanMode.object.icon,
+                    title: ScanMode.object.displayName,
+                    subtitle: ScanMode.object.subtitle,
+                    description: ScanMode.object.description,
+                    color: ScanMode.object.color,
+                    isSupported: ObjectCaptureService.isSupported || MockDataProvider.isMockModeEnabled
+                ) {
+                    onModeSelected(.object)
+                }
+
+                Spacer()
+            }
+            .padding()
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Zrušit") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+struct ScanModeCard: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let description: String
+    let color: Color
+    var isSupported: Bool = true
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                Image(systemName: icon)
+                    .font(.system(size: 36))
+                    .foregroundStyle(color)
+                    .frame(width: 60)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(title)
+                            .font(.headline)
+                        if !isSupported {
+                            Text("Nepodporováno")
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(.red.opacity(0.2))
+                                .foregroundStyle(.red)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text(description)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .background(Color(.secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .disabled(!isSupported)
+        .opacity(isSupported ? 1 : 0.5)
+        .foregroundStyle(.primary)
     }
 }
 
@@ -322,12 +535,25 @@ struct ModelDetailView: View {
     @State private var showMeasurement = false
     @State private var showExport = false
     @State private var showShare = false
+    @State private var showAIProcessing = false
+    @State private var showEnhanced3DViewer = false
+    @State private var showRenameAlert = false
+    @State private var showDeleteAlert = false
+    @State private var newName = ""
+    @State private var aiError: String?
+    @State private var showAIError = false
+    @StateObject private var aiService = AIGeometryGenerationService()
     @Environment(\.dismiss) private var dismiss
+
+    /// The scan session with actual 3D data
+    private var session: ScanSession? {
+        scanStore.getSession(for: scan.id)
+    }
 
     var body: some View {
         ZStack {
             // 3D Model Viewer
-            Model3DViewer(scan: scan, measurementMode: showMeasurement)
+            Model3DViewer(scan: scan, session: session)
                 .ignoresSafeArea()
 
             // Overlay controls
@@ -359,10 +585,15 @@ struct ModelDetailView: View {
                         Label("Exportovat", systemImage: "arrow.down.doc")
                     }
                     Divider()
-                    Button(action: { /* rename */ }) {
+                    Button(action: {
+                        newName = scan.name
+                        showRenameAlert = true
+                    }) {
                         Label("Přejmenovat", systemImage: "pencil")
                     }
-                    Button(role: .destructive, action: { /* delete */ }) {
+                    Button(role: .destructive, action: {
+                        showDeleteAlert = true
+                    }) {
                         Label("Smazat", systemImage: "trash")
                     }
                 } label: {
@@ -371,45 +602,164 @@ struct ModelDetailView: View {
             }
         }
         .sheet(isPresented: $showExport) {
-            ExportOptionsSheet(scan: scan)
+            if let session = session {
+                ExportView(session: session, scanName: scan.name)
+            } else {
+                GalleryExportSheet(scan: scan)
+            }
         }
         .fullScreenCover(isPresented: $showARPlacement) {
             ARPlacementView(scan: scan)
         }
+        .fullScreenCover(isPresented: $showEnhanced3DViewer) {
+            if let session = session {
+                NavigationStack {
+                    Enhanced3DViewer(session: session)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Zavřít") { showEnhanced3DViewer = false }
+                            }
+                        }
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showMeasurement) {
+            if let session = session {
+                NavigationStack {
+                    InteractiveMeasurementView(session: session)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Zavřít") { showMeasurement = false }
+                            }
+                        }
+                }
+            }
+        }
+        .alert("Přejmenovat model", isPresented: $showRenameAlert) {
+            TextField("Název", text: $newName)
+            Button("Zrušit", role: .cancel) { }
+            Button("Uložit") {
+                if !newName.isEmpty {
+                    scanStore.renameScan(scan, to: newName)
+                }
+            }
+        } message: {
+            Text("Zadejte nový název pro tento model")
+        }
+        .alert("Smazat model?", isPresented: $showDeleteAlert) {
+            Button("Zrušit", role: .cancel) { }
+            Button("Smazat", role: .destructive) {
+                scanStore.deleteScan(scan)
+                dismiss()
+            }
+        } message: {
+            Text("Tato akce je nevratná. Model \"\(scan.name)\" bude trvale smazán.")
+        }
+        .alert("Chyba AI zpracování", isPresented: $showAIError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(aiError ?? "Neznámá chyba")
+        }
     }
 
     private var actionBar: some View {
-        HStack(spacing: 16) {
-            // Measure button
-            ActionButton(
-                icon: "ruler",
-                title: "Měřit",
-                isActive: showMeasurement
-            ) {
-                showMeasurement.toggle()
+        VStack(spacing: 12) {
+            // AI Processing indicator
+            if aiService.isProcessing {
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text(aiService.processingStage.rawValue)
+                        .font(.caption)
+                    Spacer()
+                    Text("\(Int(aiService.progress * 100))%")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .padding(.horizontal)
             }
 
-            // AR View button
-            ActionButton(
-                icon: "arkit",
-                title: "AR",
-                isActive: false
-            ) {
-                showARPlacement = true
-            }
+            HStack(spacing: 12) {
+                // AI Enhancement button
+                ActionButton(
+                    icon: "wand.and.stars",
+                    title: "AI",
+                    isActive: aiService.isProcessing
+                ) {
+                    Task {
+                        await processWithAI()
+                    }
+                }
+                .disabled(aiService.isProcessing)
 
-            // Export button
-            ActionButton(
-                icon: "square.and.arrow.up",
-                title: "Export",
-                isActive: false
-            ) {
-                showExport = true
+                // Measure button
+                ActionButton(
+                    icon: "ruler",
+                    title: "Měřit",
+                    isActive: showMeasurement
+                ) {
+                    showMeasurement.toggle()
+                }
+
+                // Enhanced 3D View
+                ActionButton(
+                    icon: "cube.transparent",
+                    title: "3D+",
+                    isActive: showEnhanced3DViewer
+                ) {
+                    showEnhanced3DViewer = true
+                }
+
+                // AR View button
+                ActionButton(
+                    icon: "arkit",
+                    title: "AR",
+                    isActive: false
+                ) {
+                    showARPlacement = true
+                }
+
+                // Export button
+                ActionButton(
+                    icon: "square.and.arrow.up",
+                    title: "Export",
+                    isActive: false
+                ) {
+                    showExport = true
+                }
             }
+            .padding()
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+            .padding(.horizontal)
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-        .padding()
+        .padding(.bottom)
+    }
+
+    private func processWithAI() async {
+        // Get existing session or create mock one for testing
+        let workingSession = scanStore.getOrCreateSession(for: scan)
+
+        do {
+            let options = AIGeometryGenerationService.GenerationOptions(
+                mode: .hybrid,
+                completionLevel: .medium,
+                preserveDetails: true
+            )
+
+            let result = try await aiService.generateGeometry(from: workingSession, options: options)
+
+            // Update session with enhanced mesh
+            if let enhancedMesh = result.enhancedMesh as MeshData? {
+                workingSession.addMesh(enhancedMesh)
+            }
+        } catch {
+            print("AI processing error: \(error)")
+            aiError = error.localizedDescription
+            showAIError = true
+        }
     }
 
     private func formatStats(_ scan: ScanModel) -> String {
@@ -446,103 +796,166 @@ struct ActionButton: View {
 
 struct Model3DViewer: View {
     let scan: ScanModel
-    let measurementMode: Bool
-
-    @State private var rotation: Angle = .zero
-    @State private var scale: CGFloat = 1.0
-    @State private var offset: CGSize = .zero
+    let session: ScanSession?
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Background
-                Color(.systemBackground)
-
-                // 3D content would be rendered here with SceneKit/RealityKit
-                // For now, placeholder
+        ZStack {
+            if let session = session {
+                // Real 3D content using SceneKit
+                SceneKitModelView(session: session)
+            } else {
+                // Fallback placeholder when no session data
                 VStack {
                     Image(systemName: "cube.transparent")
                         .font(.system(size: 120))
                         .foregroundStyle(.blue.opacity(0.3))
-                        .rotationEffect(rotation)
-                        .scaleEffect(scale)
-                        .offset(offset)
-                        .gesture(
-                            SimultaneousGesture(
-                                RotationGesture()
-                                    .onChanged { value in
-                                        rotation = value
-                                    },
-                                MagnificationGesture()
-                                    .onChanged { value in
-                                        scale = value
-                                    }
-                            )
-                        )
-                        .gesture(
-                            DragGesture()
-                                .onChanged { value in
-                                    offset = value.translation
-                                }
-                        )
 
-                    Text("Interaktivní 3D náhled")
+                    Text("3D data nejsou k dispozici")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                }
-
-                // Measurement overlay
-                if measurementMode {
-                    MeasurementOverlayView()
                 }
             }
         }
     }
 }
 
-// MARK: - Measurement Overlay
+// MARK: - SceneKit Model View
 
-struct MeasurementOverlayView: View {
-    @State private var measurementType: MeasurementType = .distance
+struct SceneKitModelView: UIViewRepresentable {
+    let session: ScanSession
 
-    enum MeasurementType: String, CaseIterable {
-        case distance = "Vzdálenost"
-        case area = "Plocha"
-        case volume = "Objem"
+    func makeUIView(context: Context) -> SCNView {
+        let scnView = SCNView()
+        scnView.backgroundColor = .systemBackground
+        scnView.autoenablesDefaultLighting = true
+        scnView.allowsCameraControl = true
+        scnView.showsStatistics = false
 
-        var icon: String {
-            switch self {
-            case .distance: return "ruler"
-            case .area: return "square.dashed"
-            case .volume: return "cube"
-            }
+        let scene = SCNScene()
+        scnView.scene = scene
+
+        // Add camera
+        let cameraNode = SCNNode()
+        cameraNode.camera = SCNCamera()
+        cameraNode.camera?.automaticallyAdjustsZRange = true
+        cameraNode.position = SCNVector3(0, 2, 5)
+        cameraNode.look(at: SCNVector3(0, 0, 0))
+        scene.rootNode.addChildNode(cameraNode)
+
+        // Add ambient light
+        let ambientLight = SCNNode()
+        ambientLight.light = SCNLight()
+        ambientLight.light?.type = .ambient
+        ambientLight.light?.intensity = 500
+        scene.rootNode.addChildNode(ambientLight)
+
+        return scnView
+    }
+
+    func updateUIView(_ scnView: SCNView, context: Context) {
+        guard let scene = scnView.scene else { return }
+
+        // Remove old geometry
+        scene.rootNode.childNodes
+            .filter { $0.name == "scanGeometry" }
+            .forEach { $0.removeFromParentNode() }
+
+        // Add point cloud if available
+        if let pointCloud = session.pointCloud {
+            let pointNode = createPointCloudNode(from: pointCloud)
+            pointNode.name = "scanGeometry"
+            scene.rootNode.addChildNode(pointNode)
+        }
+
+        // Add meshes
+        for mesh in session.combinedMesh.meshes.values {
+            let meshNode = createMeshNode(from: mesh)
+            meshNode.name = "scanGeometry"
+            scene.rootNode.addChildNode(meshNode)
         }
     }
 
-    var body: some View {
-        VStack {
-            // Top measurement type picker
-            Picker("Typ měření", selection: $measurementType) {
-                ForEach(MeasurementType.allCases, id: \.self) { type in
-                    Label(type.rawValue, systemImage: type.icon).tag(type)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding()
-            .background(.ultraThinMaterial)
+    private func createPointCloudNode(from pc: PointCloud) -> SCNNode {
+        let node = SCNNode()
 
-            Spacer()
+        // Create point geometry
+        var vertices: [SCNVector3] = []
+        var colors: [SCNVector4] = []
 
-            // Measurement result
-            HStack {
-                Image(systemName: measurementType.icon)
-                Text("Klepněte na dva body pro měření")
+        for (i, point) in pc.points.enumerated() {
+            vertices.append(SCNVector3(point.x, point.y, point.z))
+
+            if let pcColors = pc.colors, i < pcColors.count {
+                let c = pcColors[i]
+                colors.append(SCNVector4(c.x, c.y, c.z, c.w))
+            } else {
+                // Default color based on height
+                let normalizedY = (point.y + 1) / 3.0  // Normalize height
+                colors.append(SCNVector4(Float(normalizedY), 0.5, Float(1 - normalizedY), 1.0))
             }
-            .font(.subheadline)
-            .padding()
-            .background(.ultraThinMaterial, in: Capsule())
-            .padding(.bottom, 100)
         }
+
+        let pointSource = SCNGeometrySource(vertices: vertices)
+        let colorData = Data(bytes: colors, count: colors.count * MemoryLayout<SCNVector4>.size)
+        let colorSource = SCNGeometrySource(
+            data: colorData,
+            semantic: .color,
+            vectorCount: colors.count,
+            usesFloatComponents: true,
+            componentsPerVector: 4,
+            bytesPerComponent: MemoryLayout<Float>.size,
+            dataOffset: 0,
+            dataStride: MemoryLayout<SCNVector4>.size
+        )
+
+        let elements = SCNGeometryElement(
+            data: nil,
+            primitiveType: .point,
+            primitiveCount: vertices.count,
+            bytesPerIndex: 0
+        )
+        elements.pointSize = 3
+        elements.minimumPointScreenSpaceRadius = 1
+        elements.maximumPointScreenSpaceRadius = 5
+
+        let geometry = SCNGeometry(sources: [pointSource, colorSource], elements: [elements])
+        node.geometry = geometry
+
+        return node
+    }
+
+    private func createMeshNode(from mesh: MeshData) -> SCNNode {
+        var vertices: [SCNVector3] = []
+        var normals: [SCNVector3] = []
+        var indices: [Int32] = []
+
+        for v in mesh.vertices {
+            vertices.append(SCNVector3(v.x, v.y, v.z))
+        }
+
+        for n in mesh.normals {
+            normals.append(SCNVector3(n.x, n.y, n.z))
+        }
+
+        for face in mesh.faces {
+            indices.append(Int32(face.x))
+            indices.append(Int32(face.y))
+            indices.append(Int32(face.z))
+        }
+
+        let vertexSource = SCNGeometrySource(vertices: vertices)
+        let normalSource = SCNGeometrySource(normals: normals)
+        let element = SCNGeometryElement(indices: indices, primitiveType: .triangles)
+
+        let geometry = SCNGeometry(sources: [vertexSource, normalSource], elements: [element])
+
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.systemBlue.withAlphaComponent(0.7)
+        material.isDoubleSided = true
+        geometry.materials = [material]
+
+        let node = SCNNode(geometry: geometry)
+        return node
     }
 }
 
@@ -583,9 +996,9 @@ struct ARPlacementView: View {
     }
 }
 
-// MARK: - Export Options Sheet
+// MARK: - Gallery Export Sheet
 
-struct ExportOptionsSheet: View {
+struct GalleryExportSheet: View {
     let scan: ScanModel
     @Environment(\.dismiss) private var dismiss
 
@@ -593,15 +1006,15 @@ struct ExportOptionsSheet: View {
         NavigationStack {
             List {
                 Section("3D formáty") {
-                    ExportFormatRow(format: "USDZ", description: "Apple AR formát", icon: "arkit")
-                    ExportFormatRow(format: "glTF", description: "Univerzální web formát", icon: "globe")
-                    ExportFormatRow(format: "OBJ", description: "Wavefront 3D", icon: "cube")
-                    ExportFormatRow(format: "STL", description: "3D tisk", icon: "printer")
-                    ExportFormatRow(format: "PLY", description: "Point cloud", icon: "circle.dotted")
+                    GalleryExportFormatRow(format: "USDZ", description: "Apple AR formát", icon: "arkit")
+                    GalleryExportFormatRow(format: "glTF", description: "Univerzální web formát", icon: "globe")
+                    GalleryExportFormatRow(format: "OBJ", description: "Wavefront 3D", icon: "cube")
+                    GalleryExportFormatRow(format: "STL", description: "3D tisk", icon: "printer")
+                    GalleryExportFormatRow(format: "PLY", description: "Point cloud", icon: "circle.dotted")
                 }
 
                 Section("Dokumenty") {
-                    ExportFormatRow(format: "PDF", description: "Zpráva s měřeními", icon: "doc.text")
+                    GalleryExportFormatRow(format: "PDF", description: "Zpráva s měřeními", icon: "doc.text")
                 }
             }
             .navigationTitle("Exportovat")
@@ -616,7 +1029,7 @@ struct ExportOptionsSheet: View {
     }
 }
 
-struct ExportFormatRow: View {
+struct GalleryExportFormatRow: View {
     let format: String
     let description: String
     let icon: String
@@ -692,9 +1105,9 @@ struct ProfileTabView: View {
 
                     // Stats section
                     Section("Statistiky") {
-                        StatRow(title: "Celkem skenů", value: "\(user.scanCredits)")
-                        StatRow(title: "Zpracováno AI", value: "0")
-                        StatRow(title: "Exportováno", value: "0")
+                        ProfileStatRow(title: "Celkem skenů", value: "\(user.scanCredits)")
+                        ProfileStatRow(title: "Zpracováno AI", value: "0")
+                        ProfileStatRow(title: "Exportováno", value: "0")
                     }
                 } else {
                     // Not logged in
@@ -753,7 +1166,7 @@ struct ProfileTabView: View {
     }
 }
 
-struct StatRow: View {
+struct ProfileStatRow: View {
     let title: String
     let value: String
 
@@ -793,20 +1206,101 @@ struct ScanModel: Identifiable, Hashable {
 // MARK: - Scan Store
 
 @Observable
-class ScanStore {
+final class ScanStore {
     var scans: [ScanModel] = []
+
+    /// Stores actual 3D data (point clouds, meshes) by scan ID
+    private var scanSessions: [String: ScanSession] = [:]
 
     func loadScans() async {
         // Load from local storage
-        // For now, empty
+        // For now, create mock scans for testing in simulator
+        if MockDataProvider.isMockModeEnabled && scans.isEmpty {
+            loadMockScans()
+        }
+    }
+
+    private func loadMockScans() {
+        let mockProvider = MockDataProvider.shared
+
+        // Create sample mock scans for testing
+        let mockScan1 = ScanModel(
+            id: UUID().uuidString,
+            name: "Obyvaci pokoj",
+            createdAt: Date().addingTimeInterval(-86400), // 1 day ago
+            thumbnail: nil,
+            pointCount: 125000,
+            faceCount: 42000,
+            fileSize: 15_000_000,
+            isProcessed: true,
+            localURL: nil
+        )
+        let session1 = mockProvider.createMockScanSession(name: "Obyvaci pokoj")
+        addScan(mockScan1, session: session1)
+
+        let mockScan2 = ScanModel(
+            id: UUID().uuidString,
+            name: "Kuchyn",
+            createdAt: Date().addingTimeInterval(-172800), // 2 days ago
+            thumbnail: nil,
+            pointCount: 85000,
+            faceCount: 28000,
+            fileSize: 10_500_000,
+            isProcessed: true,
+            localURL: nil
+        )
+        let session2 = mockProvider.createMockScanSession(name: "Kuchyn")
+        addScan(mockScan2, session: session2)
+
+        let mockScan3 = ScanModel(
+            id: UUID().uuidString,
+            name: "Loznice",
+            createdAt: Date().addingTimeInterval(-259200), // 3 days ago
+            thumbnail: nil,
+            pointCount: 95000,
+            faceCount: 32000,
+            fileSize: 12_000_000,
+            isProcessed: false,
+            localURL: nil
+        )
+        let session3 = mockProvider.createMockScanSession(name: "Loznice")
+        addScan(mockScan3, session: session3)
     }
 
     func addScan(_ scan: ScanModel) {
         scans.insert(scan, at: 0)
     }
 
+    func addScan(_ scan: ScanModel, session: ScanSession) {
+        scans.insert(scan, at: 0)
+        scanSessions[scan.id] = session
+    }
+
+    func getSession(for scanId: String) -> ScanSession? {
+        scanSessions[scanId]
+    }
+
     func deleteScan(_ scan: ScanModel) {
         scans.removeAll { $0.id == scan.id }
+        scanSessions.removeValue(forKey: scan.id)
+    }
+
+    func renameScan(_ scan: ScanModel, to newName: String) {
+        if let index = scans.firstIndex(where: { $0.id == scan.id }) {
+            scans[index].name = newName
+        }
+    }
+
+    /// Get existing session or create a mock one for testing
+    func getOrCreateSession(for scan: ScanModel) -> ScanSession {
+        if let existing = scanSessions[scan.id] {
+            return existing
+        }
+
+        // Create mock session for testing
+        let mockSession = MockDataProvider.shared.createMockScanSession(name: scan.name)
+        scanSessions[scan.id] = mockSession
+        return mockSession
     }
 }
 
@@ -893,14 +1387,6 @@ struct FeatureRow: View {
                     .foregroundStyle(.secondary)
             }
         }
-    }
-}
-
-// MARK: - Bundle Extension
-
-extension Bundle {
-    var appVersion: String {
-        object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     }
 }
 

@@ -29,10 +29,13 @@ class StorageService:
 
     def __init__(
         self,
-        base_path: str = "/data/scans",
+        base_path: Optional[str] = None,
         use_s3: bool = False,
         s3_bucket: Optional[str] = None
     ):
+        # Use environment variable or default to ./data/scans
+        if base_path is None:
+            base_path = os.getenv("DATA_DIR", "./data/scans")
         self.base_path = Path(base_path)
         self.base_path.mkdir(parents=True, exist_ok=True)
 

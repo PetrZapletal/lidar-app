@@ -317,7 +317,11 @@ final class LiveMeshRenderer {
     var totalVertexCount: Int {
         var count = 0
         for info in meshEntities.values {
-            count += info.entity.model?.mesh.contents.models.first?.parts.first?.positions.count ?? 0
+            if let contents = info.entity.model?.mesh.contents,
+               let model = contents.models.first(where: { _ in true }),
+               let part = model.parts.first(where: { _ in true }) {
+                count += part.positions.count
+            }
         }
         return count
     }
@@ -325,7 +329,10 @@ final class LiveMeshRenderer {
     var totalFaceCount: Int {
         var count = 0
         for info in meshEntities.values {
-            if let indices = info.entity.model?.mesh.contents.models.first?.parts.first?.triangleIndices {
+            if let contents = info.entity.model?.mesh.contents,
+               let model = contents.models.first(where: { _ in true }),
+               let part = model.parts.first(where: { _ in true }),
+               let indices = part.triangleIndices {
                 count += indices.count / 3
             }
         }
@@ -342,17 +349,19 @@ final class LiveMeshRenderer {
 
         for info in meshEntities.values {
             guard let mesh = info.entity.model?.mesh,
-                  let part = mesh.contents.models.first?.parts.first else {
+                  let model = mesh.contents.models.first(where: { _ in true }),
+                  let part = model.parts.first(where: { _ in true }) else {
                 continue
             }
 
             let transform = info.entity.transform.matrix
 
             // Get positions
-            let positions = part.positions.elements
-            for position in positions {
+            var positionCount = 0
+            for position in part.positions {
                 let worldPosition = transform * simd_float4(position, 1)
                 allVertices.append(simd_float3(worldPosition.x, worldPosition.y, worldPosition.z))
+                positionCount += 1
             }
 
             // Get normals
@@ -362,15 +371,15 @@ final class LiveMeshRenderer {
                     simd_float3(transform.columns.1.x, transform.columns.1.y, transform.columns.1.z),
                     simd_float3(transform.columns.2.x, transform.columns.2.y, transform.columns.2.z)
                 )
-                for normal in normals.elements {
+                for normal in normals {
                     allNormals.append(simd_normalize(normalMatrix * normal))
                 }
             }
 
             // Get faces
             if let indices = part.triangleIndices {
-                let indexArray = Array(indices.elements)
-                for i in stride(from: 0, to: indexArray.count, by: 3) {
+                let indexArray = Array(indices)
+                for i in Swift.stride(from: 0, to: indexArray.count, by: 3) {
                     allFaces.append(simd_uint3(
                         vertexOffset + indexArray[i],
                         vertexOffset + indexArray[i + 1],
@@ -379,7 +388,7 @@ final class LiveMeshRenderer {
                 }
             }
 
-            vertexOffset += UInt32(positions.count)
+            vertexOffset += UInt32(positionCount)
         }
 
         guard !allVertices.isEmpty else { return nil }
@@ -398,10 +407,10 @@ final class LiveMeshRenderer {
 extension LiveMeshRenderer {
 
     func setClassificationColoring(enabled: Bool, mesh: ARMeshAnchor) {
-        guard enabled, let geometry = mesh.classification else { return }
+        guard enabled else { return }
 
-        // Classification-based coloring would require custom materials
-        // This is a placeholder for future implementation
+        // Classification data is stored in the mesh geometry
+        // This is a placeholder for future implementation using mesh.geometry.classification
     }
 
     static func colorForClassification(_ classification: ARMeshClassification) -> simd_float4 {

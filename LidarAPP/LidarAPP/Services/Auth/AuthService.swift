@@ -26,15 +26,24 @@ final class AuthService {
     // MARK: - Initialization
 
     init(
-        apiBaseURL: URL = URL(string: "https://api.lidarapp.com/v1")!,
+        apiBaseURL: URL? = nil,
         keychain: KeychainService = KeychainService()
     ) {
-        self.apiBaseURL = apiBaseURL
+        // Use Tailscale URL for debug builds
+        if let url = apiBaseURL {
+            self.apiBaseURL = url
+        } else {
+            #if DEBUG
+            self.apiBaseURL = URL(string: "https://100.96.188.18:8444/api/v1")!
+            #else
+            self.apiBaseURL = URL(string: "https://api.lidarapp.com/v1")!
+            #endif
+        }
         self.keychain = keychain
 
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
-        self.session = URLSession(configuration: config)
+        self.session = URLSession(configuration: config, delegate: SelfSignedCertDelegate.shared, delegateQueue: nil)
     }
 
     // MARK: - Session Restoration

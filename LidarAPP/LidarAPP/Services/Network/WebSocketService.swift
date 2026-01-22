@@ -64,12 +64,12 @@ final class WebSocketService: NSObject {
     private(set) var lastMessage: ServerMessage?
 
     private let configuration: Configuration
-    private var webSocketTask: URLSessionWebSocketTask?
-    private var session: URLSession!
+    nonisolated(unsafe) private var webSocketTask: URLSessionWebSocketTask?
+    nonisolated(unsafe) private var session: URLSession!
     private var authToken: String?
 
-    private var pingTask: Task<Void, Never>?
-    private var receiveTask: Task<Void, Never>?
+    nonisolated(unsafe) private var pingTask: Task<Void, Never>?
+    nonisolated(unsafe) private var receiveTask: Task<Void, Never>?
     private var reconnectAttempt: Int = 0
 
     // Callbacks
@@ -92,8 +92,21 @@ final class WebSocketService: NSObject {
         self.init(configuration: Configuration(baseURL: baseURL))
     }
 
+    static func withDefaultURL() -> WebSocketService {
+        #if DEBUG
+        // Use Tailscale IP for device testing (Docker maps 8444 -> 8443)
+        let defaultURL = URL(string: "wss://100.96.188.18:8444/ws")!
+        #else
+        let defaultURL = URL(string: "wss://api.lidarapp.com/ws")!
+        #endif
+        return WebSocketService(configuration: Configuration(baseURL: defaultURL))
+    }
+
     deinit {
-        disconnect()
+        // Clean up directly without calling MainActor-isolated method
+        pingTask?.cancel()
+        receiveTask?.cancel()
+        webSocketTask?.cancel(with: .goingAway, reason: nil)
     }
 
     // MARK: - Authentication
@@ -408,6 +421,26 @@ enum WebSocketError: LocalizedError {
         case .notConnected: return "WebSocket not connected"
         case .sendFailed: return "Failed to send message"
         case .invalidMessage: return "Invalid message format"
+        }
+    }
+}
+
+// MARK: - URLSessionTaskDelegate (Certificate Handling)
+
+extension WebSocketService: URLSessionTaskDelegate {
+    nonisolated func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        // Accept self-signed certificates for debug server
+        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+           let serverTrust = challenge.protectionSpace.serverTrust {
+            let credential = URLCredential(trust: serverTrust)
+            completionHandler(.useCredential, credential)
+        } else {
+            completionHandler(.performDefaultHandling, nil)
         }
     }
 }

@@ -2,6 +2,7 @@ import Foundation
 import simd
 import UIKit
 import UniformTypeIdentifiers
+import QuartzCore
 
 /// Service for exporting scan data to various formats
 actor ExportService {

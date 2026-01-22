@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Main settings view
 struct SettingsView: View {
@@ -9,16 +10,23 @@ struct SettingsView: View {
     @AppStorage("textureResolution") private var textureResolution = 4096
     @AppStorage("autoUpload") private var autoUpload = true
     @AppStorage("outputFormats") private var outputFormatsString = "usdz,gltf"
+    @AppStorage("MockModeEnabled") private var mockModeEnabled = MockDataProvider.isSimulator
 
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
             Form {
+                developerSection
+                debugUploadSection
+                #if DEBUG
+                debugStreamSection
+                #endif
                 backendSection
                 processingSection
                 qualitySection
                 exportSection
+                diagnosticsSection
                 aboutSection
             }
             .navigationTitle("Nastavení")
@@ -32,6 +40,232 @@ struct SettingsView: View {
             }
         }
     }
+
+    // MARK: - Developer Section
+
+    private var developerSection: some View {
+        Section {
+            Toggle("Mock Mode", isOn: $mockModeEnabled)
+
+            if mockModeEnabled {
+                HStack {
+                    Text("Status")
+                    Spacer()
+                    Label("Aktivní", systemImage: "checkmark.circle.fill")
+                        .foregroundColor(.orange)
+                }
+
+                NavigationLink {
+                    MockDataPreviewView()
+                } label: {
+                    Text("Preview mock dat")
+                }
+            }
+
+            HStack {
+                Text("Simulátor")
+                Spacer()
+                Text(MockDataProvider.isSimulator ? "Ano" : "Ne")
+                    .foregroundColor(.secondary)
+            }
+        } header: {
+            Label("Vývojář", systemImage: "hammer.fill")
+        } footer: {
+            Text("Mock mode umožňuje testování aplikace bez LiDAR senzoru. Automaticky aktivní na simulátoru.")
+        }
+    }
+
+    // MARK: - Debug Upload Section
+
+    @State private var isTestingConnection = false
+    @State private var connectionTestResult: String?
+    @State private var connectionTestSuccess = false
+
+    private var debugSettings: DebugSettings { DebugSettings.shared }
+
+    private var debugUploadSection: some View {
+        Section {
+            Toggle("Raw Data Mode", isOn: Binding(
+                get: { debugSettings.rawDataModeEnabled },
+                set: { debugSettings.rawDataModeEnabled = $0 }
+            ))
+
+            if debugSettings.rawDataModeEnabled {
+                HStack {
+                    Text("Tailscale IP")
+                    Spacer()
+                    TextField("100.x.x.x", text: Binding(
+                        get: { debugSettings.tailscaleIP },
+                        set: { debugSettings.tailscaleIP = $0 }
+                    ))
+                    .multilineTextAlignment(.trailing)
+                    .keyboardType(.decimalPad)
+                    .frame(width: 150)
+                }
+
+                Stepper("Port: \(debugSettings.serverPort)", value: Binding(
+                    get: { debugSettings.serverPort },
+                    set: { debugSettings.serverPort = $0 }
+                ), in: 8000...9999)
+
+                Toggle("Incluye Depth Maps", isOn: Binding(
+                    get: { debugSettings.includeDepthMaps },
+                    set: { debugSettings.includeDepthMaps = $0 }
+                ))
+
+                Button(action: testDebugConnection) {
+                    HStack {
+                        if isTestingConnection {
+                            ProgressView()
+                                .padding(.trailing, 4)
+                        }
+                        Text("Test Connection")
+                        Spacer()
+                        if let result = connectionTestResult {
+                            Image(systemName: connectionTestSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .foregroundColor(connectionTestSuccess ? .green : .red)
+                        }
+                    }
+                }
+                .disabled(isTestingConnection)
+
+                if let result = connectionTestResult {
+                    Text(result)
+                        .font(.caption)
+                        .foregroundColor(connectionTestSuccess ? .green : .red)
+                }
+
+                // Show current URL
+                if let url = debugSettings.rawDataBaseURL {
+                    HStack {
+                        Text("URL")
+                        Spacer()
+                        Text(url.absoluteString)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+            }
+
+            // Always visible - Reset button and current settings info
+            HStack {
+                Text("Aktuální URL")
+                Spacer()
+                Text("https://\(debugSettings.tailscaleIP):\(debugSettings.serverPort)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Button(role: .destructive) {
+                debugSettings.resetToDefaults()
+                connectionTestResult = nil
+            } label: {
+                HStack {
+                    Spacer()
+                    Text("Obnovit výchozí nastavení")
+                    Spacer()
+                }
+            }
+        } header: {
+            Label("Debug Upload", systemImage: "arrow.up.circle")
+        } footer: {
+            Text("Raw Data Mode odesílá surová data přímo na backend místo lokálního zpracování. Výchozí: https://100.96.188.18:8444")
+        }
+    }
+
+    private func testDebugConnection() {
+        isTestingConnection = true
+        connectionTestResult = nil
+
+        Task {
+            let (success, message, latency) = await debugSettings.testConnection()
+            await MainActor.run {
+                connectionTestSuccess = success
+                if let lat = latency {
+                    connectionTestResult = "\(message) (\(String(format: "%.0f", lat))ms)"
+                } else {
+                    connectionTestResult = message
+                }
+                isTestingConnection = false
+            }
+        }
+    }
+
+    // MARK: - Debug Stream Section
+
+    #if DEBUG
+    private var debugStreamSection: some View {
+        Section {
+            Toggle("Enable Debug Stream", isOn: Binding(
+                get: { debugSettings.debugStreamEnabled },
+                set: { debugSettings.debugStreamEnabled = $0 }
+            ))
+
+            if debugSettings.debugStreamEnabled {
+                HStack {
+                    Text("Server IP")
+                    Spacer()
+                    TextField("100.x.x.x", text: Binding(
+                        get: { debugSettings.debugStreamServerIP },
+                        set: { debugSettings.debugStreamServerIP = $0 }
+                    ))
+                    .multilineTextAlignment(.trailing)
+                    .keyboardType(.decimalPad)
+                    .frame(width: 150)
+                }
+
+                Picker("Mode", selection: Binding(
+                    get: { debugSettings.debugStreamMode },
+                    set: { debugSettings.debugStreamMode = $0 }
+                )) {
+                    Text("Real-time (WebSocket)").tag("realtime")
+                    Text("Batch (HTTP)").tag("batch")
+                }
+
+                if debugSettings.debugStreamMode == "batch" {
+                    Stepper("Interval: \(Int(debugSettings.batchInterval))s", value: Binding(
+                        get: { debugSettings.batchInterval },
+                        set: { debugSettings.batchInterval = $0 }
+                    ), in: 1...30)
+                }
+
+                NavigationLink {
+                    DebugCategoriesView()
+                } label: {
+                    HStack {
+                        Text("Categories")
+                        Spacer()
+                        Text("\(debugSettings.enabledCategories.count) enabled")
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                // Stream status
+                HStack {
+                    Text("Status")
+                    Spacer()
+                    Circle()
+                        .fill(DebugStreamService.shared.isConnected ? Color.green : Color.red)
+                        .frame(width: 8, height: 8)
+                    Text(DebugStreamService.shared.isConnected ? "Connected" : "Disconnected")
+                        .foregroundColor(.secondary)
+                }
+
+                HStack {
+                    Text("Events sent")
+                    Spacer()
+                    Text("\(DebugStreamService.shared.eventsSent)")
+                        .foregroundColor(.secondary)
+                }
+            }
+        } header: {
+            Label("Debug Stream", systemImage: "waveform")
+        } footer: {
+            Text("Streamuje diagnostická data v reálném čase na debug server. Pouze pro development builds.")
+        }
+    }
+    #endif
 
     // MARK: - Backend Section
 
@@ -120,6 +354,58 @@ struct SettingsView: View {
     private var formatDisplayText: String {
         let formats = outputFormatsString.split(separator: ",").map(String.init)
         return formats.map { $0.uppercased() }.joined(separator: ", ")
+    }
+
+    // MARK: - Diagnostics Section
+
+    @State private var diagnosticsCount = 0
+    @State private var showDiagnosticsExport = false
+    @State private var exportedFileURL: URL?
+
+    private var diagnosticsSection: some View {
+        Section {
+            HStack {
+                Text("Crash reporty")
+                Spacer()
+                Text("\(CrashReporter.shared.getDiagnostics().count)")
+                    .foregroundColor(.secondary)
+            }
+
+            HStack {
+                Text("Metriky")
+                Spacer()
+                Text("\(CrashReporter.shared.getMetrics().count)")
+                    .foregroundColor(.secondary)
+            }
+
+            Button("Exportovat diagnostiku") {
+                exportedFileURL = CrashReporter.shared.saveDiagnosticsToFile()
+                if exportedFileURL != nil {
+                    showDiagnosticsExport = true
+                }
+            }
+
+            NavigationLink {
+                DiagnosticsDetailView()
+            } label: {
+                Text("Crash detaily")
+            }
+
+            NavigationLink {
+                DiagnosticsView()
+            } label: {
+                Label("Testování komponent", systemImage: "checklist")
+            }
+        } header: {
+            Label("Diagnostika", systemImage: "stethoscope")
+        } footer: {
+            Text("Testování komponent umožňuje rychlou kontrolu funkčnosti všech částí aplikace.")
+        }
+        .sheet(isPresented: $showDiagnosticsExport) {
+            if let url = exportedFileURL {
+                ShareSheet(items: [url])
+            }
+        }
     }
 
     // MARK: - About Section
@@ -223,11 +509,12 @@ struct BackendStatusView: View {
         errorMessage = nil
 
         do {
-            guard let baseURL = URL(string: url) else {
+            // Ensure URL doesn't have trailing slash, then add /health
+            let cleanURL = url.hasSuffix("/") ? String(url.dropLast()) : url
+            guard let healthURL = URL(string: "\(cleanURL)/health") else {
                 throw URLError(.badURL)
             }
 
-            let healthURL = baseURL.appendingPathComponent("/")
             var request = URLRequest(url: healthURL)
             request.timeoutInterval = 10
 
@@ -358,17 +645,106 @@ struct FormatRow: View {
     }
 }
 
-// MARK: - Bundle Extensions
+// MARK: - Diagnostics Detail View
 
-extension Bundle {
-    var appVersion: String {
-        object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+struct DiagnosticsDetailView: View {
+    @State private var diagnosticsJSON: String = "Načítám..."
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                // Summary
+                GroupBox("Souhrn") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Crash reporty:")
+                            Spacer()
+                            Text("\(CrashReporter.shared.getDiagnostics().count)")
+                                .fontWeight(.semibold)
+                        }
+                        HStack {
+                            Text("Metriky:")
+                            Spacer()
+                            Text("\(CrashReporter.shared.getMetrics().count)")
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .font(.subheadline)
+                }
+
+                // Raw data
+                GroupBox("Raw Data (JSON)") {
+                    Text(diagnosticsJSON)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding()
+        }
+        .navigationTitle("Diagnostika")
+        .onAppear {
+            loadDiagnostics()
+        }
     }
 
-    var buildNumber: String {
-        object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+    private func loadDiagnostics() {
+        if let json = CrashReporter.shared.exportDiagnosticsJSON() {
+            diagnosticsJSON = json
+        } else {
+            diagnosticsJSON = "Žádná diagnostická data k dispozici.\n\nData se sbírají automaticky a doručují do 24 hodin po pádu aplikace."
+        }
     }
 }
+
+// MARK: - Debug Categories View
+
+#if DEBUG
+struct DebugCategoriesView: View {
+    private var settings: DebugSettings { DebugSettings.shared }
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(DebugCategory.allCases) { category in
+                    Toggle(isOn: Binding(
+                        get: { settings.enabledCategories.contains(category) },
+                        set: { enabled in
+                            var categories = settings.enabledCategories
+                            if enabled {
+                                categories.insert(category)
+                            } else {
+                                categories.remove(category)
+                            }
+                            settings.enabledCategories = categories
+                        }
+                    )) {
+                        Label {
+                            Text(category.displayName)
+                        } icon: {
+                            Image(systemName: category.icon)
+                        }
+                    }
+                }
+            } footer: {
+                Text("Vyberte kategorie dat, které chcete streamovat na debug server.")
+            }
+
+            Section {
+                Button("Povolit vše") {
+                    settings.enabledCategories = Set(DebugCategory.allCases)
+                }
+
+                Button("Zakázat vše") {
+                    settings.enabledCategories = []
+                }
+                .foregroundColor(.red)
+            }
+        }
+        .navigationTitle("Debug Categories")
+    }
+}
+#endif
 
 #Preview {
     SettingsView()

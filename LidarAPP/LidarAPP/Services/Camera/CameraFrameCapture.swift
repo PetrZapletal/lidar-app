@@ -119,7 +119,7 @@ final class CameraFrameCapture: Sendable {
             cameraTransform: camera.transform,
             cameraIntrinsics: camera.intrinsics,
             imageResolution: camera.imageResolution,
-            exposureDuration: arFrame.lightEstimate?.ambientIntensity ?? 0,
+            exposureDuration: Double(arFrame.lightEstimate?.ambientIntensity ?? 0),
             iso: 100  // ARKit doesn't expose ISO directly
         )
     }
@@ -147,7 +147,7 @@ final class CameraFrameCapture: Sendable {
             cameraTransform: camera.transform,
             cameraIntrinsics: camera.intrinsics,
             imageResolution: camera.imageResolution,
-            exposureDuration: arFrame.lightEstimate?.ambientIntensity ?? 0,
+            exposureDuration: Double(arFrame.lightEstimate?.ambientIntensity ?? 0),
             iso: 100
         )
     }

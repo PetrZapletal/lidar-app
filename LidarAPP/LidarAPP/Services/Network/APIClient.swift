@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 /// Main API client for backend communication
 actor APIClient {
@@ -16,7 +17,17 @@ actor APIClient {
         }
 
         static var development: Configuration {
-            Configuration(baseURL: URL(string: "http://localhost:8080/v1")!)
+            // Use Tailscale IP for device testing (Docker maps 8444 -> 8443)
+            Configuration(baseURL: URL(string: "https://100.96.188.18:8444/api/v1")!)
+        }
+
+        /// Automatically selects configuration based on build type
+        static var current: Configuration {
+            #if DEBUG
+            return .development
+            #else
+            return .default
+            #endif
         }
     }
 
@@ -116,14 +127,14 @@ actor APIClient {
 
     // MARK: - Initialization
 
-    init(configuration: Configuration = .default) {
+    init(configuration: Configuration = .current) {
         self.configuration = configuration
 
         let sessionConfig = URLSessionConfiguration.default
         sessionConfig.timeoutIntervalForRequest = configuration.timeout
         sessionConfig.waitsForConnectivity = true
 
-        self.session = URLSession(configuration: sessionConfig)
+        self.session = URLSession(configuration: sessionConfig, delegate: SelfSignedCertDelegate.shared, delegateQueue: nil)
 
         self.decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601

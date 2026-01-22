@@ -24,6 +24,10 @@ plyfile>=1.0.0
 torch>=2.1.0
 torchvision>=0.16.0
 
+# HuggingFace (for Depth Anything V2)
+transformers>=4.35.0
+accelerate>=0.24.0
+
 # Image Processing
 Pillow>=10.2.0
 opencv-python>=4.9.0

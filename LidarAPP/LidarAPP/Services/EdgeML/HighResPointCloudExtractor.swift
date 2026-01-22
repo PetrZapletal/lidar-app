@@ -149,10 +149,10 @@ final class HighResPointCloudExtractor {
         var filteredCount = 0
         var edgeCount = 0
 
-        let stride = configuration.samplingStride
+        let samplingStep = configuration.samplingStride
 
-        for y in stride(from: 0, to: height, by: stride) {
-            for x in stride(from: 0, to: width, by: stride) {
+        for y in Swift.stride(from: 0, to: height, by: samplingStep) {
+            for x in Swift.stride(from: 0, to: width, by: samplingStep) {
                 let idx = y * width + x
                 let depth = depthData[idx]
                 let confidence = Float(confData[idx]) / 255.0

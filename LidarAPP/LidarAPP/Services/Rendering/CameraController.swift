@@ -52,7 +52,7 @@ final class CameraController {
     private var velocity: simd_float3 = .zero
     private var angularVelocity: simd_float2 = .zero
     private var isAnimating: Bool = false
-    private var displayLink: CADisplayLink?
+    nonisolated(unsafe) private var displayLink: CADisplayLink?
 
     // Gesture state
     private var lastPanLocation: CGPoint = .zero
@@ -67,7 +67,9 @@ final class CameraController {
     }
 
     deinit {
-        stopMomentum()
+        // Clean up display link directly without calling MainActor-isolated method
+        displayLink?.invalidate()
+        displayLink = nil
     }
 
     // MARK: - Camera Control

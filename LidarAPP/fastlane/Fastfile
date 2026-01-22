@@ -1,0 +1,152 @@
+# Fastfile for LiDAR 3D Scanner iOS App
+# https://docs.fastlane.tools
+
+default_platform(:ios)
+
+platform :ios do
+
+  # --------------------------
+  # Before all lanes
+  # --------------------------
+  before_all do
+    # Ensure we're on the right branch
+    # ensure_git_status_clean
+  end
+
+  # --------------------------
+  # TestFlight Beta
+  # --------------------------
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    # Increment build number
+    increment_build_number(
+      xcodeproj: "LidarAPP.xcodeproj"
+    )
+
+    # Build the app
+    build_app(
+      scheme: "LidarAPP",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          "com.lidarscanner.app" => "match AppStore com.lidarscanner.app"
+        }
+      }
+    )
+
+    # Upload to TestFlight
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      distribute_external: false
+    )
+
+    # Commit version bump
+    commit_version_bump(
+      xcodeproj: "LidarAPP.xcodeproj",
+      message: "Bump build number for TestFlight"
+    )
+  end
+
+  # --------------------------
+  # TestFlight with external testers
+  # --------------------------
+  desc "Push a new beta build to TestFlight and notify external testers"
+  lane :beta_external do
+    beta
+
+    # Distribute to external testers
+    upload_to_testflight(
+      distribute_external: true,
+      groups: ["Beta Testers"],
+      changelog: "New beta build with latest features and fixes."
+    )
+  end
+
+  # --------------------------
+  # Build only (no upload)
+  # --------------------------
+  desc "Build the app without uploading"
+  lane :build do
+    build_app(
+      scheme: "LidarAPP",
+      export_method: "app-store",
+      skip_archive: false
+    )
+  end
+
+  # --------------------------
+  # Run tests
+  # --------------------------
+  desc "Run all unit tests"
+  lane :test do
+    run_tests(
+      scheme: "LidarAPP",
+      devices: ["iPhone 15 Pro"],
+      code_coverage: true
+    )
+  end
+
+  # --------------------------
+  # Setup certificates with match
+  # --------------------------
+  desc "Sync certificates and profiles"
+  lane :sync_certs do
+    match(type: "appstore", readonly: true)
+    match(type: "development", readonly: true)
+  end
+
+  # --------------------------
+  # Create new certificates
+  # --------------------------
+  desc "Create new certificates and profiles (run once)"
+  lane :create_certs do
+    match(type: "development", readonly: false)
+    match(type: "appstore", readonly: false)
+  end
+
+  # --------------------------
+  # Screenshots (for App Store)
+  # --------------------------
+  desc "Capture screenshots"
+  lane :screenshots do
+    capture_screenshots(
+      scheme: "LidarAPPUITests"
+    )
+    frame_screenshots
+  end
+
+  # --------------------------
+  # App Store release
+  # --------------------------
+  desc "Submit to App Store for review"
+  lane :release do
+    increment_version_number(
+      bump_type: "patch"
+    )
+    increment_build_number
+
+    build_app(
+      scheme: "LidarAPP",
+      export_method: "app-store"
+    )
+
+    upload_to_app_store(
+      skip_metadata: true,
+      skip_screenshots: true,
+      submit_for_review: false,
+      automatic_release: false
+    )
+  end
+
+  # --------------------------
+  # Error handling
+  # --------------------------
+  error do |lane, exception|
+    # Slack notification on error (optional)
+    # slack(
+    #   message: "Error in lane #{lane}: #{exception.message}",
+    #   success: false
+    # )
+  end
+
+end

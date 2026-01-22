@@ -15,6 +15,7 @@ final class ScanSession: Identifiable, @unchecked Sendable {
     var pointCloud: PointCloud?
     let combinedMesh: CombinedMesh
     private(set) var textureFrames: [TextureFrame]
+    private(set) var depthFrames: [DepthFrame] = []
     private(set) var measurements: [Measurement]
 
     // Statistics
@@ -80,6 +81,20 @@ final class ScanSession: Identifiable, @unchecked Sendable {
         state = .failed
     }
 
+    /// Reset all scan data for a fresh start
+    func reset() {
+        state = .idle
+        pointCloud = nil
+        combinedMesh.clear()
+        textureFrames = []
+        depthFrames = []
+        measurements = []
+        scanDuration = 0
+        deviceTrajectory = []
+        scanStartTime = nil
+        updatedAt = Date()
+    }
+
     private func updateDuration() {
         if let startTime = scanStartTime {
             scanDuration += Date().timeIntervalSince(startTime)
@@ -101,6 +116,11 @@ final class ScanSession: Identifiable, @unchecked Sendable {
 
     func addTextureFrame(_ frame: TextureFrame) {
         textureFrames.append(frame)
+        updatedAt = Date()
+    }
+
+    func addDepthFrame(_ frame: DepthFrame) {
+        depthFrames.append(frame)
         updatedAt = Date()
     }
 
@@ -243,9 +263,18 @@ enum MeasurementType: String, Sendable {
     case area
     case volume
     case angle
+
+    var icon: String {
+        switch self {
+        case .distance: return "ruler"
+        case .area: return "square.dashed"
+        case .volume: return "cube"
+        case .angle: return "angle"
+        }
+    }
 }
 
-enum MeasurementUnit: String, CaseIterable, Sendable {
+enum MeasurementUnit: String, Codable, CaseIterable, Sendable {
     case meters
     case centimeters
     case feet

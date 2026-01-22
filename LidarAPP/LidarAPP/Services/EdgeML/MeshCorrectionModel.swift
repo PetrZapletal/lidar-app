@@ -1,6 +1,7 @@
 import CoreML
 import simd
 import Accelerate
+import QuartzCore
 
 /// CoreML model wrapper for on-device mesh correction
 @MainActor

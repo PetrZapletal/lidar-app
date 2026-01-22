@@ -52,7 +52,9 @@ class ScanProcessor:
         ProcessingStage("export", 0.10, "Exporting to formats"),
     ]
 
-    def __init__(self, data_dir: str = "/data/scans"):
+    def __init__(self, data_dir: str = None):
+        if data_dir is None:
+            data_dir = os.getenv("DATA_DIR", "./data/scans")
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 

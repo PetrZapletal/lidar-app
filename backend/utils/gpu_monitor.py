@@ -205,24 +205,21 @@ class GPUMonitor:
             return 0
 
     def _get_mock_gpu_info(self) -> List[GPUInfo]:
-        """Return mock GPU data for development/testing"""
+        """Return placeholder when no GPU available"""
         return [
             GPUInfo(
                 index=0,
-                name="NVIDIA RTX 4090 (Mock)",
-                uuid="GPU-mock-0000",
-                status="active",
-                utilization=78,
-                memory_used=18.2,
-                memory_total=24.0,
-                memory_percent=76,
-                temp=72,
-                power=320,
-                power_limit=450,
-                current_job={
-                    "name": "Office Scan",
-                    "stage": "3D Gaussian Splatting"
-                }
+                name="Žádné GPU (CPU mód)",
+                uuid="",
+                status="unavailable",
+                utilization=0,
+                memory_used=0,
+                memory_total=0,
+                memory_percent=0,
+                temp=0,
+                power=0,
+                power_limit=0,
+                current_job=None
             )
         ]
 

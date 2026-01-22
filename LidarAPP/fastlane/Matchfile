@@ -1,0 +1,22 @@
+# Matchfile for certificate management
+# https://docs.fastlane.tools/actions/match/
+
+# Git repository URL for storing certificates and profiles
+# Create a PRIVATE repository for this!
+git_url("git@github.com:YOUR_USERNAME/certificates.git")
+
+# Storage mode (git, google_cloud, s3)
+storage_mode("git")
+
+# App identifier
+app_identifier("com.lidarscanner.app")
+
+# Apple Developer email
+username("YOUR_APPLE_ID@email.com")
+
+# Team ID
+team_id("YOUR_TEAM_ID")
+
+# Types of certificates to sync
+# type("development")  # for development
+# type("appstore")     # for App Store / TestFlight

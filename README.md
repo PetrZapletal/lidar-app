@@ -17,6 +17,8 @@
 
 ## Architektura
 
+### Procesní architektura
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        iPhone (Edge Device)                          │
@@ -54,6 +56,12 @@
 │              └──────────────────────────────────────────┘           │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+### Síťová architektura (Development)
+
+iOS app komunikuje s backendem přes **Tailscale VPN** a **HTTPS (port 8444)**.
+
+> **Detailní síťová konfigurace:** viz [backend/DEVELOPMENT.md](backend/DEVELOPMENT.md)
 
 ## Struktura projektu
 

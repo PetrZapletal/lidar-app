@@ -72,13 +72,22 @@ final class DepthAnythingModel {
     /// Load the CoreML model
     func loadModel() async throws {
         // Try to load the model from bundle
-        // Model should be added as DepthAnythingV2Small.mlmodelc
-        guard let modelURL = Bundle.main.url(
-            forResource: "DepthAnythingV2Small",
-            withExtension: "mlmodelc"
-        ) else {
+        // Model should be added as DepthAnythingV2SmallF16.mlpackage (compiled to mlmodelc by Xcode)
+        let modelNames = ["DepthAnythingV2SmallF16", "DepthAnythingV2Small"]
+        var modelURL: URL?
+
+        for name in modelNames {
+            if let url = Bundle.main.url(forResource: name, withExtension: "mlmodelc") {
+                modelURL = url
+                print("✅ Found model: \(name).mlmodelc")
+                break
+            }
+        }
+
+        guard let finalURL = modelURL else {
             // Model not found - use placeholder for development
-            print("⚠️ DepthAnythingV2Small.mlmodelc not found in bundle")
+            print("⚠️ Depth Anything V2 model not found in bundle")
+            print("   Expected: DepthAnythingV2SmallF16.mlmodelc")
             print("   Download from: https://huggingface.co/apple/coreml-depth-anything-v2-small")
             loadError = DepthAnythingError.modelNotFound
             return
@@ -88,7 +97,7 @@ final class DepthAnythingModel {
             let config = MLModelConfiguration()
             config.computeUnits = configuration.useNeuralEngine ? .all : .cpuAndGPU
 
-            let mlModel = try await MLModel.load(contentsOf: modelURL, configuration: config)
+            let mlModel = try await MLModel.load(contentsOf: finalURL, configuration: config)
             visionModel = try VNCoreMLModel(for: mlModel)
             isLoaded = true
 
@@ -486,19 +495,19 @@ extension DepthAnythingModel {
     /// Information about the model
     static var modelInfo: String {
         """
-        Depth Anything V2 Small
-        =======================
-        - Input: 518×518 RGB image
-        - Output: 518×518 relative depth map
-        - Size: ~25MB (FP16)
-        - Inference: <50ms on Neural Engine
+        Depth Anything V2 Small (F16)
+        =============================
+        - Input: 518×396 RGB image (4:3 aspect ratio)
+        - Output: 518×396 relative depth map
+        - Size: ~49MB (FP16 quantized)
+        - Inference: 31ms on iPhone 12 Pro Max
+        - Compute: Neural Engine optimized
 
-        Download: https://huggingface.co/apple/coreml-depth-anything-v2-small
+        Source: https://huggingface.co/apple/coreml-depth-anything-v2-small
 
         Usage:
-        1. Download DepthAnythingV2SmallF16.mlpackage
-        2. Add to Xcode project
-        3. Rename to DepthAnythingV2Small.mlmodelc
+        1. Model is located at: ML/DepthAnythingV2SmallF16.mlpackage
+        2. Xcode automatically compiles .mlpackage to .mlmodelc
         """
     }
 }

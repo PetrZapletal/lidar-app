@@ -1,0 +1,27 @@
+INFO:     Started server process [42851]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on https://0.0.0.0:8443 (Press CTRL+C to quit)
+============================================================
+LiDAR Debug Server
+============================================================
+Mode: HTTPS
+Port: 8443
+Data directory: /Users/petrzapletal/Documents/GitHub/lidar-app/backend/debug_data
+
+Endpoints:
+  GET  /health                              - Health check
+  POST /api/v1/debug/scans/raw/init         - Init upload
+  PUT  /api/v1/debug/scans/{id}/raw/chunk   - Upload chunk
+  POST /api/v1/debug/scans/{id}/raw/finalize- Finalize
+  WS   /api/v1/debug/stream/{device_id}     - Debug stream
+  POST /api/v1/debug/events/{device_id}     - Batch events
+============================================================
+INFO:     100.96.188.18:50944 - "GET /health HTTP/1.1" 200 OK
+INFO:     100.85.189.116:49595 - "GET /admin/ HTTP/1.1" 404 Not Found
+INFO:     100.85.189.116:49595 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:51459 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [42851]

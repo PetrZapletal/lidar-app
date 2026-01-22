@@ -14,6 +14,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from services.storage import StorageService
+from services.log_storage import get_log_storage
 from utils.logger import get_logger
 from utils.gpu_monitor import get_gpu_info as get_real_gpu_info, get_system_info as get_real_system_info
 from api.auth import get_current_user
@@ -45,34 +46,88 @@ def get_system_data():
     return get_real_system_info()
 
 
-def get_mock_services():
-    """Get services status (mock for demo)"""
-    return [
+def get_services_status():
+    """Get real services status"""
+    import redis
+
+    services = [
         {
             "name": "FastAPI Server",
             "description": "REST API & WebSocket",
-            "status": "running",
+            "status": "running",  # Always running if we're here
             "icon": "fas fa-server"
-        },
-        {
-            "name": "Redis",
-            "description": "Task Queue",
-            "status": "running",
-            "icon": "fas fa-database"
-        },
-        {
-            "name": "Celery Workers",
-            "description": "Background Processing",
-            "status": "running",
-            "icon": "fas fa-cogs"
-        },
-        {
-            "name": "Storage (MinIO)",
-            "description": "Object Storage",
-            "status": "running",
-            "icon": "fas fa-hdd"
         }
     ]
+
+    # Check Redis
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+    try:
+        r = redis.from_url(redis_url, socket_timeout=2)
+        r.ping()
+        redis_status = "running"
+    except Exception:
+        redis_status = "stopped"
+
+    services.append({
+        "name": "Redis",
+        "description": "Task Queue",
+        "status": redis_status,
+        "icon": "fas fa-database"
+    })
+
+    # Check Celery (via Redis)
+    try:
+        if redis_status == "running":
+            r = redis.from_url(redis_url, socket_timeout=2)
+            # Check if any celery workers registered
+            workers = r.smembers("_kombu.binding.celery")
+            celery_status = "running" if workers else "idle"
+        else:
+            celery_status = "stopped"
+    except Exception:
+        celery_status = "unknown"
+
+    services.append({
+        "name": "Celery Workers",
+        "description": "Background Processing",
+        "status": celery_status,
+        "icon": "fas fa-cogs"
+    })
+
+    # Storage (local filesystem)
+    storage_status = "running" if storage.base_path.exists() else "stopped"
+    services.append({
+        "name": "Local Storage",
+        "description": f"{storage.base_path}",
+        "status": storage_status,
+        "icon": "fas fa-hdd"
+    })
+
+    return services
+
+
+def get_directory_size(path: Path) -> int:
+    """Calculate total size of directory in bytes"""
+    total = 0
+    try:
+        for entry in path.rglob("*"):
+            if entry.is_file():
+                total += entry.stat().st_size
+    except (PermissionError, OSError):
+        pass
+    return total
+
+
+def format_size(bytes_size: int) -> str:
+    """Format bytes to human readable string"""
+    if bytes_size < 1024:
+        return f"{bytes_size} B"
+    elif bytes_size < 1024 ** 2:
+        return f"{bytes_size / 1024:.1f} KB"
+    elif bytes_size < 1024 ** 3:
+        return f"{bytes_size / (1024 ** 2):.1f} MB"
+    else:
+        return f"{bytes_size / (1024 ** 3):.2f} GB"
 
 
 async def get_dashboard_stats():
@@ -95,6 +150,18 @@ async def get_dashboard_stats():
     total_finished = completed + failed
     success_rate = round((completed / total_finished * 100) if total_finished > 0 else 100, 1)
 
+    # Calculate real storage usage
+    storage_bytes = get_directory_size(storage.base_path)
+    storage_used = format_size(storage_bytes)
+
+    # Get disk info for percentage (use DATA_DIR mount point)
+    import psutil
+    try:
+        disk = psutil.disk_usage(str(storage.base_path))
+        storage_percent = int((storage_bytes / disk.total) * 100) if disk.total > 0 else 0
+    except (OSError, Exception):
+        storage_percent = 0
+
     return {
         "total_scans": total,
         "processing": processing,
@@ -103,8 +170,8 @@ async def get_dashboard_stats():
         "scans_today": scans_today,
         "queued": 0,  # TODO: Get from Redis queue
         "success_rate": success_rate,
-        "storage_used": "45.2 GB",
-        "storage_percent": 23
+        "storage_used": storage_used,
+        "storage_percent": storage_percent
     }
 
 
@@ -274,7 +341,10 @@ async def scan_detail(request: Request, scan_id: str):
                 })
 
     scan["files"] = files
-    scan["logs"] = []  # TODO: Get real logs
+
+    # Get real logs from storage
+    log_storage = get_log_storage()
+    scan["logs"] = log_storage.get_scan_logs(scan_id, limit=50)
 
     return templates.TemplateResponse("scan_detail.html", {
         "request": request,
@@ -332,6 +402,23 @@ async def processing_queue(request: Request):
     })
 
 
+@router.get("/logs", response_class=HTMLResponse)
+async def logs_page(request: Request):
+    """Logs viewer page"""
+    user = await check_auth(request)
+    if not user:
+        return RedirectResponse(url="/login?next=/admin/logs", status_code=303)
+
+    log_storage = get_log_storage()
+
+    return templates.TemplateResponse("logs.html", {
+        "request": request,
+        "active_page": "logs",
+        "stats": log_storage.get_statistics(),
+        "recent_errors": log_storage.get_recent_errors(limit=20)
+    })
+
+
 @router.get("/system", response_class=HTMLResponse)
 async def system_status(request: Request):
     """System status page"""
@@ -339,13 +426,18 @@ async def system_status(request: Request):
     if not user:
         return RedirectResponse(url="/login?next=/admin/system", status_code=303)
 
+    # Get real errors from log storage
+    log_storage = get_log_storage()
+    recent_errors = log_storage.get_recent_errors(limit=20)
+
     return templates.TemplateResponse("system.html", {
         "request": request,
         "active_page": "system",
         "system": get_system_data(),
         "gpus": get_gpu_data(),
-        "services": get_mock_services(),
-        "recent_errors": [],  # TODO: Get from logs
+        "services": get_services_status(),
+        "recent_errors": recent_errors,
+        "log_stats": log_storage.get_statistics(),
         "config": {
             "ENVIRONMENT": os.getenv("ENVIRONMENT", "development"),
             "DATA_DIR": os.getenv("DATA_DIR", "/data/scans"),
@@ -439,15 +531,41 @@ async def cancel_processing(scan_id: str):
 
 
 @router.get("/api/scans/{scan_id}/logs")
-async def get_scan_logs(scan_id: str):
+async def get_scan_logs(scan_id: str, limit: int = 100):
     """Get processing logs for a scan"""
-    # TODO: Implement real log retrieval
-    return [
-        {"timestamp": "10:34:56", "level": "info", "message": "Started preprocessing"},
-        {"timestamp": "10:35:12", "level": "info", "message": "Point cloud loaded: 1,234,567 points"},
-        {"timestamp": "10:35:18", "level": "info", "message": "Outlier removal: removed 12,345 points"},
-        {"timestamp": "10:35:45", "level": "info", "message": "Starting 3D Gaussian Splatting training"}
-    ]
+    log_storage = get_log_storage()
+    return log_storage.get_scan_logs(scan_id, limit=limit)
+
+
+@router.get("/api/logs/recent")
+async def get_recent_logs(
+    limit: int = 100,
+    level: Optional[str] = None,
+    category: Optional[str] = None
+):
+    """Get recent logs with optional filtering"""
+    log_storage = get_log_storage()
+    return {
+        "logs": log_storage.get_recent_logs(limit=limit, level=level, category=category),
+        "stats": log_storage.get_statistics()
+    }
+
+
+@router.get("/api/logs/errors")
+async def get_recent_errors(limit: int = 50):
+    """Get recent errors"""
+    log_storage = get_log_storage()
+    return {
+        "errors": log_storage.get_recent_errors(limit=limit),
+        "stats": log_storage.get_statistics()
+    }
+
+
+@router.get("/api/devices/{device_id}/logs")
+async def get_device_logs(device_id: str, limit: int = 200):
+    """Get logs for a specific device"""
+    log_storage = get_log_storage()
+    return log_storage.get_device_logs(device_id, limit=limit)
 
 
 @router.delete("/api/queue/{scan_id}")

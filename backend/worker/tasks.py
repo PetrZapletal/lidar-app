@@ -197,6 +197,127 @@ async def _update_scan_status(
 
 
 # ============================================================================
+# Raw Data Processing Tasks
+# ============================================================================
+
+@celery_app.task(
+    bind=True,
+    base=ScanProcessingTask,
+    name="worker.tasks.process_raw_scan",
+    max_retries=3,
+    default_retry_delay=60,
+    time_limit=7200,  # 2 hours max for raw data
+    soft_time_limit=6900
+)
+def process_raw_scan_task(
+    self,
+    scan_id: str,
+    options: Dict[str, Any] = None
+) -> Dict[str, Any]:
+    """
+    Process raw scan data uploaded via debug pipeline.
+
+    Pipeline:
+    1. Parse LRAW binary format
+    2. Reconstruct mesh from anchors
+    3. Extract point cloud
+    4. Run standard processing pipeline
+    """
+    logger.info(f"Starting raw scan processing: {scan_id}")
+
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        try:
+            result = loop.run_until_complete(
+                _process_raw_scan_async(self, scan_id, options or {})
+            )
+            return result
+        finally:
+            loop.close()
+
+    except Exception as e:
+        logger.error(f"Raw scan processing failed for {scan_id}: {e}")
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(
+                _update_scan_status(scan_id, "failed", error=str(e))
+            )
+        finally:
+            loop.close()
+
+        raise self.retry(exc=e)
+
+
+async def _process_raw_scan_async(
+    task: ScanProcessingTask,
+    scan_id: str,
+    options: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Process raw scan data asynchronously"""
+    from pathlib import Path
+    from services.raw_data_processor import RawDataProcessor
+
+    async def on_progress(progress: float, stage: str, message: str = None):
+        await _update_scan_status(scan_id, "processing", progress=progress, stage=stage)
+
+        task.update_state(
+            state="PROGRESS",
+            meta={
+                "progress": progress,
+                "stage": stage,
+                "scan_id": scan_id
+            }
+        )
+
+    # Get raw file path
+    scan_data = await storage.get_scan_metadata(scan_id)
+    if not scan_data:
+        raise ValueError(f"Scan not found: {scan_id}")
+
+    raw_file = scan_data.get("raw_file")
+    if not raw_file or not Path(raw_file).exists():
+        raise ValueError(f"Raw data file not found: {raw_file}")
+
+    # Process raw data
+    raw_processor = RawDataProcessor()
+    processed_data = await raw_processor.process(
+        raw_file_path=raw_file,
+        scan_id=scan_id,
+        progress_callback=on_progress
+    )
+
+    # Continue with standard processing
+    await on_progress(0.5, "gaussian_splatting", "Starting 3D reconstruction...")
+
+    result = await task.processor.process_scan(
+        scan_id=scan_id,
+        options={**options, "preprocessed_data": processed_data},
+        progress_callback=lambda p, s, m=None: on_progress(0.5 + p * 0.5, s, m)
+    )
+
+    # Update final status
+    await _update_scan_status(
+        scan_id,
+        "completed",
+        progress=1.0,
+        stage="completed",
+        result_urls=result.get("output_urls", {})
+    )
+
+    logger.info(f"Raw scan processing completed: {scan_id}")
+
+    return {
+        "scan_id": scan_id,
+        "status": "completed",
+        "output_urls": result.get("output_urls", {})
+    }
+
+
+# ============================================================================
 # Export Tasks
 # ============================================================================
 

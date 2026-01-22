@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1500"
-   version = "1.7">
+   LastUpgradeVersion = "1600"
+   version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A1B2C3D4E5F60001"
+               BlueprintIdentifier = "A60000001111111100000001"
                BuildableName = "LidarAPP.app"
                BlueprintName = "LidarAPP"
                ReferencedContainer = "container:LidarAPP.xcodeproj">
@@ -26,8 +26,19 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      shouldAutocreateTestPlan = "YES">
+      shouldUseLaunchSchemeArgsEnv = "YES">
+      <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "DD07A028791BABA27469180E"
+               BuildableName = "LidarAPPTests.xctest"
+               BlueprintName = "LidarAPPTests"
+               ReferencedContainer = "container:LidarAPP.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -39,11 +50,10 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <BuildableProductRunnable>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A1B2C3D4E5F60001"
+            BlueprintIdentifier = "A60000001111111100000001"
             BuildableName = "LidarAPP.app"
             BlueprintName = "LidarAPP"
             ReferencedContainer = "container:LidarAPP.xcodeproj">
@@ -56,11 +66,10 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
+      <BuildableProductRunnable>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A1B2C3D4E5F60001"
+            BlueprintIdentifier = "A60000001111111100000001"
             BuildableName = "LidarAPP.app"
             BlueprintName = "LidarAPP"
             ReferencedContainer = "container:LidarAPP.xcodeproj">

@@ -82,6 +82,9 @@
                                 <a href="/admin/system" class="{% if active_page == 'system' %}bg-gray-900 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
                                     <i class="fas fa-server mr-2"></i>Systém
                                 </a>
+                                <a href="/admin/logs" class="{% if active_page == 'logs' %}bg-gray-900 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                                    <i class="fas fa-scroll mr-2"></i>Logy
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -127,6 +130,9 @@
             </div>
         </footer>
     </div>
+
+    <!-- Dashboard JavaScript -->
+    <script src="/static/js/dashboard.js"></script>
 
     {% block extra_scripts %}{% endblock %}
 </body>

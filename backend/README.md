@@ -4,6 +4,10 @@ Backend služba pro AI-powered zpracování 3D skenů.
 
 ## Architektura
 
+> **Síťová konfigurace a iOS připojení:** viz [DEVELOPMENT.md](DEVELOPMENT.md)
+
+### Processing architektura
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         FastAPI Server                           │
@@ -39,16 +43,18 @@ Backend služba pro AI-powered zpracování 3D skenů.
 
 ### Docker (doporučeno)
 
+> **Detailní Docker setup:** viz [DEVELOPMENT.md](DEVELOPMENT.md)
+
 ```bash
-# Spustit všechny služby
-docker-compose up -d
-
-# Zobrazit logy
-docker-compose logs -f api
-
-# Zastavit
-docker-compose down
+# Apple Silicon (M1/M2/M3) - vždy použít docker-compose.dev.yml
+cd backend
+docker compose -f docker-compose.dev.yml up -d --build
 ```
+
+| Docker Compose soubor | Platform | GPU |
+|-----------------------|----------|-----|
+| `docker-compose.dev.yml` | Apple Silicon | CPU only |
+| `docker-compose.yml` | Linux x86_64 | NVIDIA CUDA |
 
 ### Lokální instalace
 

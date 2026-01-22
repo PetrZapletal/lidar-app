@@ -119,7 +119,7 @@ final class OnDeviceProcessor {
 
         // Check for degenerate mesh
         if currentMesh.vertexCount < 3 {
-            throw ProcessingError.insufficientData("Mesh has fewer than 3 vertices")
+            throw OnDeviceProcessorError.insufficientData("Mesh has fewer than 3 vertices")
         }
 
         // Stage 2: Noise removal
@@ -427,12 +427,12 @@ final class OnDeviceProcessor {
 
         guard mesh.vertexCount > targetVertexCount else { return mesh }
 
-        let stride = mesh.vertexCount / targetVertexCount
+        let sampleStep = mesh.vertexCount / targetVertexCount
 
         var sampledVertices: [simd_float3] = []
         var sampledNormals: [simd_float3] = []
 
-        for i in stride(from: 0, to: mesh.vertices.count, by: stride) {
+        for i in Swift.stride(from: 0, to: mesh.vertices.count, by: sampleStep) {
             sampledVertices.append(mesh.vertices[i])
             if i < mesh.normals.count {
                 sampledNormals.append(mesh.normals[i])
@@ -464,7 +464,7 @@ final class OnDeviceProcessor {
 
 // MARK: - Processing Error
 
-enum ProcessingError: LocalizedError {
+enum OnDeviceProcessorError: LocalizedError {
     case insufficientData(String)
     case modelNotLoaded
     case processingFailed(String)

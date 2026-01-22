@@ -1,0 +1,89 @@
+# =============================================================================
+# LiDAR Backend - Development (Apple Silicon M1/M2 - no CUDA)
+# =============================================================================
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d --build
+#
+# Ports:
+#   - 8080: HTTP API (container 8000)
+#   - 8444: HTTPS API (container 8443) - for iOS app via Tailscale
+#   - 6379: Redis
+#
+# Tailscale Access (from iOS app):
+#   REST API: https://100.96.188.18:8444/api/v1
+#   WebSocket: wss://100.96.188.18:8444/ws
+#
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # API Server (Apple Silicon - no CUDA)
+  # ===========================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8000"    # HTTP
+      - "8444:8443"    # HTTPS (for iOS via Tailscale)
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - REDIS_URL=redis://redis:6379
+      - DATA_DIR=/data/scans
+    volumes:
+      - scan_data:/data/scans
+      - model_cache:/data/cache
+      - ./certs:/app/certs:ro          # SSL certificates (note: certs with 's')
+      - ./api:/app/api:ro              # Hot reload API code
+      - ./utils:/app/utils:ro          # Hot reload utils
+      - ./services:/app/services:ro    # Hot reload services
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    # Run both HTTP and HTTPS servers
+    command: ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port 8000 & uvicorn api.main:app --host 0.0.0.0 --port 8443 --ssl-keyfile=/app/certs/key.pem --ssl-certfile=/app/certs/cert.pem"]
+
+  # ===========================================================================
+  # Redis (for task queue and caching)
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  # ===========================================================================
+  # Celery Worker (Apple Silicon - no CUDA)
+  # ===========================================================================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: celery -A worker.tasks worker --loglevel=info
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - REDIS_URL=redis://redis:6379
+      - DATA_DIR=/data/scans
+    volumes:
+      - scan_data:/data/scans
+      - model_cache:/data/cache
+      - ./api:/app/api:ro
+      - ./utils:/app/utils:ro
+      - ./services:/app/services:ro
+    depends_on:
+      - redis
+
+volumes:
+  scan_data:
+  model_cache:
+  redis_data:
