@@ -2,13 +2,13 @@ import Foundation
 import CoreML
 import simd
 import Accelerate
-import Combine
 
 /// AI-powered 3D Geometry Generation Service
 /// Combines on-device lightweight models with cloud heavy processing
 /// for intelligent geometry completion and enhancement
 @MainActor
-final class AIGeometryGenerationService: ObservableObject {
+@Observable
+final class AIGeometryGenerationService {
 
     // MARK: - Types
 
@@ -74,12 +74,12 @@ final class AIGeometryGenerationService: ObservableObject {
         }
     }
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
-    @Published var isProcessing = false
-    @Published var processingStage: ProcessingStage = .idle
-    @Published var progress: Float = 0
-    @Published var currentResult: GenerationResult?
+    var isProcessing = false
+    var processingStage: ProcessingStage = .idle
+    var progress: Float = 0
+    var currentResult: GenerationResult?
 
     enum ProcessingStage: String {
         case idle = "Připraveno"
@@ -97,8 +97,6 @@ final class AIGeometryGenerationService: ObservableObject {
     }
 
     // MARK: - Private Properties
-
-    private var cancellables = Set<AnyCancellable>()
 
     // Edge ML models (would be loaded from CoreML)
     private var depthCompletionModel: MLModel?

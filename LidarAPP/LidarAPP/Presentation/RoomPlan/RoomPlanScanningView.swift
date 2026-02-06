@@ -5,11 +5,34 @@ import Combine
 // MARK: - RoomPlan Scanning View
 
 struct RoomPlanScanningView: View {
-    @StateObject private var viewModel = RoomPlanViewModel()
+    @State private var viewModel = RoomPlanViewModel()
     @State private var showResults = false
     @Environment(\.dismiss) private var dismiss
 
     var onScanCompleted: ((ScanModel, ScanSession) -> Void)?
+
+    /// Convert RoomCaptureStatus to UnifiedScanStatus for shared components
+    private var unifiedStatus: UnifiedScanStatus {
+        switch viewModel.status {
+        case .idle: return .idle
+        case .preparing: return .preparing
+        case .capturing: return .scanning
+        case .processing: return .processing
+        case .completed: return .completed
+        case .failed(let message): return .failed(message)
+        }
+    }
+
+    /// Capture button state based on view model status
+    private var captureButtonState: CaptureButtonState {
+        switch viewModel.status {
+        case .idle, .preparing: return .processing
+        case .capturing: return .recording
+        case .processing: return .processing
+        case .completed: return .ready
+        case .failed: return .disabled
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -19,18 +42,60 @@ struct RoomPlanScanningView: View {
 
             // Overlay UI
             VStack {
-                // Top bar
-                topBar
+                // Top bar - using shared component
+                SharedTopBar(
+                    status: unifiedStatus,
+                    statusSubtitle: viewModel.isCapturing ? "Pohybujte se pomalu po místnosti" : nil,
+                    onClose: {
+                        viewModel.cancelCapture()
+                        dismiss()
+                    }
+                ) {
+                    CircleButton(
+                        icon: "info.circle",
+                        action: { /* show info */ },
+                        accessibilityLabel: "Informace"
+                    )
+                }
 
                 Spacer()
 
-                // Progress and stats
+                // Stats bar - using shared component
                 if viewModel.isCapturing {
-                    captureStatsBar
+                    StatisticsGrid(items: [
+                        StatItem(icon: "square.3.layers.3d", value: "\(viewModel.roomCount)", label: "Místnosti"),
+                        StatItem(icon: "rectangle.portrait", value: "\(viewModel.wallCount)", label: "Stěny"),
+                        StatItem(icon: "door.left.hand.open", value: "\(viewModel.doorCount)", label: "Dveře"),
+                        StatItem(icon: "window.ceiling", value: "\(viewModel.windowCount)", label: "Okna")
+                    ])
+                    .padding(.bottom, 16)
                 }
 
-                // Controls
-                controlsBar
+                // Controls - using shared component
+                SharedControlBar(
+                    captureState: captureButtonState,
+                    onCaptureTap: {
+                        if viewModel.isCapturing {
+                            Task {
+                                await viewModel.stopCapture()
+                                showResults = true
+                            }
+                        }
+                    }
+                ) {
+                    // Left: Progress indicator
+                    ProgressAccessory(
+                        progress: viewModel.progress,
+                        label: "Progress"
+                    )
+                } rightContent: {
+                    // Right: Area indicator
+                    StatsAccessory(
+                        icon: "square.dashed",
+                        value: String(format: "%.1f", viewModel.totalArea),
+                        label: "m²"
+                    )
+                }
             }
         }
         .onAppear {
@@ -58,157 +123,9 @@ struct RoomPlanScanningView: View {
             }
         }
     }
-
-    private var topBar: some View {
-        HStack {
-            // Close button
-            Button(action: {
-                viewModel.cancelCapture()
-                dismiss()
-            }) {
-                Image(systemName: "xmark")
-                    .font(.title2)
-                    .foregroundStyle(.white)
-                    .padding(12)
-                    .background(.ultraThinMaterial, in: Circle())
-            }
-
-            Spacer()
-
-            // Status indicator
-            VStack(spacing: 4) {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(statusColor)
-                        .frame(width: 10, height: 10)
-                    Text(viewModel.status.displayName)
-                        .font(.headline)
-                }
-
-                if viewModel.isCapturing {
-                    Text("Pohybujte se pomalu po místnosti")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(.ultraThinMaterial, in: Capsule())
-
-            Spacer()
-
-            // Info button
-            Button(action: { /* show info */ }) {
-                Image(systemName: "info.circle")
-                    .font(.title2)
-                    .foregroundStyle(.white)
-                    .padding(12)
-                    .background(.ultraThinMaterial, in: Circle())
-            }
-        }
-        .padding()
-    }
-
-    private var statusColor: Color {
-        switch viewModel.status {
-        case .idle, .preparing: return .gray
-        case .capturing: return .green
-        case .processing: return .orange
-        case .completed: return .blue
-        case .failed: return .red
-        }
-    }
-
-    private var captureStatsBar: some View {
-        HStack(spacing: 20) {
-            StatItem(icon: "square.3.layers.3d", value: "\(viewModel.roomCount)", label: "Místnosti")
-            StatItem(icon: "rectangle.portrait", value: "\(viewModel.wallCount)", label: "Stěny")
-            StatItem(icon: "door.left.hand.open", value: "\(viewModel.doorCount)", label: "Dveře")
-            StatItem(icon: "window.ceiling", value: "\(viewModel.windowCount)", label: "Okna")
-        }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .padding(.horizontal)
-        .padding(.bottom, 20)
-    }
-
-    private var controlsBar: some View {
-        HStack(spacing: 40) {
-            // Progress indicator
-            VStack {
-                CircularProgressView(progress: viewModel.progress)
-                    .frame(width: 50, height: 50)
-                Text("\(Int(viewModel.progress * 100))%")
-                    .font(.caption2)
-            }
-            .foregroundStyle(.white)
-
-            // Main capture button
-            Button(action: {
-                if viewModel.isCapturing {
-                    Task {
-                        await viewModel.stopCapture()
-                        showResults = true
-                    }
-                }
-            }) {
-                ZStack {
-                    Circle()
-                        .stroke(Color.white, lineWidth: 4)
-                        .frame(width: 80, height: 80)
-
-                    if viewModel.isCapturing {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.red)
-                            .frame(width: 35, height: 35)
-                    } else {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                            .tint(.white)
-                    }
-                }
-            }
-            .disabled(!viewModel.isCapturing)
-
-            // Area indicator
-            VStack {
-                Image(systemName: "square.dashed")
-                    .font(.title2)
-                Text(String(format: "%.1f m²", viewModel.totalArea))
-                    .font(.caption2)
-            }
-            .foregroundStyle(.white)
-            .frame(width: 50)
-        }
-        .padding(.vertical, 30)
-        .padding(.horizontal)
-        .background(.ultraThinMaterial)
-    }
 }
 
-// MARK: - Stat Item
-
-struct StatItem: View {
-    let icon: String
-    let value: String
-    let label: String
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.title3)
-            Text(value)
-                .font(.headline)
-                .fontWeight(.bold)
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .foregroundStyle(.white)
-    }
-}
-
-// MARK: - Circular Progress View
+// MARK: - Circular Progress View (kept for backward compatibility)
 
 struct CircularProgressView: View {
     let progress: Float
@@ -229,18 +146,21 @@ struct CircularProgressView: View {
 // MARK: - RoomPlan View Model
 
 @MainActor
-class RoomPlanViewModel: ObservableObject {
-    @Published var status: RoomCaptureStatus = .idle
-    @Published var progress: Float = 0
-    @Published var roomCount: Int = 0
-    @Published var wallCount: Int = 0
-    @Published var doorCount: Int = 0
-    @Published var windowCount: Int = 0
-    @Published var totalArea: Float = 0
-    @Published var showError = false
-    @Published var errorMessage: String?
-    @Published var capturedStructure: CapturedStructure?
+@Observable
+final class RoomPlanViewModel {
+    // MARK: - Observable State (no @Published needed with @Observable)
+    private(set) var status: RoomCaptureStatus = .idle
+    private(set) var progress: Float = 0
+    private(set) var roomCount: Int = 0
+    private(set) var wallCount: Int = 0
+    private(set) var doorCount: Int = 0
+    private(set) var windowCount: Int = 0
+    private(set) var totalArea: Float = 0
+    var showError = false
+    var errorMessage: String?
+    private(set) var capturedStructure: CapturedStructure?
 
+    // MARK: - Private
     private let service = RoomPlanService.shared
     private var cancellables = Set<AnyCancellable>()
 
@@ -328,7 +248,8 @@ class RoomPlanViewModel: ObservableObject {
 // MARK: - RoomCapture View Representable
 
 struct RoomCaptureViewRepresentable: UIViewRepresentable {
-    @ObservedObject var viewModel: RoomPlanViewModel
+    // With @Observable, no property wrapper needed - just pass the reference
+    let viewModel: RoomPlanViewModel
 
     func makeUIView(context: Context) -> RoomCaptureView {
         RoomPlanService.shared.createCaptureView()
@@ -343,7 +264,8 @@ struct RoomCaptureViewRepresentable: UIViewRepresentable {
 
 struct RoomPlanResultsView: View {
     let structure: CapturedStructure
-    @ObservedObject var viewModel: RoomPlanViewModel
+    // With @Observable, no property wrapper needed
+    let viewModel: RoomPlanViewModel
     let onSave: (ScanModel, ScanSession) -> Void
     @State private var scanName = ""
     @Environment(\.dismiss) private var dismiss

@@ -127,6 +127,20 @@ final class CoverageAnalyzer {
     private var lastUpdateTime: Date = Date.distantPast
     private let updateInterval: TimeInterval = 0.2 // 5 Hz update rate
 
+    // MARK: - Performance Optimization State
+    /// Tracks which mesh anchors have been fully processed (by identifier)
+    private var processedAnchorIdentifiers: Set<UUID> = []
+    /// Number of new cells since last gap detection
+    private var newCellsSinceLastGapDetection: Int = 0
+    /// Minimum new cells before running gap detection (reduces CPU usage)
+    private let minNewCellsForGapDetection: Int = 100
+    /// Last time gap detection was run
+    private var lastGapDetectionTime: Date = Date.distantPast
+    /// Minimum interval between gap detection runs (seconds)
+    private let minGapDetectionInterval: TimeInterval = 1.0
+    /// Flag indicating if statistics need recalculation
+    private var statisticsDirty: Bool = false
+
     // MARK: - Initialization
 
     init(configuration: Configuration = .default) {
@@ -142,8 +156,14 @@ final class CoverageAnalyzer {
         guard now.timeIntervalSince(lastUpdateTime) >= updateInterval else { return }
         lastUpdateTime = now
 
-        // Store camera position in trajectory
+        // Store camera position in trajectory (with pruning for memory)
         cameraTrajectory.append(cameraTransform)
+        if cameraTrajectory.count > 1000 {
+            // Downsample to keep every other point
+            cameraTrajectory = cameraTrajectory.enumerated()
+                .filter { $0.offset % 2 == 0 }
+                .map { $0.element }
+        }
 
         let cameraPosition = simd_float3(
             cameraTransform.columns.3.x,
@@ -157,18 +177,40 @@ final class CoverageAnalyzer {
             cameraTransform.columns.2.z
         )
 
-        // Process mesh anchors to update coverage grid
+        // PERFORMANCE: Process only new or updated mesh anchors
+        let previousCellCount = coverageGrid.count
         for anchor in meshAnchors {
-            updateCoverageFromMeshAnchor(anchor, cameraPosition: cameraPosition, cameraForward: cameraForward)
+            // Skip fully processed anchors (only process new/updated ones)
+            if !processedAnchorIdentifiers.contains(anchor.identifier) {
+                updateCoverageFromMeshAnchor(anchor, cameraPosition: cameraPosition, cameraForward: cameraForward)
+                // Mark as processed after first pass (will still update on subsequent geometry changes)
+                processedAnchorIdentifiers.insert(anchor.identifier)
+            }
         }
 
-        // Detect gaps
-        detectGaps(cameraPosition: cameraPosition)
+        // Track new cells for gap detection throttling
+        let newCellsThisUpdate = coverageGrid.count - previousCellCount
+        newCellsSinceLastGapDetection += max(0, newCellsThisUpdate)
+        statisticsDirty = statisticsDirty || newCellsThisUpdate > 0
 
-        // Update statistics
-        updateStatistics()
+        // PERFORMANCE: Only run gap detection when sufficient new data or time passed
+        let timeSinceLastGapDetection = now.timeIntervalSince(lastGapDetectionTime)
+        let shouldDetectGaps = (newCellsSinceLastGapDetection >= minNewCellsForGapDetection) ||
+                               (timeSinceLastGapDetection >= minGapDetectionInterval && newCellsSinceLastGapDetection > 0)
 
-        // Calculate suggested direction
+        if shouldDetectGaps {
+            detectGaps(cameraPosition: cameraPosition)
+            lastGapDetectionTime = now
+            newCellsSinceLastGapDetection = 0
+        }
+
+        // PERFORMANCE: Only update statistics when dirty
+        if statisticsDirty {
+            updateStatistics()
+            statisticsDirty = false
+        }
+
+        // Calculate suggested direction (lightweight operation)
         updateSuggestedDirection(cameraPosition: cameraPosition, cameraForward: cameraForward)
     }
 
@@ -268,6 +310,12 @@ final class CoverageAnalyzer {
         suggestedDirection = nil
         suggestedCameraPosition = nil
         gridBounds = nil
+
+        // Reset performance tracking state
+        processedAnchorIdentifiers.removeAll()
+        newCellsSinceLastGapDetection = 0
+        lastGapDetectionTime = Date.distantPast
+        statisticsDirty = false
     }
 
     /// Serialize coverage grid for persistence

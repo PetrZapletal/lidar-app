@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		010AE2DA81E4840301A3A7FF /* DebugSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5C982388D3288F6054BDFA3 /* DebugSettings.swift */; };
 		0255A922691FF9CDDE5629A7 /* MockDataProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD44B741DA11675287E212D2 /* MockDataProviderTests.swift */; };
+		057EBEC897942F5A7FEF3541 /* ScanningModeProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA9BA78F0A3140D83D1B7E82 /* ScanningModeProtocol.swift */; };
 		07CAB0073648274645BE6396 /* ChunkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE2A27D5662105D98F771D38 /* ChunkManager.swift */; };
 		2C520A5DCAFE51C942BF8501 /* ScanSessionPersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A91D9ACF2857EAC33EDF1A7 /* ScanSessionPersistence.swift */; };
 		2D04E05F79DA8612A575748D /* GaussianSplatRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36E859B348C609F3A03D3B01 /* GaussianSplatRenderer.swift */; };
@@ -20,11 +21,16 @@
 		74D8D973DAA3F6144F4026AA /* DebugLogOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 353B785CE088ADDD39669976 /* DebugLogOverlay.swift */; };
 		753F21E57CA110881F6DFA28 /* ScanSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79511D5C4D7B8275CEB3507C /* ScanSessionTests.swift */; };
 		7A86830645D9AADCC8CBF9CF /* CoverageAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A9438C9A4600487C16C34FD /* CoverageAnalyzer.swift */; };
+		7B981133AF8659512846EA64 /* LiDARScanningModeAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96C7293324F3BB8EF5E87614 /* LiDARScanningModeAdapter.swift */; };
+		8A593F1790A6F0B12A809612 /* SharedTopBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D9C447B7A15F2D2DFE59403 /* SharedTopBar.swift */; };
+		8C670889578B2F01CA7824D8 /* CaptureButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D760D1732444BB1DA9D90FC /* CaptureButton.swift */; };
+		8D69BB7359A410D9B4F5C0B5 /* StatisticsGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DAC3AADB1078418CB736B5 /* StatisticsGrid.swift */; };
 		8E079881E1C135A87FC49CB6 /* ResumeSessionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4FCE63E1F6531AF3C1F4BE5 /* ResumeSessionSheet.swift */; };
 		8E12834F6C4FFF080871A766 /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2AC5B34455CB0E35428D5E5 /* DebugLogger.swift */; };
 		903D6E29E630CDD3B08EAE01 /* IntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9B0630A0C52DD87368DD0F /* IntegrationTests.swift */; };
 		947D1CF43292877BC3D6966C /* ObjectCaptureScanningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E5C5D0BF7ABD0F7E8005A95 /* ObjectCaptureScanningView.swift */; };
 		98ABFA9738675BD168B73ADA /* RawDataUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6FFFB2166A5C6464A61A13 /* RawDataUploader.swift */; };
+		A0B7DCC81D1903DEE40FF344 /* RoomPlanScanningModeAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804843AB44AF939F6810D2BE /* RoomPlanScanningModeAdapter.swift */; };
 		A10000001111111100000001 /* LidarAPPApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000001 /* LidarAPPApp.swift */; };
 		A10000001111111100000002 /* simd+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000002 /* simd+Extensions.swift */; };
 		A10000001111111100000003 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000003 /* KeychainService.swift */; };
@@ -79,13 +85,27 @@
 		A10000001111111100000052 /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000052 /* ExportView.swift */; };
 		A10000001111111100000100 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000100 /* Assets.xcassets */; };
 		A68960C7C603AD2E9D13DF07 /* CoverageOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C9682E3D418CF4F375BDC3 /* CoverageOverlay.swift */; };
+		A6DBDB6D3EE2FEC707039154 /* StatusIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79C8B652158C0888D031D72C /* StatusIndicator.swift */; };
 		B3EDD54F79661BCB54AD0860 /* MeshDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BDFBB830E7A14BA4215BEA5 /* MeshDataTests.swift */; };
 		C5248EE0CB98F8F5E134BF05 /* ObjectCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3965372E23C57EE85D5733B7 /* ObjectCaptureService.swift */; };
+		D11DA08DF7355602E0A3BE45 /* SharedControlBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCAF89F401F786B7584C0FE /* SharedControlBar.swift */; };
 		D7C09590EFBC32C03E5B197D /* DepthFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55A893DD7CBD3791E1FF8EAB /* DepthFrame.swift */; };
 		DB6A96DACB412D892D993E17 /* DebugStreamService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B24805449D3FA8F7B9D4F9CC /* DebugStreamService.swift */; };
 		DC3D011B9D0EAE0E4E496FD8 /* AppDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F441C2EEC6B2CA29A9BFD96C /* AppDiagnostics.swift */; };
 		DC9B4B82F247902AEA81F341 /* RawDataPackager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35E42A26EF170899EF768373 /* RawDataPackager.swift */; };
+		EEDA56A2937B258998B4EDD8 /* UnifiedScanningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 188A8672FAF9BFA0B04150D5 /* UnifiedScanningView.swift */; };
+		EEDEFD112A187CDA387EA22C /* ObjectCaptureScanningModeAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F49A0C864D5DABD1E4AFFBF /* ObjectCaptureScanningModeAdapter.swift */; };
 		FDC0AEBDBB74E5C386FE1961 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57E3731C82F379B15733EABB /* Foundation.framework */; };
+		532F00628D76245E5862C4C9 /* ScanModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45D236188D400CF633D9B35E /* ScanModel.swift */; };
+		4F09B302736B9DDBF667FAB5 /* ScanMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB047F504FF925813E10C28 /* ScanMode.swift */; };
+		A7386D3DF68396063FE2E761 /* ScanStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4E5A1226378EA75F496E873 /* ScanStore.swift */; };
+		F0886099F3EA5703E53813DC /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A1CD1D59F280F2C16F4521 /* MainTabView.swift */; };
+		CCA1BBA6491507DBB185B625 /* GalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97AF0F67178FF40C299E24AB /* GalleryView.swift */; };
+		F21E7CB961DD8CF7FE09983A /* ModelDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 387E5FEFE3613AC0C45DE390 /* ModelDetailView.swift */; };
+		1D11B826539D174A2643A825 /* ARPlacementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB169D1647AEF764664F4447 /* ARPlacementView.swift */; };
+		630578A11AF6A41CEA5DADD8 /* GalleryExportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B9AC0BFEA34EDA816B1035 /* GalleryExportSheet.swift */; };
+		F345D18254C59CFAE56D80FB /* ProfileTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356400F61049A9A22F3E0416 /* ProfileTabView.swift */; };
+		B884665FA05B2EAB51C685E7 /* UserStatusBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8138F127211E7BA9FBABC330 /* UserStatusBanner.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,6 +120,7 @@
 
 /* Begin PBXFileReference section */
 		0A9438C9A4600487C16C34FD /* CoverageAnalyzer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CoverageAnalyzer.swift; sourceTree = "<group>"; };
+		188A8672FAF9BFA0B04150D5 /* UnifiedScanningView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UnifiedScanningView.swift; path = LidarAPP/Presentation/Scanning/Views/UnifiedScanningView.swift; sourceTree = SOURCE_ROOT; };
 		353B785CE088ADDD39669976 /* DebugLogOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugLogOverlay.swift; sourceTree = "<group>"; };
 		35E42A26EF170899EF768373 /* RawDataPackager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RawDataPackager.swift; sourceTree = "<group>"; };
 		36E859B348C609F3A03D3B01 /* GaussianSplatRenderer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GaussianSplatRenderer.swift; sourceTree = "<group>"; };
@@ -108,12 +129,18 @@
 		3E9B0630A0C52DD87368DD0F /* IntegrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = IntegrationTests.swift; sourceTree = "<group>"; };
 		55A893DD7CBD3791E1FF8EAB /* DepthFrame.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DepthFrame.swift; sourceTree = "<group>"; };
 		57E3731C82F379B15733EABB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		5F49A0C864D5DABD1E4AFFBF /* ObjectCaptureScanningModeAdapter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ObjectCaptureScanningModeAdapter.swift; path = LidarAPP/Presentation/ObjectCapture/ViewModels/ObjectCaptureScanningModeAdapter.swift; sourceTree = SOURCE_ROOT; };
 		647DAA8ECD4E1E615F933F59 /* DepthAnythingV2SmallF16.mlpackage */ = {isa = PBXFileReference; includeInIndex = 1; path = DepthAnythingV2SmallF16.mlpackage; sourceTree = "<group>"; };
+		6D760D1732444BB1DA9D90FC /* CaptureButton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CaptureButton.swift; path = Shared/CaptureButton.swift; sourceTree = "<group>"; };
 		71C9682E3D418CF4F375BDC3 /* CoverageOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CoverageOverlay.swift; sourceTree = "<group>"; };
 		79511D5C4D7B8275CEB3507C /* ScanSessionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanSessionTests.swift; sourceTree = "<group>"; };
+		79C8B652158C0888D031D72C /* StatusIndicator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StatusIndicator.swift; path = Shared/StatusIndicator.swift; sourceTree = "<group>"; };
 		7EA8FD791196A3DA250C6F31 /* PointCloudTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PointCloudTests.swift; sourceTree = "<group>"; };
+		804843AB44AF939F6810D2BE /* RoomPlanScanningModeAdapter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RoomPlanScanningModeAdapter.swift; path = LidarAPP/Presentation/RoomPlan/ViewModels/RoomPlanScanningModeAdapter.swift; sourceTree = SOURCE_ROOT; };
 		8A91D9ACF2857EAC33EDF1A7 /* ScanSessionPersistence.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanSessionPersistence.swift; sourceTree = "<group>"; };
 		8CA1C3EF8D76618E8DC8B828 /* DepthAnythingV2SmallF16.mlpackage */ = {isa = PBXFileReference; includeInIndex = 1; name = DepthAnythingV2SmallF16.mlpackage; path = LidarAPP/ML/DepthAnythingV2SmallF16.mlpackage; sourceTree = "<group>"; };
+		8D9C447B7A15F2D2DFE59403 /* SharedTopBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SharedTopBar.swift; path = Shared/SharedTopBar.swift; sourceTree = "<group>"; };
+		96C7293324F3BB8EF5E87614 /* LiDARScanningModeAdapter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiDARScanningModeAdapter.swift; path = LidarAPP/Presentation/Scanning/ViewModels/LiDARScanningModeAdapter.swift; sourceTree = SOURCE_ROOT; };
 		97A4AD88E4E1438B95DC5AF1 /* LidarAPPTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LidarAPPTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9BDFBB830E7A14BA4215BEA5 /* MeshDataTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MeshDataTests.swift; sourceTree = "<group>"; };
 		A20000001111111100000001 /* LidarAPPApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LidarAPPApp.swift; sourceTree = "<group>"; };
@@ -172,8 +199,11 @@
 		A20000001111111100000101 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000001111111100000102 /* LidarAPP.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LidarAPP.entitlements; sourceTree = "<group>"; };
 		A30000001111111100000001 /* LidarAPP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LidarAPP.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA9BA78F0A3140D83D1B7E82 /* ScanningModeProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ScanningModeProtocol.swift; path = LidarAPP/Presentation/Scanning/Protocols/ScanningModeProtocol.swift; sourceTree = SOURCE_ROOT; };
 		B14D5C8A30BBD59DA9A7AD77 /* CrashReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
 		B24805449D3FA8F7B9D4F9CC /* DebugStreamService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugStreamService.swift; sourceTree = "<group>"; };
+		B8DAC3AADB1078418CB736B5 /* StatisticsGrid.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StatisticsGrid.swift; path = Shared/StatisticsGrid.swift; sourceTree = "<group>"; };
+		BCCAF89F401F786B7584C0FE /* SharedControlBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SharedControlBar.swift; path = Shared/SharedControlBar.swift; sourceTree = "<group>"; };
 		CE6FFFB2166A5C6464A61A13 /* RawDataUploader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RawDataUploader.swift; sourceTree = "<group>"; };
 		D7CB8CB691753BDEB2B16B41 /* GuidanceIndicator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GuidanceIndicator.swift; sourceTree = "<group>"; };
 		D8409994984C6D6FDE0B9A28 /* PerformanceMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PerformanceMonitor.swift; sourceTree = "<group>"; };
@@ -183,6 +213,16 @@
 		E5C982388D3288F6054BDFA3 /* DebugSettings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugSettings.swift; sourceTree = "<group>"; };
 		EE2A27D5662105D98F771D38 /* ChunkManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChunkManager.swift; sourceTree = "<group>"; };
 		F441C2EEC6B2CA29A9BFD96C /* AppDiagnostics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDiagnostics.swift; sourceTree = "<group>"; };
+		45D236188D400CF633D9B35E /* ScanModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanModel.swift; sourceTree = "<group>"; };
+		8DB047F504FF925813E10C28 /* ScanMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanMode.swift; sourceTree = "<group>"; };
+		A4E5A1226378EA75F496E873 /* ScanStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanStore.swift; sourceTree = "<group>"; };
+		50A1CD1D59F280F2C16F4521 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		97AF0F67178FF40C299E24AB /* GalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryView.swift; sourceTree = "<group>"; };
+		387E5FEFE3613AC0C45DE390 /* ModelDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDetailView.swift; sourceTree = "<group>"; };
+		BB169D1647AEF764664F4447 /* ARPlacementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARPlacementView.swift; sourceTree = "<group>"; };
+		B2B9AC0BFEA34EDA816B1035 /* GalleryExportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryExportSheet.swift; sourceTree = "<group>"; };
+		356400F61049A9A22F3E0416 /* ProfileTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileTabView.swift; sourceTree = "<group>"; };
+		8138F127211E7BA9FBABC330 /* UserStatusBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserStatusBanner.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -209,9 +249,18 @@
 			children = (
 				EE2A27D5662105D98F771D38 /* ChunkManager.swift */,
 				8A91D9ACF2857EAC33EDF1A7 /* ScanSessionPersistence.swift */,
+				A4E5A1226378EA75F496E873 /* ScanStore.swift */,
 			);
 			name = Persistence;
 			path = Persistence;
+			sourceTree = "<group>";
+		};
+		1F1618FAF0D0A9A114B380F1 /* Protocols */ = {
+			isa = PBXGroup;
+			children = (
+				AA9BA78F0A3140D83D1B7E82 /* ScanningModeProtocol.swift */,
+			);
+			name = Protocols;
 			sourceTree = "<group>";
 		};
 		28552DFCE8B70AFF66CAD836 /* Frameworks */ = {
@@ -246,6 +295,14 @@
 			path = ObjectCapture;
 			sourceTree = "<group>";
 		};
+		4E972A52798369A01AAE8DF1 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				804843AB44AF939F6810D2BE /* RoomPlanScanningModeAdapter.swift */,
+			);
+			name = ViewModels;
+			sourceTree = "<group>";
+		};
 		78A51D74212EBF77E9384753 /* ML */ = {
 			isa = PBXGroup;
 			children = (
@@ -272,6 +329,7 @@
 			isa = PBXGroup;
 			children = (
 				3E5C5D0BF7ABD0F7E8005A95 /* ObjectCaptureScanningView.swift */,
+				B68836A20C97AAC5D78E6E9B /* ViewModels */,
 			);
 			name = ObjectCapture;
 			path = ObjectCapture;
@@ -348,6 +406,10 @@
 				A50000001111111100000017 /* Scanning */,
 				A50000001111111100000033 /* Settings */,
 				9A8B409BFC0E87483512751A /* ObjectCapture */,
+				A7538A43E2CFC707D6910CE0 /* Gallery */,
+				50A217BCC85CD13F05C9CD98 /* Navigation */,
+				4BB0D4C066BD84EA101A205C /* Profile */,
+				9A4995379AD1CAA5EB250D03 /* Components */,
 			);
 			path = Presentation;
 			sourceTree = "<group>";
@@ -414,6 +476,8 @@
 				A20000001111111100000006 /* PointCloud.swift */,
 				A20000001111111100000007 /* ScanSession.swift */,
 				A20000001111111100000008 /* User.swift */,
+				45D236188D400CF633D9B35E /* ScanModel.swift */,
+				8DB047F504FF925813E10C28 /* ScanMode.swift */,
 			);
 			path = Entities;
 			sourceTree = "<group>";
@@ -450,6 +514,7 @@
 			children = (
 				A50000001111111100000022 /* ViewModels */,
 				A50000001111111100000023 /* Views */,
+				1F1618FAF0D0A9A114B380F1 /* Protocols */,
 			);
 			path = Scanning;
 			sourceTree = "<group>";
@@ -492,6 +557,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000001111111100000015 /* ScanningViewModel.swift */,
+				96C7293324F3BB8EF5E87614 /* LiDARScanningModeAdapter.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -504,6 +570,8 @@
 				D7CB8CB691753BDEB2B16B41 /* GuidanceIndicator.swift */,
 				E4FCE63E1F6531AF3C1F4BE5 /* ResumeSessionSheet.swift */,
 				353B785CE088ADDD39669976 /* DebugLogOverlay.swift */,
+				A98A66E50CF09B204A8654DA /* Shared */,
+				188A8672FAF9BFA0B04150D5 /* UnifiedScanningView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -629,6 +697,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000001111111100000045 /* RoomPlanScanningView.swift */,
+				4E972A52798369A01AAE8DF1 /* ViewModels */,
 			);
 			path = RoomPlan;
 			sourceTree = "<group>";
@@ -658,6 +727,26 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		A98A66E50CF09B204A8654DA /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				6D760D1732444BB1DA9D90FC /* CaptureButton.swift */,
+				8D9C447B7A15F2D2DFE59403 /* SharedTopBar.swift */,
+				B8DAC3AADB1078418CB736B5 /* StatisticsGrid.swift */,
+				79C8B652158C0888D031D72C /* StatusIndicator.swift */,
+				BCCAF89F401F786B7584C0FE /* SharedControlBar.swift */,
+			);
+			name = Shared;
+			sourceTree = "<group>";
+		};
+		B68836A20C97AAC5D78E6E9B /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				5F49A0C864D5DABD1E4AFFBF /* ObjectCaptureScanningModeAdapter.swift */,
+			);
+			name = ViewModels;
+			sourceTree = "<group>";
+		};
 		DC7CECFEAC9172562CDDA577 /* Diagnostics */ = {
 			isa = PBXGroup;
 			children = (
@@ -666,6 +755,41 @@
 			);
 			name = Diagnostics;
 			path = Diagnostics;
+			sourceTree = "<group>";
+		};
+		A7538A43E2CFC707D6910CE0 /* Gallery */ = {
+			isa = PBXGroup;
+			children = (
+				97AF0F67178FF40C299E24AB /* GalleryView.swift */,
+				387E5FEFE3613AC0C45DE390 /* ModelDetailView.swift */,
+				BB169D1647AEF764664F4447 /* ARPlacementView.swift */,
+				B2B9AC0BFEA34EDA816B1035 /* GalleryExportSheet.swift */,
+			);
+			path = Gallery;
+			sourceTree = "<group>";
+		};
+		50A217BCC85CD13F05C9CD98 /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				50A1CD1D59F280F2C16F4521 /* MainTabView.swift */,
+			);
+			path = Navigation;
+			sourceTree = "<group>";
+		};
+		4BB0D4C066BD84EA101A205C /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				356400F61049A9A22F3E0416 /* ProfileTabView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		9A4995379AD1CAA5EB250D03 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				8138F127211E7BA9FBABC330 /* UserStatusBanner.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -783,6 +907,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000001111111100000001 /* LidarAPPApp.swift in Sources */,
+				B884665FA05B2EAB51C685E7 /* UserStatusBanner.swift in Sources */,
+				F345D18254C59CFAE56D80FB /* ProfileTabView.swift in Sources */,
+				630578A11AF6A41CEA5DADD8 /* GalleryExportSheet.swift in Sources */,
+				1D11B826539D174A2643A825 /* ARPlacementView.swift in Sources */,
+				F21E7CB961DD8CF7FE09983A /* ModelDetailView.swift in Sources */,
+				CCA1BBA6491507DBB185B625 /* GalleryView.swift in Sources */,
+				F0886099F3EA5703E53813DC /* MainTabView.swift in Sources */,
+				A7386D3DF68396063FE2E761 /* ScanStore.swift in Sources */,
+				4F09B302736B9DDBF667FAB5 /* ScanMode.swift in Sources */,
+				532F00628D76245E5862C4C9 /* ScanModel.swift in Sources */,
 				A10000001111111100000002 /* simd+Extensions.swift in Sources */,
 				A10000001111111100000003 /* KeychainService.swift in Sources */,
 				A10000001111111100000004 /* DeviceCapabilities.swift in Sources */,
@@ -853,6 +987,16 @@
 				6EAF6F61FF7DF94B089B6F12 /* PerformanceMonitor.swift in Sources */,
 				DB6A96DACB412D892D993E17 /* DebugStreamService.swift in Sources */,
 				74D8D973DAA3F6144F4026AA /* DebugLogOverlay.swift in Sources */,
+				8C670889578B2F01CA7824D8 /* CaptureButton.swift in Sources */,
+				8A593F1790A6F0B12A809612 /* SharedTopBar.swift in Sources */,
+				8D69BB7359A410D9B4F5C0B5 /* StatisticsGrid.swift in Sources */,
+				A6DBDB6D3EE2FEC707039154 /* StatusIndicator.swift in Sources */,
+				D11DA08DF7355602E0A3BE45 /* SharedControlBar.swift in Sources */,
+				057EBEC897942F5A7FEF3541 /* ScanningModeProtocol.swift in Sources */,
+				7B981133AF8659512846EA64 /* LiDARScanningModeAdapter.swift in Sources */,
+				EEDA56A2937B258998B4EDD8 /* UnifiedScanningView.swift in Sources */,
+				A0B7DCC81D1903DEE40FF344 /* RoomPlanScanningModeAdapter.swift in Sources */,
+				EEDEFD112A187CDA387EA22C /* ObjectCaptureScanningModeAdapter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

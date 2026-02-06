@@ -7,14 +7,15 @@ import SwiftUI
 
 /// In-app diagnostics and testing framework
 @MainActor
-final class AppDiagnostics: ObservableObject {
+@Observable
+final class AppDiagnostics {
     static let shared = AppDiagnostics()
 
     // MARK: - Test Results
 
-    @Published var testResults: [DiagnosticTest] = []
-    @Published var isRunning = false
-    @Published var lastRunDate: Date?
+    var testResults: [DiagnosticTest] = []
+    var isRunning = false
+    var lastRunDate: Date?
 
     // MARK: - Device Info
 
@@ -221,7 +222,7 @@ struct DiagnosticTest: Identifiable {
 // MARK: - Diagnostics View
 
 struct DiagnosticsView: View {
-    @StateObject private var diagnostics = AppDiagnostics.shared
+    @State private var diagnostics = AppDiagnostics.shared
     @State private var showShareSheet = false
 
     var body: some View {

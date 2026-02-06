@@ -1,6 +1,5 @@
 import Foundation
 import ARKit
-import Combine
 import UIKit
 
 /// Processing state for a scan
@@ -88,13 +87,14 @@ struct ScanMetadata: Codable {
 
 /// Main service for orchestrating scan processing
 @MainActor
-final class ScanProcessingService: ObservableObject {
+@Observable
+final class ScanProcessingService {
 
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
 
-    @Published private(set) var state: ScanProcessingState = .idle
-    @Published private(set) var currentScanId: String?
-    @Published private(set) var processingStats: ProcessingStats?
+    private(set) var state: ScanProcessingState = .idle
+    private(set) var currentScanId: String?
+    private(set) var processingStats: ProcessingStats?
 
     struct ProcessingStats {
         var pointCount: Int = 0
@@ -113,7 +113,6 @@ final class ScanProcessingService: ObservableObject {
 
     private var accumulatedPoints: [simd_float3] = []
     private var processingStartTime: Date?
-    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Configuration
 

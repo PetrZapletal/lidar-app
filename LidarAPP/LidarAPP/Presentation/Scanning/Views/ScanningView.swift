@@ -415,19 +415,29 @@ struct ScanningControls: View {
     let onToggleMesh: () -> Void
     let onClose: () -> Void
 
+    /// Compute capture button state from scanning state
+    private var captureButtonState: CaptureButtonState {
+        if isScanning {
+            return .paused  // When scanning, show pause icon
+        } else if canStart {
+            return .ready   // Ready to start
+        } else {
+            return .disabled // Can't start yet (tracking not ready)
+        }
+    }
+
     var body: some View {
         HStack(spacing: 40) {
-            // Mesh toggle button
-            Button(action: onToggleMesh) {
-                Image(systemName: showMesh ? "cube.fill" : "cube")
-                    .font(.title2)
-                    .frame(width: 50, height: 50)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-            }
-            .accessibilityLabel(showMesh ? "Skrýt 3D mesh" : "Zobrazit 3D mesh")
+            // Mesh toggle button - using shared component
+            ControlAccessoryButton(
+                icon: showMesh ? "cube.fill" : "cube",
+                label: "Mesh",
+                action: onToggleMesh,
+                isActive: showMesh
+            )
+            .frame(width: 50)
 
-            // Main control button
+            // Main control button - custom for LiDAR (has pause/resume behavior)
             Button(action: {
                 if isScanning {
                     onPause()
@@ -435,16 +445,31 @@ struct ScanningControls: View {
                     onStart()
                 }
             }) {
-                Image(systemName: isScanning ? "pause.fill" : "record.circle")
-                    .font(.largeTitle)
-                    .foregroundStyle(isScanning ? .white : .red)
-                    .frame(width: 70, height: 70)
-                    .background(isScanning ? Color.orange : Color.white.opacity(0.2))
-                    .clipShape(Circle())
-                    .overlay(
+                ZStack {
+                    Circle()
+                        .stroke(Color.white, lineWidth: 4)
+                        .frame(width: 80, height: 80)
+
+                    if isScanning {
+                        // Pause icon when scanning
+                        Image(systemName: "pause.fill")
+                            .font(.system(size: 30))
+                            .foregroundStyle(.white)
+                            .frame(width: 65, height: 65)
+                            .background(Color.orange)
+                            .clipShape(Circle())
+                    } else if canStart {
+                        // Record icon when ready
                         Circle()
-                            .stroke(Color.white, lineWidth: 3)
-                    )
+                            .fill(Color.red)
+                            .frame(width: 60, height: 60)
+                    } else {
+                        // Disabled state
+                        Circle()
+                            .fill(Color.white.opacity(0.3))
+                            .frame(width: 60, height: 60)
+                    }
+                }
             }
             .disabled(!canStart && !isScanning)
             .opacity((!canStart && !isScanning) ? 0.5 : 1)
@@ -453,32 +478,29 @@ struct ScanningControls: View {
             // Stop/Close button
             if isScanning {
                 // Stop button with tap and long press gestures
-                Image(systemName: "stop.fill")
-                    .font(.title2)
-                    .frame(width: 50, height: 50)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .foregroundStyle(.white)
-                    .onTapGesture {
-                        onStop()
-                    }
-                    .onLongPressGesture(minimumDuration: 0.5) {
-                        onStopLongPress?()
-                    }
-                    .accessibilityLabel("Ukončit skenování")
-                    .accessibilityHint("Klepnutí ukončí sken, podržení zobrazí možnosti zpracování")
-            } else {
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.title2)
-                        .frame(width: 50, height: 50)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
+                ControlAccessoryButton(
+                    icon: "stop.fill",
+                    label: "Stop",
+                    action: onStop
+                )
+                .frame(width: 50)
+                .onLongPressGesture(minimumDuration: 0.5) {
+                    onStopLongPress?()
                 }
-                .accessibilityLabel("Zavřít")
+                .accessibilityHint("Klepnutí ukončí sken, podržení zobrazí možnosti zpracování")
+            } else {
+                ControlAccessoryButton(
+                    icon: "xmark",
+                    label: "Zavřít",
+                    action: onClose
+                )
+                .frame(width: 50)
             }
         }
         .foregroundStyle(.white)
+        .padding(.vertical, 20)
+        .padding(.horizontal)
+        .background(.ultraThinMaterial)
     }
 }
 

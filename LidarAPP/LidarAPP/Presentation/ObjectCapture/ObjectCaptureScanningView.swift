@@ -6,7 +6,7 @@ import Combine
 // MARK: - Object Capture Scanning View
 
 struct ObjectCaptureScanningView: View {
-    @StateObject private var viewModel = ObjectCaptureViewModel()
+    @State private var viewModel = ObjectCaptureViewModel()
     @State private var showResults = false
     @Environment(\.dismiss) private var dismiss
 
@@ -106,63 +106,44 @@ struct ObjectCaptureScanningView: View {
         .background(Color(.systemBackground))
     }
 
-    private var topBar: some View {
-        HStack {
-            // Close button
-            Button(action: {
-                viewModel.cancelCapture()
-                dismiss()
-            }) {
-                Image(systemName: "xmark")
-                    .font(.title2)
-                    .foregroundStyle(.white)
-                    .padding(12)
-                    .background(.ultraThinMaterial, in: Circle())
-            }
-
-            Spacer()
-
-            // Status indicator
-            VStack(spacing: 4) {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(statusColor)
-                        .frame(width: 10, height: 10)
-                    Text(viewModel.status.displayName)
-                        .font(.headline)
-                }
-
-                if viewModel.isCapturing {
-                    Text("Obejděte objekt dokola")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(.ultraThinMaterial, in: Capsule())
-
-            Spacer()
-
-            // Help button
-            Button(action: { /* show help */ }) {
-                Image(systemName: "questionmark.circle")
-                    .font(.title2)
-                    .foregroundStyle(.white)
-                    .padding(12)
-                    .background(.ultraThinMaterial, in: Circle())
-            }
+    /// Convert ObjectCaptureStatus to UnifiedScanStatus for shared components
+    private var unifiedStatus: UnifiedScanStatus {
+        switch viewModel.status {
+        case .idle: return .idle
+        case .preparing: return .preparing
+        case .capturing: return .scanning
+        case .processing: return .processing
+        case .completed: return .completed
+        case .failed(let message): return .failed(message ?? "Neznámá chyba")
         }
-        .padding()
     }
 
-    private var statusColor: Color {
+    /// Capture button state based on view model status
+    private var captureButtonState: CaptureButtonState {
         switch viewModel.status {
-        case .idle, .preparing: return .gray
-        case .capturing: return .green
-        case .processing: return .orange
-        case .completed: return .blue
-        case .failed: return .red
+        case .idle: return .ready
+        case .preparing: return .processing
+        case .capturing: return .recording
+        case .processing: return .processing
+        case .completed: return .ready
+        case .failed: return .disabled
+        }
+    }
+
+    private var topBar: some View {
+        SharedTopBar(
+            status: unifiedStatus,
+            statusSubtitle: viewModel.isCapturing ? "Obejděte objekt dokola" : nil,
+            onClose: {
+                viewModel.cancelCapture()
+                dismiss()
+            }
+        ) {
+            CircleButton(
+                icon: "questionmark.circle",
+                action: { /* show help */ },
+                accessibilityLabel: "Nápověda"
+            )
         }
     }
 
@@ -195,57 +176,6 @@ struct ObjectCaptureScanningView: View {
         .padding(.horizontal, 40)
     }
 
-    private var captureStatsBar: some View {
-        HStack(spacing: 24) {
-            VStack(spacing: 4) {
-                Image(systemName: "photo.stack")
-                    .font(.title3)
-                Text("\(viewModel.imageCount)")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                Text("Snímky")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-
-            Divider()
-                .frame(height: 40)
-                .background(Color.white.opacity(0.3))
-
-            VStack(spacing: 4) {
-                Image(systemName: "rotate.3d")
-                    .font(.title3)
-                Text("\(Int(viewModel.orbitProgress * 100))%")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                Text("Orbita")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-
-            Divider()
-                .frame(height: 40)
-                .background(Color.white.opacity(0.3))
-
-            VStack(spacing: 4) {
-                Image(systemName: qualityIcon)
-                    .font(.title3)
-                    .foregroundStyle(qualityColor)
-                Text(viewModel.quality.displayName)
-                    .font(.headline)
-                    .fontWeight(.bold)
-                Text("Kvalita")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .foregroundStyle(.white)
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .padding(.horizontal)
-        .padding(.bottom, 16)
-    }
-
     private var qualityIcon: String {
         switch viewModel.quality {
         case .poor: return "exclamationmark.triangle"
@@ -264,82 +194,62 @@ struct ObjectCaptureScanningView: View {
         }
     }
 
-    private var controlsBar: some View {
-        HStack(spacing: 40) {
-            // Flip camera (placeholder)
-            VStack {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.title2)
-                Text("Flip")
-                    .font(.caption2)
-            }
-            .foregroundStyle(.white.opacity(0.5))
-            .frame(width: 50)
+    private var captureStatsBar: some View {
+        StatisticsGrid(items: [
+            StatItem(icon: "photo.stack", value: "\(viewModel.imageCount)", label: "Snímky"),
+            StatItem(icon: "rotate.3d", value: "\(Int(viewModel.orbitProgress * 100))%", label: "Orbita"),
+            StatItem(icon: qualityIcon, value: viewModel.quality.displayName, label: "Kvalita", iconColor: qualityColor)
+        ])
+        .padding(.bottom, 16)
+    }
 
-            // Main capture button
-            Button(action: {
+    private var controlsBar: some View {
+        SharedControlBar(
+            captureState: captureButtonState,
+            onCaptureTap: {
                 if viewModel.isCapturing {
                     Task {
                         await viewModel.stopCapture()
                         showResults = true
                     }
                 }
-            }) {
-                ZStack {
-                    Circle()
-                        .stroke(Color.white, lineWidth: 4)
-                        .frame(width: 80, height: 80)
-
-                    if viewModel.isCapturing {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.red)
-                            .frame(width: 35, height: 35)
-                    } else if viewModel.status == .processing {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                            .tint(.white)
-                    } else {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 65, height: 65)
-                    }
-                }
             }
-            .disabled(viewModel.status == .processing)
-
-            // Auto-capture toggle
-            VStack {
-                Image(systemName: viewModel.autoCapture ? "a.circle.fill" : "a.circle")
-                    .font(.title2)
-                Text("Auto")
-                    .font(.caption2)
-            }
-            .foregroundStyle(viewModel.autoCapture ? .white : .white.opacity(0.5))
-            .frame(width: 50)
-            .onTapGesture {
-                viewModel.autoCapture.toggle()
-            }
+        ) {
+            // Left: Flip camera placeholder
+            ControlAccessoryButton(
+                icon: "arrow.triangle.2.circlepath",
+                label: "Flip",
+                action: { /* flip camera */ }
+            )
+        } rightContent: {
+            // Right: Auto-capture toggle
+            ControlAccessoryButton(
+                icon: viewModel.autoCapture ? "a.circle.fill" : "a.circle",
+                label: "Auto",
+                action: { viewModel.autoCapture.toggle() },
+                isActive: viewModel.autoCapture
+            )
         }
-        .padding(.vertical, 30)
-        .padding(.horizontal)
-        .background(.ultraThinMaterial)
     }
 }
 
 // MARK: - Object Capture View Model
 
 @MainActor
-class ObjectCaptureViewModel: ObservableObject {
-    @Published var status: ObjectCaptureStatus = .idle
-    @Published var progress: Float = 0
-    @Published var imageCount: Int = 0
-    @Published var orbitProgress: Float = 0
-    @Published var quality: CaptureQuality = .poor
-    @Published var guidanceText: String = "Namířte na objekt"
-    @Published var autoCapture: Bool = true
-    @Published var showError = false
-    @Published var errorMessage: String?
+@Observable
+final class ObjectCaptureViewModel {
+    // MARK: - Observable State (no @Published needed with @Observable)
+    var status: ObjectCaptureStatus = .idle
+    private(set) var progress: Float = 0
+    var imageCount: Int = 0
+    var orbitProgress: Float = 0
+    var quality: CaptureQuality = .poor
+    var guidanceText: String = "Namířte na objekt"
+    var autoCapture: Bool = true
+    var showError = false
+    var errorMessage: String?
 
+    // MARK: - Private
     private var cancellables = Set<AnyCancellable>()
     private var mockTimer: Timer?
 
@@ -517,7 +427,8 @@ enum CaptureQuality: Int, CaseIterable {
 // Uses ARKit with LiDAR for real object scanning on device
 
 struct ObjectCaptureARView: UIViewRepresentable {
-    @ObservedObject var viewModel: ObjectCaptureViewModel
+    // With @Observable, no property wrapper needed
+    let viewModel: ObjectCaptureViewModel
 
     func makeUIView(context: Context) -> ARView {
         let arView = ARView(frame: .zero)
@@ -575,11 +486,30 @@ struct ObjectCaptureARView: UIViewRepresentable {
         private var frameCount = 0
         private var hasStartedCapturing = false
 
+        // MARK: - Frame Throttling (Performance Optimization)
+        /// Last time a frame was processed (for 30Hz throttling)
+        private var lastFrameProcessTime: TimeInterval = 0
+        /// Minimum interval between frame processing (30Hz = 1/30 seconds)
+        private let minFrameInterval: TimeInterval = 1.0 / 30.0
+        /// Last camera position for debouncing
+        private var lastCameraPosition: simd_float3?
+        /// Minimum camera movement required for significant update (meters)
+        private let cameraMovementThreshold: Float = 0.03 // 3cm for object capture (tighter than room scan)
+        /// Last time an image was captured
+        private var lastImageCaptureTime: TimeInterval = 0
+        /// Minimum interval between image captures (2Hz for quality images)
+        private let minImageCaptureInterval: TimeInterval = 0.5
+
         init(viewModel: ObjectCaptureViewModel) {
             self.viewModel = viewModel
         }
 
         nonisolated func session(_ session: ARSession, didUpdate frame: ARFrame) {
+            // PERFORMANCE: Time-based throttling to 30Hz (instead of 60Hz)
+            let currentTime = frame.timestamp
+            guard currentTime - lastFrameProcessTime >= minFrameInterval else { return }
+            lastFrameProcessTime = currentTime
+
             Task { @MainActor in
                 // Auto-start capturing once AR session is running
                 if !hasStartedCapturing && frame.camera.trackingState == .normal {
@@ -591,8 +521,20 @@ struct ObjectCaptureARView: UIViewRepresentable {
 
                 frameCount += 1
 
-                // Capture frame every 15 frames (roughly 2 fps at 30fps input)
-                if frameCount % 15 == 0 {
+                // PERFORMANCE: Camera position debouncing - only capture if moved significantly
+                let currentPosition = simd_make_float3(frame.camera.transform.columns.3)
+                var hasMoved = true
+                if let lastPos = lastCameraPosition {
+                    let distance = simd_distance(currentPosition, lastPos)
+                    hasMoved = distance >= cameraMovementThreshold
+                }
+
+                // Only capture images when camera has moved and enough time passed
+                let timeSinceLastCapture = currentTime - lastImageCaptureTime
+                if hasMoved && timeSinceLastCapture >= minImageCaptureInterval {
+                    lastCameraPosition = currentPosition
+                    lastImageCaptureTime = currentTime
+
                     viewModel.imageCount += 1
                     viewModel.orbitProgress = min(Float(viewModel.imageCount) / 50.0, 1.0)
 
@@ -641,7 +583,8 @@ struct ObjectCaptureARView: UIViewRepresentable {
 // On iOS we use LiDAR + camera capture, then process on backend.
 
 struct MockObjectCaptureView: View {
-    @ObservedObject var viewModel: ObjectCaptureViewModel
+    // With @Observable, no property wrapper needed
+    let viewModel: ObjectCaptureViewModel
 
     var body: some View {
         ZStack {
@@ -705,7 +648,8 @@ struct MockObjectCaptureView: View {
 // MARK: - Object Capture Results View
 
 struct ObjectCaptureResultsView: View {
-    @ObservedObject var viewModel: ObjectCaptureViewModel
+    // With @Observable, no property wrapper needed
+    let viewModel: ObjectCaptureViewModel
     let onSave: (ScanModel, ScanSession) -> Void
     @State private var scanName = ""
     @Environment(\.dismiss) private var dismiss

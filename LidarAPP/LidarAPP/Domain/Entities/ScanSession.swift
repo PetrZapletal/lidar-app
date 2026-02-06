@@ -11,6 +11,16 @@ final class ScanSession: Identifiable, @unchecked Sendable {
     private(set) var updatedAt: Date
     private(set) var state: ScanState
 
+    // MARK: - Memory Management Constants (Performance Optimization)
+    /// Maximum number of texture frames to keep in memory
+    private static let maxTextureFramesInMemory = 50
+    /// Maximum number of depth frames to keep in memory
+    private static let maxDepthFramesInMemory = 50
+    /// Number of most recent frames to retain after cleanup
+    private static let framesRetainedAfterCleanup = 10
+    /// Maximum trajectory points before pruning (keep every Nth point)
+    private static let maxTrajectoryPoints = 500
+
     // Scan data
     var pointCloud: PointCloud?
     let combinedMesh: CombinedMesh
@@ -22,6 +32,11 @@ final class ScanSession: Identifiable, @unchecked Sendable {
     private(set) var scanDuration: TimeInterval
     private(set) var deviceTrajectory: [simd_float4x4]
     private var scanStartTime: Date?
+
+    /// Count of total texture frames captured (including flushed ones)
+    private(set) var totalTextureFramesCaptured: Int = 0
+    /// Count of total depth frames captured (including flushed ones)
+    private(set) var totalDepthFramesCaptured: Int = 0
 
     // Device info
     let deviceModel: String
@@ -92,6 +107,8 @@ final class ScanSession: Identifiable, @unchecked Sendable {
         scanDuration = 0
         deviceTrajectory = []
         scanStartTime = nil
+        totalTextureFramesCaptured = 0
+        totalDepthFramesCaptured = 0
         updatedAt = Date()
     }
 
@@ -116,16 +133,43 @@ final class ScanSession: Identifiable, @unchecked Sendable {
 
     func addTextureFrame(_ frame: TextureFrame) {
         textureFrames.append(frame)
+        totalTextureFramesCaptured += 1
+
+        // PERFORMANCE: Enforce memory limit - flush older frames when limit exceeded
+        if textureFrames.count > Self.maxTextureFramesInMemory {
+            // Keep only the most recent frames
+            let startIndex = textureFrames.count - Self.framesRetainedAfterCleanup
+            textureFrames = Array(textureFrames[startIndex...])
+        }
+
         updatedAt = Date()
     }
 
     func addDepthFrame(_ frame: DepthFrame) {
         depthFrames.append(frame)
+        totalDepthFramesCaptured += 1
+
+        // PERFORMANCE: Enforce memory limit - flush older frames when limit exceeded
+        if depthFrames.count > Self.maxDepthFramesInMemory {
+            // Keep only the most recent frames
+            let startIndex = depthFrames.count - Self.framesRetainedAfterCleanup
+            depthFrames = Array(depthFrames[startIndex...])
+        }
+
         updatedAt = Date()
     }
 
     func addCameraPosition(_ transform: simd_float4x4) {
         deviceTrajectory.append(transform)
+
+        // PERFORMANCE: Prune trajectory to avoid unbounded memory growth
+        // Keep every Nth point when exceeding max
+        if deviceTrajectory.count > Self.maxTrajectoryPoints * 2 {
+            // Downsample: keep every other point
+            deviceTrajectory = deviceTrajectory.enumerated()
+                .filter { $0.offset % 2 == 0 }
+                .map { $0.element }
+        }
     }
 
     func addMeasurement(_ measurement: Measurement) {

@@ -1,5 +1,9 @@
 # LidarApp - Project Context for Claude Code
 
+## TODO (po restartu Claude Code)
+- [ ] Spustit `@spec-manager` pro analýzu aktuálního stavu projektu a aktualizaci dokumentace
+- [ ] Aktualizovat `docs/CURRENT_SPRINT.md` podle skutečného stavu
+
 ## Project Overview
 iOS LiDAR 3D Scanner app with backend AI processing. Ultra-precise 3D space mapping using ARKit, Metal rendering, and neural network mesh processing.
 

@@ -2,7 +2,7 @@ import SwiftUI
 
 /// View for displaying scan processing progress
 struct ProcessingProgressView: View {
-    @ObservedObject var processingService: ScanProcessingService
+    var processingService: ScanProcessingService
 
     @Environment(\.dismiss) private var dismiss
 

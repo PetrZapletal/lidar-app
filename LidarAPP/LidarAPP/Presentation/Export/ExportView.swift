@@ -108,13 +108,13 @@ enum ExportCategory: String, CaseIterable {
 struct ExportView: View {
     let session: ScanSession
     let scanName: String
-    @StateObject private var viewModel: ExportViewModel
+    @State private var viewModel: ExportViewModel
     @Environment(\.dismiss) private var dismiss
 
     init(session: ScanSession, scanName: String) {
         self.session = session
         self.scanName = scanName
-        self._viewModel = StateObject(wrappedValue: ExportViewModel(session: session, scanName: scanName))
+        self._viewModel = State(wrappedValue: ExportViewModel(session: session, scanName: scanName))
     }
 
     var body: some View {
@@ -347,26 +347,27 @@ struct ExportFormatRow: View {
 // MARK: - Export View Model
 
 @MainActor
-class ExportViewModel: ObservableObject {
+@Observable
+final class ExportViewModel {
     let session: ScanSession
     let scanName: String
 
-    @Published var selectedFormat: ExportFormat?
-    @Published var isExporting = false
-    @Published var showSuccess = false
-    @Published var showError = false
-    @Published var showShareSheet = false
-    @Published var errorMessage: String?
-    @Published var exportResult: ExportService.ExportResult?
-    @Published var exportedFileURL: URL?
+    var selectedFormat: ExportFormat?
+    var isExporting = false
+    var showSuccess = false
+    var showError = false
+    var showShareSheet = false
+    var errorMessage: String?
+    var exportResult: ExportService.ExportResult?
+    var exportedFileURL: URL?
 
     // Export options
-    @Published var includeNormals = true
-    @Published var includeColors = true
-    @Published var coordinateSystem: ExportService.ExportOptions.CoordinateSystem = .yUp
-    @Published var binaryFormat = false
-    @Published var includeImages = true
-    @Published var includeMeasurements = true
+    var includeNormals = true
+    var includeColors = true
+    var coordinateSystem: ExportService.ExportOptions.CoordinateSystem = .yUp
+    var binaryFormat = false
+    var includeImages = true
+    var includeMeasurements = true
 
     private let exportService = ExportService()
 

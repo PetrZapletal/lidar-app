@@ -6,7 +6,7 @@ import simd
 
 struct InteractiveMeasurementView: View {
     let session: ScanSession
-    @StateObject private var measurementService = MeasurementServiceWrapper()
+    @State private var measurementService = MeasurementServiceWrapper()
     @State private var showMeasurementList = false
     @State private var selectedMeasurementMode: MeasurementService.MeasurementMode = .distance
     @Environment(\.dismiss) private var dismiss
@@ -234,7 +234,7 @@ struct MeasurementModeButton: View {
 
 struct MeasurementSceneView: UIViewRepresentable {
     let session: ScanSession
-    @ObservedObject var measurementService: MeasurementServiceWrapper
+    var measurementService: MeasurementServiceWrapper
     let selectedMode: MeasurementService.MeasurementMode
 
     func makeUIView(context: Context) -> SCNView {
@@ -601,12 +601,13 @@ struct MeasurementSceneView: UIViewRepresentable {
 // MARK: - Measurement Service Wrapper
 
 @MainActor
-class MeasurementServiceWrapper: ObservableObject {
+@Observable
+class MeasurementServiceWrapper {
     private let service = MeasurementService()
 
-    @Published var currentPoints: [simd_float3] = []
-    @Published var measurements: [MeasurementService.MeasurementResult] = []
-    @Published var previewValue: String?
+    var currentPoints: [simd_float3] = []
+    var measurements: [MeasurementService.MeasurementResult] = []
+    var previewValue: String?
 
     func setMode(_ mode: MeasurementService.MeasurementMode) {
         service.setMode(mode)
