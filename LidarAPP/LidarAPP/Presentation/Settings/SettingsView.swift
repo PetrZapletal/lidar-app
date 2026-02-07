@@ -198,15 +198,39 @@ struct SettingsView: View {
 
     // MARK: - Debug Stream Section
 
+    @State private var isTestingStream = false
+    @State private var testStreamResult: String?
+    @State private var testStreamSuccess = false
+
     #if DEBUG
+    private var debugStreamService: DebugStreamService { DebugStreamService.shared }
+
+    private var streamStatusColor: Color {
+        guard debugSettings.debugStreamEnabled else { return .gray }
+        if debugStreamService.isConnected { return .green }
+        if debugStreamService.isStreaming { return .yellow }
+        if debugStreamService.lastError != nil { return .red }
+        return .red
+    }
+
+    private var streamStatusText: String {
+        guard debugSettings.debugStreamEnabled else { return "Vypnuto" }
+        if debugStreamService.isConnected { return "Připojeno" }
+        if debugStreamService.isStreaming { return "Připojování..." }
+        if debugStreamService.lastError != nil { return "Chyba" }
+        return "Odpojeno"
+    }
+
     private var debugStreamSection: some View {
         Section {
-            Toggle("Enable Debug Stream", isOn: Binding(
+            // 1. Main toggle
+            Toggle("Debug Stream", isOn: Binding(
                 get: { debugSettings.debugStreamEnabled },
                 set: { debugSettings.debugStreamEnabled = $0 }
             ))
 
             if debugSettings.debugStreamEnabled {
+                // Server IP
                 HStack {
                     Text("Server IP")
                     Spacer()
@@ -219,14 +243,16 @@ struct SettingsView: View {
                     .frame(width: 150)
                 }
 
-                Picker("Mode", selection: Binding(
+                // 2. Stream mode picker
+                Picker("Režim", selection: Binding(
                     get: { debugSettings.debugStreamMode },
                     set: { debugSettings.debugStreamMode = $0 }
                 )) {
-                    Text("Real-time (WebSocket)").tag("realtime")
-                    Text("Batch (HTTP)").tag("batch")
+                    Text("Reálný čas (WebSocket)").tag("realtime")
+                    Text("Dávkově (HTTP)").tag("batch")
                 }
 
+                // 3. Batch interval stepper (only in batch mode)
                 if debugSettings.debugStreamMode == "batch" {
                     Stepper("Interval: \(Int(debugSettings.batchInterval))s", value: Binding(
                         get: { debugSettings.batchInterval },
@@ -234,39 +260,133 @@ struct SettingsView: View {
                     ), in: 1...30)
                 }
 
+                // 4. Category toggles via NavigationLink
                 NavigationLink {
                     DebugCategoriesView()
                 } label: {
                     HStack {
-                        Text("Categories")
+                        Text("Kategorie")
                         Spacer()
-                        Text("\(debugSettings.enabledCategories.count) enabled")
+                        Text("\(debugSettings.enabledCategories.count) aktivních")
                             .foregroundColor(.secondary)
                     }
                 }
 
-                // Stream status
+                // Verbose logging toggle
+                Toggle("Podrobné logování", isOn: Binding(
+                    get: { debugSettings.verboseLogging },
+                    set: { debugSettings.verboseLogging = $0 }
+                ))
+
+                // 5. Connection status indicator
                 HStack {
-                    Text("Status")
+                    Text("Stav připojení")
                     Spacer()
                     Circle()
-                        .fill(DebugStreamService.shared.isConnected ? Color.green : Color.red)
+                        .fill(streamStatusColor)
                         .frame(width: 8, height: 8)
-                    Text(DebugStreamService.shared.isConnected ? "Connected" : "Disconnected")
+                    Text(streamStatusText)
                         .foregroundColor(.secondary)
                 }
 
+                // Events sent / buffered stats
                 HStack {
-                    Text("Events sent")
+                    Text("Odesláno událostí")
                     Spacer()
-                    Text("\(DebugStreamService.shared.eventsSent)")
+                    Text("\(debugStreamService.eventsSent)")
                         .foregroundColor(.secondary)
+                }
+
+                if debugSettings.debugStreamMode == "batch" {
+                    HStack {
+                        Text("Ve frontě")
+                        Spacer()
+                        Text("\(debugStreamService.eventsBuffered)")
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                // Last error display
+                if let lastError = debugStreamService.lastError {
+                    Text(lastError)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+
+                // 6. Test Stream button
+                Button(action: sendTestStreamEvent) {
+                    HStack {
+                        if isTestingStream {
+                            ProgressView()
+                                .padding(.trailing, 4)
+                        }
+                        Text("Test streamu")
+                        Spacer()
+                        if let _ = testStreamResult {
+                            Image(systemName: testStreamSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .foregroundColor(testStreamSuccess ? .green : .red)
+                        }
+                    }
+                }
+                .disabled(isTestingStream)
+
+                if let result = testStreamResult {
+                    Text(result)
+                        .font(.caption)
+                        .foregroundColor(testStreamSuccess ? .green : .red)
                 }
             }
         } header: {
             Label("Debug Stream", systemImage: "waveform")
         } footer: {
             Text("Streamuje diagnostická data v reálném čase na debug server. Pouze pro development builds.")
+        }
+    }
+
+    private func sendTestStreamEvent() {
+        isTestingStream = true
+        testStreamResult = nil
+
+        let wasStreaming = debugStreamService.isStreaming
+
+        // Start streaming if not already active
+        if !wasStreaming {
+            debugStreamService.startStreaming()
+        }
+
+        // Send a test event
+        let testEvent = DebugEvent(
+            category: .appState,
+            type: "test_event",
+            data: [
+                "source": "settings_test",
+                "timestamp": ISO8601DateFormatter().string(from: Date()),
+                "message": "Test event from Settings"
+            ]
+        )
+        debugStreamService.logEvent(testEvent)
+
+        // Give it a moment to process
+        Task {
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            await MainActor.run {
+                if debugStreamService.isConnected {
+                    testStreamSuccess = true
+                    testStreamResult = "Test událost odeslána (celkem: \(debugStreamService.eventsSent))"
+                } else if let error = debugStreamService.lastError {
+                    testStreamSuccess = false
+                    testStreamResult = "Chyba: \(error)"
+                } else {
+                    testStreamSuccess = false
+                    testStreamResult = "Nepodařilo se připojit k serveru"
+                }
+                isTestingStream = false
+
+                // Stop streaming if we started it just for testing
+                if !wasStreaming {
+                    debugStreamService.stopStreaming()
+                }
+            }
         }
     }
     #endif

@@ -254,6 +254,11 @@ final class ObjectCaptureViewModel {
     private var cancellables = Set<AnyCancellable>()
     private var mockTimer: Timer?
 
+    #if DEBUG
+    /// Unique session ID for debug streaming
+    private let debugSessionId = UUID().uuidString
+    #endif
+
     var isCapturing: Bool {
         status == .capturing
     }
@@ -350,6 +355,13 @@ final class ObjectCaptureViewModel {
         // Status will be updated to .capturing by the AR session delegate
         // when tracking becomes normal
         status = .preparing
+
+        // Start debug streaming
+        #if DEBUG
+        if DebugSettings.shared.debugStreamEnabled {
+            DebugStreamService.shared.startStreaming(sessionId: debugSessionId)
+        }
+        #endif
     }
 
     /// Accumulated mesh data from ARMeshAnchors during capture
@@ -365,6 +377,11 @@ final class ObjectCaptureViewModel {
 
         // Real device: just update status, AR session cleanup handled by view
         status = .completed(nil)
+
+        // Stop debug streaming
+        #if DEBUG
+        DebugStreamService.shared.stopStreaming()
+        #endif
     }
 
     func cancelCapture() {
@@ -372,6 +389,11 @@ final class ObjectCaptureViewModel {
         mockTimer = nil
 
         ObjectCaptureService.shared.cancelCapture()
+
+        // Stop debug streaming
+        #if DEBUG
+        DebugStreamService.shared.stopStreaming()
+        #endif
 
         status = .idle
         imageCount = 0
@@ -382,6 +404,13 @@ final class ObjectCaptureViewModel {
 
     private func startMockCapture() async {
         status = .preparing
+
+        // Start debug streaming for mock mode
+        #if DEBUG
+        if DebugSettings.shared.debugStreamEnabled {
+            DebugStreamService.shared.startStreaming(sessionId: debugSessionId)
+        }
+        #endif
 
         try? await Task.sleep(nanoseconds: 500_000_000)
 
@@ -406,6 +435,11 @@ final class ObjectCaptureViewModel {
         mockTimer?.invalidate()
         mockTimer = nil
         status = .completed(nil)
+
+        // Stop debug streaming
+        #if DEBUG
+        DebugStreamService.shared.stopStreaming()
+        #endif
     }
 
     func convertToSession() -> ScanSession {
@@ -582,6 +616,13 @@ struct ObjectCaptureARView: UIViewRepresentable {
         /// Minimum interval between mesh extractions (every 2 seconds to save CPU)
         private let minMeshExtractionInterval: TimeInterval = 2.0
 
+        #if DEBUG
+        /// Last time a debug stream event was sent
+        private var lastDebugEventTime: TimeInterval = 0
+        /// Minimum interval between debug stream events (2 seconds)
+        private let debugEventInterval: TimeInterval = 2.0
+        #endif
+
         init(viewModel: ObjectCaptureViewModel) {
             self.viewModel = viewModel
         }
@@ -731,6 +772,22 @@ struct ObjectCaptureARView: UIViewRepresentable {
                         viewModel.guidanceText = "Výborné! Můžete dokončit"
                     }
                 }
+
+                // Send periodic debug stream performance events (throttled to every ~2s)
+                #if DEBUG
+                if DebugSettings.shared.debugStreamEnabled {
+                    if currentTime - lastDebugEventTime >= debugEventInterval {
+                        lastDebugEventTime = currentTime
+                        DebugStreamService.shared.logAppState(
+                            scanState: "objectCapture",
+                            trackingState: trackingState == .normal ? "normal" : "limited",
+                            pointCount: viewModel.capturedMeshes.reduce(0) { $0 + $1.vertices.count },
+                            meshFaceCount: viewModel.capturedMeshes.reduce(0) { $0 + $1.faces.count },
+                            memoryMB: PerformanceMonitor.shared.memoryUsageMB
+                        )
+                    }
+                }
+                #endif
             }
         }
 

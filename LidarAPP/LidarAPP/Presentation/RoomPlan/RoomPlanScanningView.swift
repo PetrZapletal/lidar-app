@@ -164,6 +164,15 @@ final class RoomPlanViewModel {
     private let service = RoomPlanService.shared
     private var cancellables = Set<AnyCancellable>()
 
+    #if DEBUG
+    /// Unique session ID for debug streaming
+    private let debugSessionId = UUID().uuidString
+    /// Last time a debug stream event was sent
+    private var lastDebugEventTime: Date = .distantPast
+    /// Minimum interval between debug stream events (2 seconds)
+    private let debugEventInterval: TimeInterval = 2.0
+    #endif
+
     var isCapturing: Bool {
         status == .capturing
     }
@@ -214,6 +223,36 @@ final class RoomPlanViewModel {
         totalArea = rooms.reduce(0) { total, room in
             total + room.floors.reduce(0) { $0 + $1.dimensions.x * $1.dimensions.y }
         }
+
+        // Send room capture progress events (throttled to every ~2s)
+        #if DEBUG
+        if DebugSettings.shared.debugStreamEnabled {
+            let now = Date()
+            if now.timeIntervalSince(lastDebugEventTime) >= debugEventInterval {
+                lastDebugEventTime = now
+                DebugStreamService.shared.logAppState(
+                    scanState: "roomCapture",
+                    trackingState: isCapturing ? "capturing" : "idle",
+                    pointCount: 0,
+                    meshFaceCount: wallCount,
+                    memoryMB: PerformanceMonitor.shared.memoryUsageMB
+                )
+                DebugStreamService.shared.logEvent(
+                    DebugEvent.arEvent(
+                        type: "roomCaptureProgress",
+                        details: [
+                            "rooms": roomCount,
+                            "walls": wallCount,
+                            "doors": doorCount,
+                            "windows": windowCount,
+                            "totalArea": totalArea,
+                            "progress": progress
+                        ]
+                    )
+                )
+            }
+        }
+        #endif
     }
 
     func startCapture() async {
@@ -222,6 +261,13 @@ final class RoomPlanViewModel {
             showError = true
             return
         }
+
+        // Start debug streaming
+        #if DEBUG
+        if DebugSettings.shared.debugStreamEnabled {
+            DebugStreamService.shared.startStreaming(sessionId: debugSessionId)
+        }
+        #endif
 
         do {
             try await service.startCapture()
@@ -233,10 +279,20 @@ final class RoomPlanViewModel {
 
     func stopCapture() async {
         capturedStructure = await service.stopCapture()
+
+        // Stop debug streaming
+        #if DEBUG
+        DebugStreamService.shared.stopStreaming()
+        #endif
     }
 
     func cancelCapture() {
         service.cancelCapture()
+
+        // Stop debug streaming
+        #if DEBUG
+        DebugStreamService.shared.stopStreaming()
+        #endif
     }
 
     func convertToSession() -> ScanSession? {

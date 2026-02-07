@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Dashboard - LiDAR Scanner</title>
+    <style>
+        /* ================================================================
+           CSS Reset & Base
+           ================================================================ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Segoe UI', Roboto, monospace;
+            background: #0a0e17;
+            color: #c9d1d9;
+            overflow: hidden;
+        }
+
+        /* ================================================================
+           Layout
+           ================================================================ */
+        .app {
+            display: grid;
+            grid-template-rows: 48px 1fr;
+            grid-template-columns: 280px 1fr;
+            height: 100vh;
+        }
+        .header {
+            grid-column: 1 / -1;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 16px;
+        }
+        .sidebar {
+            background: #0d1117;
+            border-right: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .main {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            overflow: hidden;
+        }
+
+        /* ================================================================
+           Header
+           ================================================================ */
+        .header h1 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #e6edf3;
+            white-space: nowrap;
+        }
+        .header h1 span { color: #58a6ff; }
+        .conn-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .conn-badge .dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+        }
+        .conn-badge.connected { background: #0d2818; color: #3fb950; }
+        .conn-badge.connected .dot { background: #3fb950; box-shadow: 0 0 6px #3fb950; }
+        .conn-badge.disconnected { background: #3d1318; color: #f85149; }
+        .conn-badge.disconnected .dot { background: #f85149; }
+        .conn-badge.idle { background: #2d1f00; color: #d29922; }
+        .conn-badge.idle .dot { background: #d29922; }
+        .header-spacer { flex: 1; }
+        .header-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 11px;
+            color: #8b949e;
+        }
+        .header-stats strong { color: #c9d1d9; }
+
+        /* ================================================================
+           Sidebar - Device List
+           ================================================================ */
+        .sidebar-header {
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8b949e;
+            border-bottom: 1px solid #21262d;
+        }
+        .device-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        .device-card {
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+        .device-card:hover { background: #161b22; border-color: #30363d; }
+        .device-card.active { background: #161b22; border-color: #58a6ff; }
+        .device-card .device-id {
+            font-size: 13px;
+            font-weight: 500;
+            color: #e6edf3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .device-card .device-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 11px;
+            color: #8b949e;
+        }
+        .device-card .event-count {
+            color: #58a6ff;
+            font-weight: 500;
+        }
+        .no-devices {
+            padding: 20px;
+            text-align: center;
+            color: #484f58;
+            font-size: 12px;
+        }
+
+        /* ================================================================
+           Filters Bar
+           ================================================================ */
+        .filters-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            background: transparent;
+            color: #8b949e;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .filter-btn:hover { border-color: #58a6ff; color: #c9d1d9; }
+        .filter-btn.active { background: #1f3a5f; border-color: #58a6ff; color: #58a6ff; }
+        .filter-label {
+            font-size: 11px;
+            color: #484f58;
+            margin-right: 4px;
+        }
+        .filter-sep {
+            width: 1px;
+            height: 20px;
+            background: #30363d;
+            margin: 0 4px;
+        }
+        .autoscroll-btn {
+            margin-left: auto;
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            background: transparent;
+            color: #8b949e;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .autoscroll-btn.active { background: #0d2818; border-color: #3fb950; color: #3fb950; }
+        .clear-btn {
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            background: transparent;
+            color: #8b949e;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .clear-btn:hover { border-color: #f85149; color: #f85149; }
+
+        /* ================================================================
+           Main Content Area
+           ================================================================ */
+        .content-area {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            overflow: hidden;
+        }
+        .charts-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 8px 16px;
+            background: #0d1117;
+            border-bottom: 1px solid #21262d;
+        }
+        .chart-box {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 8px 12px;
+            min-height: 100px;
+        }
+        .chart-box .chart-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8b949e;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .chart-box .chart-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #e6edf3;
+            margin-bottom: 4px;
+        }
+        .chart-box canvas {
+            width: 100%;
+            height: 50px;
+            display: block;
+        }
+        .chart-value.good { color: #3fb950; }
+        .chart-value.warn { color: #d29922; }
+        .chart-value.bad { color: #f85149; }
+
+        /* ================================================================
+           Event Log
+           ================================================================ */
+        .event-log {
+            overflow-y: auto;
+            padding: 8px 16px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .event-row {
+            display: grid;
+            grid-template-columns: 85px 85px 100px 1fr;
+            gap: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            align-items: start;
+            border-bottom: 1px solid #161b22;
+            cursor: pointer;
+        }
+        .event-row:hover { background: #161b22; }
+        .event-time { color: #484f58; font-variant-numeric: tabular-nums; }
+        .event-category {
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .cat-performance { background: #1a2332; color: #58a6ff; }
+        .cat-appState, .cat-appstate { background: #1a2818; color: #3fb950; }
+        .cat-arSession, .cat-arsession { background: #2d1f00; color: #d29922; }
+        .cat-processing { background: #2a1a2e; color: #bc8cff; }
+        .cat-network { background: #1a2332; color: #79c0ff; }
+        .cat-logs { background: #272118; color: #d2a679; }
+        .cat-error { background: #3d1318; color: #f85149; }
+        .event-type { color: #c9d1d9; font-weight: 500; }
+        .event-data {
+            color: #8b949e;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .event-data.expanded {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* ================================================================
+           Empty States
+           ================================================================ */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #484f58;
+            text-align: center;
+            padding: 40px;
+        }
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+        .empty-state h3 { font-size: 16px; color: #8b949e; margin-bottom: 8px; }
+        .empty-state p { font-size: 13px; max-width: 300px; }
+
+        /* ================================================================
+           Scrollbar
+           ================================================================ */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+        /* ================================================================
+           Responsive
+           ================================================================ */
+        @media (max-width: 768px) {
+            .app {
+                grid-template-columns: 1fr;
+                grid-template-rows: 48px auto 1fr;
+            }
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid #30363d;
+                max-height: 200px;
+            }
+            .charts-strip {
+                grid-template-columns: 1fr;
+            }
+            .event-row {
+                grid-template-columns: 70px 70px 1fr;
+            }
+            .event-data { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <div class="header">
+            <h1>&#x25C9; Debug <span>Dashboard</span></h1>
+            <div id="connStatus" class="conn-badge idle">
+                <span class="dot"></span>
+                <span class="label">Select Device</span>
+            </div>
+            <div class="header-spacer"></div>
+            <div class="header-stats">
+                <span>Devices: <strong id="deviceCount">0</strong></span>
+                <span>Events: <strong id="totalEvents">0</strong></span>
+                <span>Uptime: <strong id="uptime">--</strong></span>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">Connected Devices</div>
+            <div class="device-list" id="deviceList">
+                <div class="no-devices" id="noDevices">
+                    No devices connected.<br>
+                    Waiting for iOS debug streams...
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main">
+            <!-- Filters -->
+            <div class="filters-bar">
+                <span class="filter-label">Filter:</span>
+                <button class="filter-btn active" data-category="all" onclick="toggleFilter(this)">All</button>
+                <button class="filter-btn" data-category="performance" onclick="toggleFilter(this)">Performance</button>
+                <button class="filter-btn" data-category="appState" onclick="toggleFilter(this)">App State</button>
+                <button class="filter-btn" data-category="arSession" onclick="toggleFilter(this)">AR Session</button>
+                <button class="filter-btn" data-category="processing" onclick="toggleFilter(this)">Processing</button>
+                <button class="filter-btn" data-category="network" onclick="toggleFilter(this)">Network</button>
+                <button class="filter-btn" data-category="logs" onclick="toggleFilter(this)">Logs</button>
+                <div class="filter-sep"></div>
+                <button class="clear-btn" onclick="clearEvents()">Clear Log</button>
+                <button class="autoscroll-btn active" id="autoscrollBtn" onclick="toggleAutoscroll()">Auto-scroll ON</button>
+            </div>
+
+            <!-- Content: Charts + Log -->
+            <div class="content-area">
+                <!-- Performance Charts -->
+                <div class="charts-strip" id="chartsStrip">
+                    <div class="chart-box">
+                        <div class="chart-title">
+                            <span>FPS</span>
+                            <span id="fpsUnit">frames/s</span>
+                        </div>
+                        <div class="chart-value" id="fpsValue">--</div>
+                        <canvas id="fpsChart" width="300" height="50"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <div class="chart-title">
+                            <span>Memory</span>
+                            <span id="memUnit">MB</span>
+                        </div>
+                        <div class="chart-value" id="memValue">--</div>
+                        <canvas id="memChart" width="300" height="50"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <div class="chart-title">
+                            <span>CPU</span>
+                            <span id="cpuUnit">%</span>
+                        </div>
+                        <div class="chart-value" id="cpuValue">--</div>
+                        <canvas id="cpuChart" width="300" height="50"></canvas>
+                    </div>
+                </div>
+
+                <!-- Event Log -->
+                <div class="event-log" id="eventLog">
+                    <div class="empty-state" id="emptyState">
+                        <div class="icon">&#x1F4E1;</div>
+                        <h3>No events yet</h3>
+                        <p>Select a device from the sidebar to start receiving real-time debug events.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* ====================================================================
+       State
+       ==================================================================== */
+    var state = {
+        selectedDevice: null,
+        ws: null,
+        events: [],
+        maxEvents: 5000,
+        activeFilters: new Set(['all']),
+        autoScroll: true,
+        startTime: Date.now(),
+        fpsHistory: [],
+        memHistory: [],
+        cpuHistory: [],
+        chartMaxPoints: 60
+    };
+
+    /* ====================================================================
+       Utility Functions
+       ==================================================================== */
+    function escapeHtml(str) {
+        if (!str) return '';
+        var s = String(str);
+        s = s.replace(/&/g, '&amp;');
+        s = s.replace(/</g, '&lt;');
+        s = s.replace(/>/g, '&gt;');
+        s = s.replace(/"/g, '&quot;');
+        return s;
+    }
+
+    function formatEventTime(ts) {
+        if (!ts) return '--:--:--';
+        try {
+            var d = new Date(ts);
+            if (isNaN(d.getTime())) {
+                var sub = String(ts).substring(11, 19);
+                return sub || '--:--:--';
+            }
+            return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        } catch (e) {
+            return '--:--:--';
+        }
+    }
+
+    function formatTimeAgo(ts) {
+        if (!ts) return 'N/A';
+        try {
+            var d = new Date(ts);
+            var now = new Date();
+            var diffS = Math.floor((now - d) / 1000);
+            if (diffS < 5) return 'just now';
+            if (diffS < 60) return diffS + 's ago';
+            if (diffS < 3600) return Math.floor(diffS / 60) + 'm ago';
+            return Math.floor(diffS / 3600) + 'h ago';
+        } catch (e) {
+            return 'N/A';
+        }
+    }
+
+    function summarizeData(data) {
+        if (typeof data === 'string') return data;
+        if (typeof data !== 'object' || data === null) return String(data);
+        var parts = [];
+        var keys = Object.keys(data);
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            var val = data[key];
+            if (typeof val === 'number') {
+                parts.push(key + ':' + (Number.isInteger(val) ? val : val.toFixed(2)));
+            } else if (typeof val === 'string') {
+                parts.push(key + ':' + (val.length > 30 ? val.substring(0, 30) + '...' : val));
+            } else if (typeof val === 'boolean') {
+                parts.push(key + ':' + val);
+            }
+        }
+        return parts.join('  ');
+    }
+
+    function updateUptime() {
+        var elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+        var m = Math.floor(elapsed / 60);
+        var s = elapsed % 60;
+        var h = Math.floor(m / 60);
+        if (h > 0) {
+            document.getElementById('uptime').textContent = h + 'h ' + (m % 60) + 'm';
+        } else {
+            document.getElementById('uptime').textContent = m + 'm ' + s + 's';
+        }
+    }
+
+    /* ====================================================================
+       Device List Polling
+       ==================================================================== */
+    function fetchDevices() {
+        fetch('/api/v1/debug/devices')
+            .then(function(resp) {
+                if (!resp.ok) throw new Error('fetch failed');
+                return resp.json();
+            })
+            .then(function(data) {
+                renderDevices(data.devices || []);
+                document.getElementById('deviceCount').textContent = (data.devices || []).length;
+                document.getElementById('totalEvents').textContent = data.total_buffered_events || 0;
+            })
+            .catch(function() { /* silently retry */ });
+    }
+
+    function renderDevices(devices) {
+        var list = document.getElementById('deviceList');
+        var noDevices = document.getElementById('noDevices');
+
+        if (devices.length === 0) {
+            if (noDevices) noDevices.style.display = 'block';
+            return;
+        }
+
+        // Build device cards using DOM methods
+        while (list.firstChild) {
+            list.removeChild(list.firstChild);
+        }
+
+        for (var i = 0; i < devices.length; i++) {
+            var dev = devices[i];
+            var isActive = state.selectedDevice === dev.device_id;
+            var timeAgo = dev.last_event_at ? formatTimeAgo(dev.last_event_at) : 'N/A';
+            var shortId = dev.device_id.length > 20
+                ? dev.device_id.substring(0, 8) + '...' + dev.device_id.substring(dev.device_id.length - 6)
+                : dev.device_id;
+
+            var card = document.createElement('div');
+            card.className = 'device-card' + (isActive ? ' active' : '');
+            card.setAttribute('data-device-id', dev.device_id);
+            card.title = dev.device_id;
+            card.onclick = (function(did) { return function() { selectDevice(did); }; })(dev.device_id);
+
+            var idDiv = document.createElement('div');
+            idDiv.className = 'device-id';
+            idDiv.textContent = shortId;
+            card.appendChild(idDiv);
+
+            var metaDiv = document.createElement('div');
+            metaDiv.className = 'device-meta';
+
+            var timeSpan = document.createElement('span');
+            timeSpan.textContent = timeAgo;
+            metaDiv.appendChild(timeSpan);
+
+            var countSpan = document.createElement('span');
+            countSpan.className = 'event-count';
+            countSpan.textContent = dev.buffered_events + ' events';
+            metaDiv.appendChild(countSpan);
+
+            card.appendChild(metaDiv);
+            list.appendChild(card);
+        }
+
+        // Re-add the no-devices placeholder (hidden)
+        var placeholder = document.createElement('div');
+        placeholder.className = 'no-devices';
+        placeholder.id = 'noDevices';
+        placeholder.style.display = 'none';
+        placeholder.textContent = 'No devices connected.';
+        list.appendChild(placeholder);
+    }
+
+    /* ====================================================================
+       Device Selection & WebSocket
+       ==================================================================== */
+    function selectDevice(deviceId) {
+        if (state.selectedDevice === deviceId) return;
+        state.selectedDevice = deviceId;
+
+        // Close existing WS
+        if (state.ws) {
+            state.ws.close();
+            state.ws = null;
+        }
+
+        // Clear events for new device
+        state.events = [];
+        state.fpsHistory = [];
+        state.memHistory = [];
+        state.cpuHistory = [];
+        renderEventLog();
+        updateCharts();
+
+        // Update active card
+        var cards = document.querySelectorAll('.device-card');
+        for (var i = 0; i < cards.length; i++) {
+            cards[i].classList.remove('active');
+            if (cards[i].getAttribute('data-device-id') === deviceId) {
+                cards[i].classList.add('active');
+            }
+        }
+
+        // Connect WebSocket
+        connectWebSocket(deviceId);
+    }
+
+    function connectWebSocket(deviceId) {
+        var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        var url = protocol + '//' + location.host + '/api/v1/debug/dashboard/ws/' + encodeURIComponent(deviceId);
+
+        updateConnectionStatus('idle', 'Connecting...');
+
+        var ws = new WebSocket(url);
+        state.ws = ws;
+
+        ws.onopen = function() {
+            updateConnectionStatus('connected', 'Connected');
+        };
+
+        ws.onmessage = function(evt) {
+            try {
+                var msg = JSON.parse(evt.data);
+                if (msg.type === 'buffered_events' && Array.isArray(msg.events)) {
+                    for (var i = 0; i < msg.events.length; i++) {
+                        processEvent(msg.events[i]);
+                    }
+                    renderEventLog();
+                } else if (msg.type === 'event') {
+                    processEvent(msg.data);
+                    renderEventLog();
+                } else {
+                    processEvent(msg);
+                    renderEventLog();
+                }
+            } catch (e) {
+                // Not valid JSON, ignore
+            }
+        };
+
+        ws.onclose = function() {
+            updateConnectionStatus('disconnected', 'Disconnected');
+            // Auto-reconnect after 3s
+            if (state.selectedDevice === deviceId) {
+                setTimeout(function() {
+                    if (state.selectedDevice === deviceId) {
+                        connectWebSocket(deviceId);
+                    }
+                }, 3000);
+            }
+        };
+
+        ws.onerror = function() {
+            updateConnectionStatus('disconnected', 'Error');
+        };
+    }
+
+    function updateConnectionStatus(status, label) {
+        var badge = document.getElementById('connStatus');
+        badge.className = 'conn-badge ' + status;
+        badge.querySelector('.label').textContent = label;
+    }
+
+    /* ====================================================================
+       Event Processing
+       ==================================================================== */
+    function processEvent(event) {
+        if (!event) return;
+
+        state.events.push(event);
+        if (state.events.length > state.maxEvents) {
+            state.events = state.events.slice(-state.maxEvents);
+        }
+
+        // Extract performance metrics
+        var category = (event.category || '').toLowerCase();
+        var data = event.data || {};
+
+        if (category === 'performance') {
+            if (data.fps !== undefined) {
+                state.fpsHistory.push(data.fps);
+                if (state.fpsHistory.length > state.chartMaxPoints) state.fpsHistory.shift();
+            }
+            if (data.memoryUsage !== undefined) {
+                state.memHistory.push(data.memoryUsage);
+                if (state.memHistory.length > state.chartMaxPoints) state.memHistory.shift();
+            }
+            if (data.cpuUsage !== undefined) {
+                state.cpuHistory.push(data.cpuUsage);
+                if (state.cpuHistory.length > state.chartMaxPoints) state.cpuHistory.shift();
+            }
+            updateChartValues();
+        }
+    }
+
+    /* ====================================================================
+       Event Log Rendering (DOM-based, safe)
+       ==================================================================== */
+    function renderEventLog() {
+        var log = document.getElementById('eventLog');
+        var empty = document.getElementById('emptyState');
+        var filtered = getFilteredEvents();
+
+        if (filtered.length === 0) {
+            // Clear all children except empty state
+            while (log.firstChild) {
+                log.removeChild(log.firstChild);
+            }
+            if (state.events.length === 0) {
+                empty.style.display = 'flex';
+                log.appendChild(empty);
+            } else {
+                empty.style.display = 'none';
+                var notice = document.createElement('div');
+                notice.className = 'empty-state';
+                var h = document.createElement('h3');
+                h.textContent = 'No matching events';
+                notice.appendChild(h);
+                var p = document.createElement('p');
+                p.textContent = 'Try changing filters.';
+                notice.appendChild(p);
+                log.appendChild(notice);
+            }
+            return;
+        }
+
+        empty.style.display = 'none';
+
+        // Only render last 500 visible events for performance
+        var visible = filtered.slice(-500);
+
+        // Use document fragment for efficient DOM building
+        var fragment = document.createDocumentFragment();
+        for (var i = 0; i < visible.length; i++) {
+            fragment.appendChild(createEventRow(visible[i]));
+        }
+
+        while (log.firstChild) {
+            log.removeChild(log.firstChild);
+        }
+        log.appendChild(fragment);
+
+        if (state.autoScroll) {
+            log.scrollTop = log.scrollHeight;
+        }
+
+        updateCharts();
+    }
+
+    function createEventRow(evt) {
+        var row = document.createElement('div');
+        row.className = 'event-row';
+        row.onclick = function() {
+            var dataCell = row.querySelector('.event-data');
+            if (dataCell) dataCell.classList.toggle('expanded');
+        };
+
+        var timeSpan = document.createElement('span');
+        timeSpan.className = 'event-time';
+        timeSpan.textContent = formatEventTime(evt.timestamp || evt.received_at || '');
+        row.appendChild(timeSpan);
+
+        var catSpan = document.createElement('span');
+        var category = evt.category || 'unknown';
+        catSpan.className = 'event-category cat-' + category.replace(/[^a-zA-Z]/g, '');
+        catSpan.textContent = category;
+        row.appendChild(catSpan);
+
+        var typeSpan = document.createElement('span');
+        typeSpan.className = 'event-type';
+        typeSpan.textContent = evt.type || '-';
+        row.appendChild(typeSpan);
+
+        var dataSpan = document.createElement('span');
+        dataSpan.className = 'event-data';
+        dataSpan.title = 'Click to expand';
+        dataSpan.textContent = evt.data ? summarizeData(evt.data) : '';
+        row.appendChild(dataSpan);
+
+        return row;
+    }
+
+    function getFilteredEvents() {
+        if (state.activeFilters.has('all')) return state.events;
+        return state.events.filter(function(e) {
+            return state.activeFilters.has(e.category);
+        });
+    }
+
+    /* ====================================================================
+       Filters
+       ==================================================================== */
+    function toggleFilter(btn) {
+        var cat = btn.getAttribute('data-category');
+
+        if (cat === 'all') {
+            state.activeFilters.clear();
+            state.activeFilters.add('all');
+            var allBtns = document.querySelectorAll('.filter-btn');
+            for (var i = 0; i < allBtns.length; i++) allBtns[i].classList.remove('active');
+            btn.classList.add('active');
+        } else {
+            state.activeFilters.delete('all');
+            document.querySelector('.filter-btn[data-category="all"]').classList.remove('active');
+
+            if (state.activeFilters.has(cat)) {
+                state.activeFilters.delete(cat);
+                btn.classList.remove('active');
+            } else {
+                state.activeFilters.add(cat);
+                btn.classList.add('active');
+            }
+
+            if (state.activeFilters.size === 0) {
+                state.activeFilters.add('all');
+                document.querySelector('.filter-btn[data-category="all"]').classList.add('active');
+            }
+        }
+
+        renderEventLog();
+    }
+
+    function toggleAutoscroll() {
+        state.autoScroll = !state.autoScroll;
+        var btn = document.getElementById('autoscrollBtn');
+        btn.textContent = state.autoScroll ? 'Auto-scroll ON' : 'Auto-scroll OFF';
+        if (state.autoScroll) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    }
+
+    function clearEvents() {
+        state.events = [];
+        state.fpsHistory = [];
+        state.memHistory = [];
+        state.cpuHistory = [];
+        renderEventLog();
+        updateCharts();
+        document.getElementById('fpsValue').textContent = '--';
+        document.getElementById('memValue').textContent = '--';
+        document.getElementById('cpuValue').textContent = '--';
+        document.getElementById('fpsValue').className = 'chart-value';
+        document.getElementById('memValue').className = 'chart-value';
+        document.getElementById('cpuValue').className = 'chart-value';
+    }
+
+    /* ====================================================================
+       Performance Charts (Canvas)
+       ==================================================================== */
+    function updateChartValues() {
+        if (state.fpsHistory.length > 0) {
+            var fps = state.fpsHistory[state.fpsHistory.length - 1];
+            var fpsEl = document.getElementById('fpsValue');
+            fpsEl.textContent = Math.round(fps);
+            fpsEl.className = 'chart-value' + (fps >= 55 ? ' good' : fps >= 30 ? ' warn' : ' bad');
+        }
+
+        if (state.memHistory.length > 0) {
+            var mem = state.memHistory[state.memHistory.length - 1];
+            var memEl = document.getElementById('memValue');
+            memEl.textContent = typeof mem === 'number' ? mem.toFixed(0) : mem;
+            memEl.className = 'chart-value' + (mem < 200 ? ' good' : mem < 500 ? ' warn' : ' bad');
+        }
+
+        if (state.cpuHistory.length > 0) {
+            var cpu = state.cpuHistory[state.cpuHistory.length - 1];
+            var cpuEl = document.getElementById('cpuValue');
+            cpuEl.textContent = typeof cpu === 'number' ? cpu.toFixed(1) : cpu;
+            cpuEl.className = 'chart-value' + (cpu < 50 ? ' good' : cpu < 80 ? ' warn' : ' bad');
+        }
+    }
+
+    function updateCharts() {
+        drawSparkline('fpsChart', state.fpsHistory, '#58a6ff', 0, 70);
+        drawSparkline('memChart', state.memHistory, '#3fb950', 0, null);
+        drawSparkline('cpuChart', state.cpuHistory, '#d29922', 0, 100);
+    }
+
+    function drawSparkline(canvasId, data, color, minVal, maxVal) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var dpr = window.devicePixelRatio || 1;
+
+        // Handle high-DPI
+        var cw = canvas.clientWidth;
+        var ch = canvas.clientHeight;
+        canvas.width = cw * dpr;
+        canvas.height = ch * dpr;
+        ctx.scale(dpr, dpr);
+
+        ctx.clearRect(0, 0, cw, ch);
+
+        if (data.length < 2) return;
+
+        // Compute range
+        var lo = minVal !== null ? minVal : Math.min.apply(null, data);
+        var hi = maxVal !== null ? maxVal : Math.max.apply(null, data);
+        if (hi === lo) hi = lo + 1;
+
+        var step = cw / (state.chartMaxPoints - 1);
+        var startIdx = Math.max(0, data.length - state.chartMaxPoints);
+        var count = data.length - startIdx;
+
+        // Draw fill
+        ctx.beginPath();
+        for (var i = 0; i < count; i++) {
+            var x = i * step;
+            var y = ch - ((data[startIdx + i] - lo) / (hi - lo)) * (ch - 2) - 1;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        var lastX = (count - 1) * step;
+        ctx.lineTo(lastX, ch);
+        ctx.lineTo(0, ch);
+        ctx.closePath();
+        ctx.fillStyle = color + '15';
+        ctx.fill();
+
+        // Draw line
+        ctx.beginPath();
+        for (var j = 0; j < count; j++) {
+            var lx = j * step;
+            var ly = ch - ((data[startIdx + j] - lo) / (hi - lo)) * (ch - 2) - 1;
+            if (j === 0) ctx.moveTo(lx, ly);
+            else ctx.lineTo(lx, ly);
+        }
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    }
+
+    /* ====================================================================
+       Init
+       ==================================================================== */
+    fetchDevices();
+    setInterval(fetchDevices, 5000);
+    setInterval(updateUptime, 1000);
+    window.addEventListener('resize', function() { updateCharts(); });
+    </script>
+</body>
+</html>

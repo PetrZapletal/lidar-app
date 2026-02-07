@@ -132,6 +132,12 @@ final class ScanningViewModel {
     private var autoSaveTask: Task<Void, Never>?
     private let autoSaveInterval: TimeInterval = 30
 
+    // Debug stream throttle
+    #if DEBUG
+    private var lastDebugEventTime: TimeInterval = 0
+    private let debugEventInterval: TimeInterval = 2.0
+    #endif
+
     // Cached CIContext for texture capture (expensive to create)
     // Using nonisolated(unsafe) to avoid @Observable macro issues with lazy
     private nonisolated(unsafe) static let sharedCIContext: CIContext = {
@@ -445,6 +451,11 @@ final class ScanningViewModel {
     func cancelScanning() {
         isScanning = false
         arSessionManager.stopSession()
+
+        // Stop debug streaming
+        #if DEBUG
+        DebugStreamService.shared.stopStreaming()
+        #endif
     }
 
     // MARK: - Scene Phase Handling
@@ -509,6 +520,23 @@ final class ScanningViewModel {
             addDebugLog("Frame \(frameCounter), mesh: \(meshFaceCount), pts: \(pointCount)", level: .debug, tag: "AR")
         }
 
+        // Send periodic debug stream events (throttled to every ~2s)
+        #if DEBUG
+        if DebugSettings.shared.debugStreamEnabled {
+            let currentTime = frame.timestamp
+            if currentTime - lastDebugEventTime >= debugEventInterval {
+                lastDebugEventTime = currentTime
+                DebugStreamService.shared.logAppState(
+                    scanState: session.state.rawValue,
+                    trackingState: trackingStateText,
+                    pointCount: pointCount,
+                    meshFaceCount: meshFaceCount,
+                    memoryMB: PerformanceMonitor.shared.memoryUsageMB
+                )
+            }
+        }
+        #endif
+
         // Process depth fusion (every 3rd frame for performance)
         if depthFusionEnabled && frameCounter % 3 == 0 {
             isMLProcessing = true
@@ -546,12 +574,24 @@ final class ScanningViewModel {
 
         // Update statistics
         updateStatistics()
+
+        #if DEBUG
+        if DebugSettings.shared.debugStreamEnabled {
+            DebugStreamService.shared.logMeshAnchorEvent(meshAnchor, type: "updated")
+        }
+        #endif
     }
 
     // MARK: - State Updates
 
     private func updateTrackingState(_ state: ARCamera.TrackingState) {
         trackingStateText = state.displayName
+
+        #if DEBUG
+        if DebugSettings.shared.debugStreamEnabled {
+            DebugStreamService.shared.logARTrackingChange(state)
+        }
+        #endif
     }
 
     private func updateWorldMappingStatus(_ status: ARFrame.WorldMappingStatus) {

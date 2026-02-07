@@ -12,6 +12,7 @@ Pipeline 2: Debug Stream
 """
 
 import os
+import json
 import uuid
 import struct
 from datetime import datetime
@@ -20,6 +21,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 from services.storage import StorageService
@@ -33,9 +35,38 @@ router = APIRouter(prefix="/api/v1/debug", tags=["debug"])
 # Initialize storage
 storage = StorageService()
 
+# Templates directory
+_BASE_DIR = Path(__file__).resolve().parent.parent
+templates = Jinja2Templates(directory=str(_BASE_DIR / "templates"))
+
 # In-memory storage for debug streams
 debug_connections: dict[str, list[WebSocket]] = {}
 debug_events_buffer: dict[str, list[dict]] = {}
+
+# In-memory storage for dashboard WebSocket clients (device_id -> list of dashboard websockets)
+dashboard_clients: dict[str, list[WebSocket]] = {}
+
+
+async def broadcast_to_dashboard(device_id: str, event: dict):
+    """Forward an event to all connected dashboard WebSocket clients for a device."""
+    clients = dashboard_clients.get(device_id, [])
+    if not clients:
+        return
+    message = json.dumps({"type": "event", "data": event})
+    disconnected = []
+    for ws in clients:
+        try:
+            await ws.send_text(message)
+        except Exception:
+            disconnected.append(ws)
+    # Clean up disconnected clients
+    for ws in disconnected:
+        try:
+            clients.remove(ws)
+        except ValueError:
+            pass
+    if not clients:
+        dashboard_clients.pop(device_id, None)
 
 
 # ============================================================================
@@ -362,14 +393,18 @@ async def debug_stream_websocket(websocket: WebSocket, device_id: str):
             if device_id not in debug_events_buffer:
                 debug_events_buffer[device_id] = []
 
-            debug_events_buffer[device_id].append({
+            enriched_event = {
                 **data,
                 "received_at": datetime.utcnow().isoformat()
-            })
+            }
+            debug_events_buffer[device_id].append(enriched_event)
 
             # Limit buffer size
             if len(debug_events_buffer[device_id]) > 10000:
                 debug_events_buffer[device_id] = debug_events_buffer[device_id][-5000:]
+
+            # Forward event to connected dashboard clients
+            await broadcast_to_dashboard(device_id, enriched_event)
 
             # Acknowledge receipt
             await websocket.send_json({"ack": data.get("id", "unknown")})
@@ -393,10 +428,14 @@ async def receive_debug_events(device_id: str, request: Request):
     received_at = datetime.utcnow().isoformat()
 
     for event in events:
-        debug_events_buffer[device_id].append({
+        enriched_event = {
             **event,
             "received_at": received_at
-        })
+        }
+        debug_events_buffer[device_id].append(enriched_event)
+
+        # Forward event to connected dashboard clients
+        await broadcast_to_dashboard(device_id, enriched_event)
 
         # Log important events to persistent storage
         event_type = event.get("type", "")
@@ -493,6 +532,71 @@ async def debug_health():
         "total_events": sum(len(events) for events in debug_events_buffer.values()),
         "log_stats": log_storage.get_statistics()
     }
+
+
+# ============================================================================
+# Debug Dashboard
+# ============================================================================
+
+@router.get("/dashboard")
+async def debug_dashboard(request: Request):
+    """Serve the real-time debug dashboard web UI."""
+    return templates.TemplateResponse("debug_dashboard.html", {"request": request})
+
+
+@router.websocket("/dashboard/ws/{device_id}")
+async def dashboard_websocket(websocket: WebSocket, device_id: str):
+    """
+    WebSocket relay endpoint for dashboard clients.
+
+    When a dashboard connects:
+    1. Sends buffered recent events so the dashboard shows history
+    2. Relays live events from iOS device stream in real-time
+    3. Supports multiple dashboard clients per device
+    """
+    await websocket.accept()
+
+    # Register this dashboard client
+    if device_id not in dashboard_clients:
+        dashboard_clients[device_id] = []
+    dashboard_clients[device_id].append(websocket)
+
+    logger.info(f"Dashboard client connected for device: {device_id}")
+
+    try:
+        # Send buffered recent events (last 200) on connect
+        buffered = debug_events_buffer.get(device_id, [])
+        recent = buffered[-200:] if len(buffered) > 200 else buffered
+        if recent:
+            await websocket.send_text(json.dumps({
+                "type": "buffered_events",
+                "events": recent
+            }))
+
+        # Keep connection alive - listen for pings or commands from dashboard
+        while True:
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_text("pong")
+
+    except WebSocketDisconnect:
+        if device_id in dashboard_clients:
+            try:
+                dashboard_clients[device_id].remove(websocket)
+            except ValueError:
+                pass
+            if not dashboard_clients[device_id]:
+                del dashboard_clients[device_id]
+        logger.info(f"Dashboard client disconnected for device: {device_id}")
+    except Exception as e:
+        if device_id in dashboard_clients:
+            try:
+                dashboard_clients[device_id].remove(websocket)
+            except ValueError:
+                pass
+            if not dashboard_clients.get(device_id):
+                dashboard_clients.pop(device_id, None)
+        logger.warning(f"Dashboard WebSocket error for device {device_id}: {e}")
 
 
 # ============================================================================
