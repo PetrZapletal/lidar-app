@@ -4,8 +4,8 @@ import SwiftUI
 // MARK: - Debug Settings
 
 /// Centralized debug configuration using @AppStorage
-/// Available in both Debug and Release builds for Raw Data mode
-/// Debug Stream features are #if DEBUG only
+/// Available in both Debug and Release builds
+/// Debug Stream features are controlled by runtime `debugStreamEnabled` flag
 @MainActor
 @Observable
 final class DebugSettings {
@@ -42,9 +42,8 @@ final class DebugSettings {
     @ObservationIgnored
     @AppStorage("debug.rawData.maxTextureFrames") var maxTextureFrames = 500
 
-    // MARK: - Debug Stream Settings (Development Only)
+    // MARK: - Debug Stream Settings
 
-    #if DEBUG
     /// Enable debug info streaming
     @ObservationIgnored
     @AppStorage("debug.stream.enabled") var debugStreamEnabled = true
@@ -72,7 +71,6 @@ final class DebugSettings {
     /// Verbose logging
     @ObservationIgnored
     @AppStorage("debug.stream.verbose") var verboseLogging = false
-    #endif
 
     // MARK: - Computed Properties
 
@@ -87,7 +85,6 @@ final class DebugSettings {
         return URL(string: "\(base.absoluteString)/api/v1/debug/scans/raw")
     }
 
-    #if DEBUG
     /// Full URL for debug stream WebSocket (WSS for HTTPS)
     var debugStreamWebSocketURL: URL? {
         let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
@@ -116,7 +113,6 @@ final class DebugSettings {
     func isCategoryEnabled(_ category: DebugCategory) -> Bool {
         enabledCategories.contains(category)
     }
-    #endif
 
     // MARK: - Connection Testing
 
@@ -181,7 +177,6 @@ final class DebugSettings {
         textureQuality = 0.95
         maxTextureFrames = 500
 
-        #if DEBUG
         debugStreamEnabled = true
         debugStreamServerIP = "100.96.188.18"
         debugStreamPort = 8444  // Docker external port (maps to 8443)
@@ -189,13 +184,11 @@ final class DebugSettings {
         batchInterval = 5.0
         enabledCategoriesString = "appState,performance,arSession,processing,logs"
         verboseLogging = false
-        #endif
     }
 }
 
 // MARK: - Debug Categories
 
-#if DEBUG
 enum DebugCategory: String, CaseIterable, Codable, Identifiable {
     case appState = "appState"
     case performance = "performance"
@@ -228,7 +221,6 @@ enum DebugCategory: String, CaseIterable, Codable, Identifiable {
         }
     }
 }
-#endif
 
 // MARK: - Stream Mode
 

@@ -164,14 +164,12 @@ final class RoomPlanViewModel {
     private let service = RoomPlanService.shared
     private var cancellables = Set<AnyCancellable>()
 
-    #if DEBUG
     /// Unique session ID for debug streaming
     private let debugSessionId = UUID().uuidString
     /// Last time a debug stream event was sent
     private var lastDebugEventTime: Date = .distantPast
     /// Minimum interval between debug stream events (2 seconds)
     private let debugEventInterval: TimeInterval = 2.0
-    #endif
 
     var isCapturing: Bool {
         status == .capturing
@@ -225,7 +223,6 @@ final class RoomPlanViewModel {
         }
 
         // Send room capture progress events (throttled to every ~2s)
-        #if DEBUG
         if DebugSettings.shared.debugStreamEnabled {
             let now = Date()
             if now.timeIntervalSince(lastDebugEventTime) >= debugEventInterval {
@@ -252,7 +249,6 @@ final class RoomPlanViewModel {
                 )
             }
         }
-        #endif
     }
 
     func startCapture() async {
@@ -263,11 +259,9 @@ final class RoomPlanViewModel {
         }
 
         // Start debug streaming
-        #if DEBUG
         if DebugSettings.shared.debugStreamEnabled {
             DebugStreamService.shared.startStreaming(sessionId: debugSessionId)
         }
-        #endif
 
         do {
             try await service.startCapture()
@@ -281,18 +275,14 @@ final class RoomPlanViewModel {
         capturedStructure = await service.stopCapture()
 
         // Stop debug streaming
-        #if DEBUG
         DebugStreamService.shared.stopStreaming()
-        #endif
     }
 
     func cancelCapture() {
         service.cancelCapture()
 
         // Stop debug streaming
-        #if DEBUG
         DebugStreamService.shared.stopStreaming()
-        #endif
     }
 
     func convertToSession() -> ScanSession? {

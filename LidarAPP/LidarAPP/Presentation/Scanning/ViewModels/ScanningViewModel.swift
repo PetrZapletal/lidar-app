@@ -59,7 +59,6 @@ final class ScanningViewModel {
         }
 
         // Send to backend via DebugStreamService
-        #if DEBUG
         if DebugSettings.shared.debugStreamEnabled {
             DebugStreamService.shared.logEvent(
                 DebugEvent(
@@ -74,7 +73,6 @@ final class ScanningViewModel {
                 )
             )
         }
-        #endif
     }
 
     var canStartScanning: Bool {
@@ -133,10 +131,8 @@ final class ScanningViewModel {
     private let autoSaveInterval: TimeInterval = 30
 
     // Debug stream throttle
-    #if DEBUG
     private var lastDebugEventTime: TimeInterval = 0
     private let debugEventInterval: TimeInterval = 2.0
-    #endif
 
     // Cached CIContext for texture capture (expensive to create)
     // Using nonisolated(unsafe) to avoid @Observable macro issues with lazy
@@ -305,12 +301,10 @@ final class ScanningViewModel {
         session.startScanning()
 
         // Start debug streaming
-        #if DEBUG
         if DebugSettings.shared.debugStreamEnabled {
             DebugStreamService.shared.startStreaming(sessionId: session.id.uuidString)
             addDebugLog("Debug stream started", level: .network, tag: "Stream")
         }
-        #endif
 
         addDebugLog("Scan started: \(session.name)", level: .info, tag: "Scan")
 
@@ -356,12 +350,10 @@ final class ScanningViewModel {
         addDebugLog("Scan stopped, depth frames: \(session.depthFrames.count)", level: .info, tag: "Scan")
 
         // Stop debug streaming
-        #if DEBUG
         if DebugSettings.shared.debugStreamEnabled {
             addDebugLog("Debug stream stopping", level: .network, tag: "Stream")
             DebugStreamService.shared.stopStreaming()
         }
-        #endif
 
         if isMockMode {
             mockARSessionManager.stopSession()
@@ -453,9 +445,7 @@ final class ScanningViewModel {
         arSessionManager.stopSession()
 
         // Stop debug streaming
-        #if DEBUG
         DebugStreamService.shared.stopStreaming()
-        #endif
     }
 
     // MARK: - Scene Phase Handling
@@ -521,7 +511,6 @@ final class ScanningViewModel {
         }
 
         // Send periodic debug stream events (throttled to every ~2s)
-        #if DEBUG
         if DebugSettings.shared.debugStreamEnabled {
             let currentTime = frame.timestamp
             if currentTime - lastDebugEventTime >= debugEventInterval {
@@ -535,7 +524,6 @@ final class ScanningViewModel {
                 )
             }
         }
-        #endif
 
         // Process depth fusion (every 3rd frame for performance)
         if depthFusionEnabled && frameCounter % 3 == 0 {
@@ -575,11 +563,9 @@ final class ScanningViewModel {
         // Update statistics
         updateStatistics()
 
-        #if DEBUG
         if DebugSettings.shared.debugStreamEnabled {
             DebugStreamService.shared.logMeshAnchorEvent(meshAnchor, type: "updated")
         }
-        #endif
     }
 
     // MARK: - State Updates
@@ -587,11 +573,9 @@ final class ScanningViewModel {
     private func updateTrackingState(_ state: ARCamera.TrackingState) {
         trackingStateText = state.displayName
 
-        #if DEBUG
         if DebugSettings.shared.debugStreamEnabled {
             DebugStreamService.shared.logARTrackingChange(state)
         }
-        #endif
     }
 
     private func updateWorldMappingStatus(_ status: ARFrame.WorldMappingStatus) {
@@ -657,9 +641,7 @@ final class ScanningViewModel {
                 let worldMap = try await sessionPersistence.loadWorldMap(sessionId: sessionId)
                 arSessionManager.resumeWithWorldMap(worldMap)
             } catch {
-                #if DEBUG
                 DebugStreamService.shared.trackError("Failed to load world map: \(error)", screen: "Scanning")
-                #endif
                 print("Warning: Could not load world map: \(error.localizedDescription)")
                 // Continue without world map - user can still scan
             }
@@ -670,9 +652,7 @@ final class ScanningViewModel {
                     try coverageAnalyzer.restoreCoverageGrid(from: coverageData)
                 }
             } catch {
-                #if DEBUG
                 DebugStreamService.shared.trackError("Failed to load coverage grid: \(error)", screen: "Scanning")
-                #endif
                 print("Warning: Could not load coverage grid: \(error.localizedDescription)")
                 // Continue without coverage data - it will rebuild as user scans
             }
@@ -680,9 +660,7 @@ final class ScanningViewModel {
             showResumeSheet = false
             trackingStateText = "Relocalizing..."
         } catch {
-            #if DEBUG
             DebugStreamService.shared.trackError("Failed to resume session: \(error)", screen: "Scanning")
-            #endif
             errorMessage = "Nepodařilo se obnovit session: \(error.localizedDescription)"
             showError = true
         }
@@ -700,9 +678,7 @@ final class ScanningViewModel {
             try await sessionPersistence.deleteSession(id: sessionId)
             resumableSessions.removeAll { $0.id == sessionId }
         } catch {
-            #if DEBUG
             DebugStreamService.shared.trackError("Failed to delete session: \(error)", screen: "Scanning")
-            #endif
             errorMessage = "Nepodařilo se smazat session: \(error.localizedDescription)"
             showError = true
         }
@@ -734,9 +710,7 @@ final class ScanningViewModel {
         if isScanning {
             pauseScanning()
         }
-        #if DEBUG
         print("[Debug] ScanningViewModel cleanup called")
-        #endif
     }
 
     private func saveCurrentProgress() async {

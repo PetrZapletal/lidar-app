@@ -19,9 +19,7 @@ struct SettingsView: View {
             Form {
                 developerSection
                 debugUploadSection
-                #if DEBUG
                 debugStreamSection
-                #endif
                 backendSection
                 processingSection
                 qualitySection
@@ -202,7 +200,6 @@ struct SettingsView: View {
     @State private var testStreamResult: String?
     @State private var testStreamSuccess = false
 
-    #if DEBUG
     private var debugStreamService: DebugStreamService { DebugStreamService.shared }
 
     private var streamStatusColor: Color {
@@ -339,7 +336,7 @@ struct SettingsView: View {
         } header: {
             Label("Debug Stream", systemImage: "waveform")
         } footer: {
-            Text("Streamuje diagnostická data v reálném čase na debug server. Pouze pro development builds.")
+            Text("Streamuje diagnostická data v reálném čase na debug server.")
         }
     }
 
@@ -389,7 +386,6 @@ struct SettingsView: View {
             }
         }
     }
-    #endif
 
     // MARK: - Backend Section
 
@@ -824,7 +820,6 @@ struct DiagnosticsDetailView: View {
 
 // MARK: - Debug Categories View
 
-#if DEBUG
 struct DebugCategoriesView: View {
     private var settings: DebugSettings { DebugSettings.shared }
 
@@ -869,7 +864,6 @@ struct DebugCategoriesView: View {
         .navigationTitle("Debug Categories")
     }
 }
-#endif
 
 #Preview {
     SettingsView()

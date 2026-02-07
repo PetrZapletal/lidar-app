@@ -1,8 +1,6 @@
 import Foundation
 import ARKit
 
-#if DEBUG
-
 // MARK: - Debug Event
 
 struct DebugEvent: Codable, Sendable {
@@ -608,5 +606,3 @@ final class DebugStreamService {
         logEvent(event)
     }
 }
-
-#endif
