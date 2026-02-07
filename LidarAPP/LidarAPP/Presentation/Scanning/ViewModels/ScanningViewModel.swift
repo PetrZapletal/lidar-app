@@ -344,6 +344,13 @@ final class ScanningViewModel {
 
     func stopScanning() {
         isScanning = false
+
+        // IMPORTANT: Pause AR session FIRST to stop delegate callbacks
+        // and prevent mesh anchor buffers from being deallocated during extraction
+        if !isMockMode {
+            arSessionManager.pauseSession()
+        }
+
         session.stopScanning()
         stopAutoSave()
 
@@ -362,9 +369,16 @@ final class ScanningViewModel {
                 session.pointCloud = MockDataProvider.shared.generateRoomPointCloud()
             }
         } else {
-            // Generate final point cloud from all mesh anchors
+            // Copy mesh anchors while AR session is paused (buffers still valid)
             let meshAnchors = arSessionManager.getAllMeshAnchors()
-            session.pointCloud = pointCloudExtractor.extractPointCloud(from: meshAnchors)
+
+            // Safely extract point cloud - catch any buffer access errors
+            if !meshAnchors.isEmpty {
+                session.pointCloud = pointCloudExtractor.extractPointCloudSafely(from: meshAnchors)
+            }
+
+            // Now fully stop the AR session
+            arSessionManager.stopSession()
 
             // Save final session state
             Task {

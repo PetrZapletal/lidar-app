@@ -57,8 +57,10 @@ final class PointCloudExtractor: Sendable {
 
         let depthWidth = CVPixelBufferGetWidth(depthMap)
         let depthHeight = CVPixelBufferGetHeight(depthMap)
-        let depthData = CVPixelBufferGetBaseAddress(depthMap)!
-            .assumingMemoryBound(to: Float32.self)
+        guard let depthBaseAddress = CVPixelBufferGetBaseAddress(depthMap) else {
+            return PointCloud(points: [], timestamp: CACurrentMediaTime())
+        }
+        let depthData = depthBaseAddress.assumingMemoryBound(to: Float32.self)
 
         // Optional confidence
         var confidenceData: UnsafeMutablePointer<UInt8>?
@@ -148,6 +150,8 @@ final class PointCloudExtractor: Sendable {
             let vertices = geometry.vertices
             let vertexCount = vertices.count
 
+            guard vertexCount > 0, vertices.buffer.length > 0 else { continue }
+
             let stride = vertices.stride
             let offset = vertices.offset
 
@@ -176,6 +180,21 @@ final class PointCloudExtractor: Sendable {
             points: allPoints,
             timestamp: CACurrentMediaTime()
         )
+    }
+
+    /// Safely extract point cloud, returning empty cloud on any error
+    func extractPointCloudSafely(from meshAnchors: [ARMeshAnchor]) -> PointCloud {
+        // Validate anchors have valid geometry before accessing Metal buffers
+        let validAnchors = meshAnchors.filter { anchor in
+            let vertices = anchor.geometry.vertices
+            return vertices.count > 0 && vertices.buffer.length > 0
+        }
+
+        guard !validAnchors.isEmpty else {
+            return PointCloud(points: [], timestamp: CACurrentMediaTime())
+        }
+
+        return extractPointCloud(from: validAnchors)
     }
 
     // MARK: - Voxel Downsampling
@@ -245,8 +264,10 @@ final class PointCloudExtractor: Sendable {
         let height = CVPixelBufferGetHeight(depthMap)
         let totalCount = width * height
 
-        let depthData = CVPixelBufferGetBaseAddress(depthMap)!
-            .assumingMemoryBound(to: Float32.self)
+        guard let depthBaseAddr = CVPixelBufferGetBaseAddress(depthMap) else {
+            return DepthStatistics(minDepth: 0, maxDepth: 0, meanDepth: 0, validPixelCount: 0, totalPixelCount: totalCount, coverage: 0)
+        }
+        let depthData = depthBaseAddr.assumingMemoryBound(to: Float32.self)
 
         var minDepth: Float = .greatestFiniteMagnitude
         var maxDepth: Float = 0
@@ -313,8 +334,8 @@ extension PointCloudExtractor {
 
         let depthWidth = CVPixelBufferGetWidth(depthMap)
         let depthHeight = CVPixelBufferGetHeight(depthMap)
-        let depthBuffer = CVPixelBufferGetBaseAddress(depthMap)!
-            .assumingMemoryBound(to: Float32.self)
+        guard let depthBufAddr = CVPixelBufferGetBaseAddress(depthMap) else { return nil }
+        let depthBuffer = depthBufAddr.assumingMemoryBound(to: Float32.self)
 
         let imageWidth = CVPixelBufferGetWidth(capturedImage)
         let imageHeight = CVPixelBufferGetHeight(capturedImage)
