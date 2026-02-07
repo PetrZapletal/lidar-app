@@ -117,10 +117,15 @@ final class RoomPlanService: NSObject, RoomPlanServiceProtocol {
 
         statusSubject.send(.preparing)
 
-        // Use the RoomCaptureView's built-in captureSession so the camera feed
-        // displayed by the view is driven by the same session we receive delegate
-        // callbacks from. Creating a separate RoomCaptureSession would leave the
-        // view disconnected, resulting in a black screen.
+        // Wait for the RoomCaptureView to be created by SwiftUI's rendering pipeline.
+        // makeUIView() in RoomCaptureViewRepresentable may not have run yet when
+        // onAppear fires, so we poll until the view (and its captureSession) exists.
+        var retries = 0
+        while activeCaptureSession == nil && retries < 20 {
+            try await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            retries += 1
+        }
+
         guard let session = activeCaptureSession else {
             throw RoomPlanError.captureFailed
         }
