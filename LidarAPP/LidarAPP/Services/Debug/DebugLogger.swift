@@ -1,8 +1,6 @@
 import Foundation
 import os.log
 
-#if DEBUG
-
 // MARK: - Log Level
 
 enum LogLevel: String, Codable, CaseIterable, Comparable {
@@ -314,15 +312,3 @@ extension String {
     static let logCategoryML = "ML"
     static let logCategoryStorage = "Storage"
 }
-
-#endif
-
-// MARK: - Release Build Stubs
-
-#if !DEBUG
-/// No-op logging functions for release builds
-func debugLog(_ message: String, category: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {}
-func infoLog(_ message: String, category: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {}
-func warningLog(_ message: String, category: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {}
-func errorLog(_ message: String, category: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {}
-#endif

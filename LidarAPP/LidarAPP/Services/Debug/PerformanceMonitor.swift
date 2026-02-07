@@ -2,8 +2,6 @@ import Foundation
 import QuartzCore
 import UIKit
 
-#if DEBUG
-
 // MARK: - Performance Snapshot
 
 struct PerformanceSnapshot: Codable, Sendable {
@@ -338,5 +336,3 @@ final class PerformanceHistory {
         return try? encoder.encode(snapshots)
     }
 }
-
-#endif
