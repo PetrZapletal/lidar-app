@@ -65,9 +65,11 @@ final class RoomPlanService: NSObject, RoomPlanServiceProtocol {
     private var capturedStructure: CapturedStructure?
     private var roomCaptureView: RoomCaptureView?
     private var lastCapturedRoom: CapturedRoom?
+    /// When true, createCaptureView() will auto-start the session.
+    /// Handles the race where startCapture() runs before makeUIView().
+    private var pendingStart = false
 
     /// The active capture session, obtained from the RoomCaptureView's internal session.
-    /// This ensures the session driving the camera feed is the same one we receive delegate callbacks from.
     private var activeCaptureSession: RoomCaptureSession? {
         roomCaptureView?.captureSession
     }
@@ -117,25 +119,17 @@ final class RoomPlanService: NSObject, RoomPlanServiceProtocol {
 
         statusSubject.send(.preparing)
 
-        // Wait for the RoomCaptureView to be created by SwiftUI's rendering pipeline.
-        // makeUIView() in RoomCaptureViewRepresentable may not have run yet when
-        // onAppear fires, so we poll until the view (and its captureSession) exists.
-        var retries = 0
-        while activeCaptureSession == nil && retries < 20 {
-            try await Task.sleep(nanoseconds: 100_000_000) // 100ms
-            retries += 1
+        // Try to start immediately if view already exists
+        if let session = activeCaptureSession {
+            session.delegate = self
+            let config = RoomCaptureSession.Configuration()
+            session.run(configuration: config)
+            statusSubject.send(.capturing)
+        } else {
+            // View not yet created by SwiftUI - createCaptureView() will
+            // auto-start the session when called by makeUIView()
+            pendingStart = true
         }
-
-        guard let session = activeCaptureSession else {
-            throw RoomPlanError.captureFailed
-        }
-
-        session.delegate = self
-
-        let config = RoomCaptureSession.Configuration()
-        session.run(configuration: config)
-
-        statusSubject.send(.capturing)
     }
 
     func stopCapture() async -> CapturedStructure? {
@@ -149,6 +143,7 @@ final class RoomPlanService: NSObject, RoomPlanServiceProtocol {
     }
 
     func cancelCapture() {
+        pendingStart = false
         activeCaptureSession?.stop()
         capturedStructure = nil
         roomCaptureView = nil
@@ -312,10 +307,18 @@ final class RoomPlanService: NSObject, RoomPlanServiceProtocol {
 
     func createCaptureView() -> RoomCaptureView {
         let view = RoomCaptureView(frame: .zero)
-        // Set the session delegate on the view's internal captureSession so that
-        // the camera feed and our delegate callbacks share the same session instance.
         view.captureSession.delegate = self
         self.roomCaptureView = view
+
+        // If startCapture() already ran but the view didn't exist yet,
+        // start the session now that the view (and its session) are ready.
+        if pendingStart {
+            pendingStart = false
+            let config = RoomCaptureSession.Configuration()
+            view.captureSession.run(configuration: config)
+            statusSubject.send(.capturing)
+        }
+
         return view
     }
 }
