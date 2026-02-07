@@ -61,6 +61,7 @@ struct ProfileTabView: View {
                                 }
                             }
                         }
+                        .accessibilityIdentifier(AccessibilityIdentifiers.Profile.loginButton)
                     }
                 }
 
@@ -68,12 +69,14 @@ struct ProfileTabView: View {
                     Button(action: { showSettings = true }) {
                         Label("Nastavení", systemImage: "gearshape")
                     }
+                    .accessibilityIdentifier(AccessibilityIdentifiers.Profile.settingsButton)
 
                     NavigationLink {
                         Text("Nápověda")
                     } label: {
                         Label("Nápověda", systemImage: "questionmark.circle")
                     }
+                    .accessibilityIdentifier(AccessibilityIdentifiers.Profile.helpButton)
 
                     Link(destination: URL(string: "https://lidarscanner.app")!) {
                         Label("Webové stránky", systemImage: "globe")
@@ -87,6 +90,7 @@ struct ProfileTabView: View {
                         Text(Bundle.main.appVersion)
                             .foregroundStyle(.secondary)
                     }
+                    .accessibilityIdentifier(AccessibilityIdentifiers.Profile.versionLabel)
                 }
             }
             .navigationTitle("Profil")

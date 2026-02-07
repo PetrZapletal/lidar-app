@@ -92,6 +92,7 @@ struct ScanModeSelector: View {
                 ) {
                     onModeSelected(.exterior)
                 }
+                .accessibilityIdentifier(AccessibilityIdentifiers.ScanModeSelector.exteriorCard)
 
                 ScanModeCard(
                     icon: ScanMode.interior.icon,
@@ -103,6 +104,7 @@ struct ScanModeSelector: View {
                 ) {
                     onModeSelected(.interior)
                 }
+                .accessibilityIdentifier(AccessibilityIdentifiers.ScanModeSelector.interiorCard)
 
                 ScanModeCard(
                     icon: ScanMode.object.icon,
@@ -114,6 +116,7 @@ struct ScanModeSelector: View {
                 ) {
                     onModeSelected(.object)
                 }
+                .accessibilityIdentifier(AccessibilityIdentifiers.ScanModeSelector.objectCard)
 
                 Spacer()
             }
@@ -121,6 +124,7 @@ struct ScanModeSelector: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Zrušit") { dismiss() }
+                        .accessibilityIdentifier(AccessibilityIdentifiers.ScanModeSelector.cancelButton)
                 }
             }
         }
@@ -199,6 +203,7 @@ struct CustomTabBar: View {
             ) {
                 selectedTab = .gallery
             }
+            .accessibilityIdentifier(AccessibilityIdentifiers.TabBar.galleryTab)
 
             Spacer()
 
@@ -221,6 +226,7 @@ struct CustomTabBar: View {
                         .foregroundStyle(.white)
                 }
             }
+            .accessibilityIdentifier(AccessibilityIdentifiers.TabBar.captureButton)
             .offset(y: -20)
 
             Spacer()
@@ -232,6 +238,7 @@ struct CustomTabBar: View {
             ) {
                 selectedTab = .profile
             }
+            .accessibilityIdentifier(AccessibilityIdentifiers.TabBar.profileTab)
         }
         .padding(.horizontal, 40)
         .padding(.top, 12)

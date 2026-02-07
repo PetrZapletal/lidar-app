@@ -51,6 +51,7 @@ struct GalleryView: View {
                     } label: {
                         Image(systemName: "arrow.up.arrow.down.circle")
                     }
+                    .accessibilityIdentifier(AccessibilityIdentifiers.Gallery.sortButton)
                 }
             }
             .navigationDestination(item: $selectedScan) { scan in

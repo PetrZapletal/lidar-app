@@ -38,6 +38,16 @@
                ReferencedContainer = "container:LidarAPP.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "FA986ED00A92B862EBBA313B"
+               BuildableName = "LidarAPPUITests.xctest"
+               BlueprintName = "LidarAPPUITests"
+               ReferencedContainer = "container:LidarAPP.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

@@ -36,6 +36,7 @@ struct SettingsView: View {
                     Button("Hotovo") {
                         dismiss()
                     }
+                    .accessibilityIdentifier(AccessibilityIdentifiers.Settings.doneButton)
                 }
             }
         }
@@ -46,6 +47,7 @@ struct SettingsView: View {
     private var developerSection: some View {
         Section {
             Toggle("Mock Mode", isOn: $mockModeEnabled)
+                .accessibilityIdentifier(AccessibilityIdentifiers.Settings.mockModeToggle)
 
             if mockModeEnabled {
                 HStack {
@@ -89,6 +91,7 @@ struct SettingsView: View {
                 get: { debugSettings.rawDataModeEnabled },
                 set: { debugSettings.rawDataModeEnabled = $0 }
             ))
+            .accessibilityIdentifier(AccessibilityIdentifiers.Settings.rawDataModeToggle)
 
             if debugSettings.rawDataModeEnabled {
                 HStack {
@@ -128,6 +131,7 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(isTestingConnection)
+                .accessibilityIdentifier(AccessibilityIdentifiers.Settings.testConnectionButton)
 
                 if let result = connectionTestResult {
                     Text(result)
@@ -301,6 +305,7 @@ struct SettingsView: View {
     private var processingSection: some View {
         Section {
             Toggle("Depth Fusion", isOn: $enableDepthFusion)
+                .accessibilityIdentifier(AccessibilityIdentifiers.Settings.depthFusionToggle)
 
             Stepper("Cílový počet bodů: \(targetPointCount / 1000)K", value: $targetPointCount, in: 100_000...2_000_000, step: 100_000)
         } header: {
