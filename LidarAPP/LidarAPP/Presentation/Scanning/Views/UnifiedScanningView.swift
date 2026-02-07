@@ -8,6 +8,7 @@ struct UnifiedScanningView<Mode: ScanningModeProtocol>: View {
     @State private var mode: Mode
     @State private var showResults = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
 
     var onScanCompleted: ((ScanModel, ScanSession) -> Void)?
 
@@ -62,6 +63,9 @@ struct UnifiedScanningView<Mode: ScanningModeProtocol>: View {
         .onDisappear {
             mode.cancelScanning()
         }
+        .onChange(of: scenePhase) { _, newPhase in
+            mode.handleScenePhaseChange(to: newPhase)
+        }
         .fullScreenCover(isPresented: $showResults) {
             mode.makeResultsView(
                 onSave: { scanModel, session in
@@ -100,6 +104,7 @@ struct LiDARUnifiedScanningView: View {
     @State private var showResults = false
     @State private var showSettings = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
 
     var onScanCompleted: ((ScanModel, ScanSession) -> Void)?
 
@@ -195,6 +200,9 @@ struct LiDARUnifiedScanningView: View {
         }
         .onDisappear {
             mode.cancelScanning()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            mode.handleScenePhaseChange(to: newPhase)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()

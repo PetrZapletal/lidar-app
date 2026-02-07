@@ -7,6 +7,7 @@ struct ScanningView: View {
     @State private var showSettings = false
     @State private var showStopOptions = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
 
     /// The scan mode (exterior or generic LiDAR)
     let mode: ScanMode
@@ -189,6 +190,9 @@ struct ScanningView: View {
             #if DEBUG
             DebugStreamService.shared.trackViewDisappeared("ScanningView")
             #endif
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            viewModel.handleScenePhaseChange(to: newPhase)
         }
         .alert("Scanning Error", isPresented: $viewModel.showError) {
             Button("OK") { viewModel.dismissError() }

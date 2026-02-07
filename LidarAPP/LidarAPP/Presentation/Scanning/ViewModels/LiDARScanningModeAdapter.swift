@@ -93,6 +93,11 @@ final class LiDARScanningModeAdapter: ScanningModeProtocol {
         viewModel.toggleCoverageOverlay()
     }
 
+    /// Handle app lifecycle changes to prevent camera black screen
+    func handleScenePhaseChange(to newPhase: ScenePhase) {
+        viewModel.handleScenePhaseChange(to: newPhase)
+    }
+
     // MARK: - Protocol Conformance: Views
 
     func makeMiddleContentView() -> some View {

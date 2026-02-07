@@ -258,11 +258,21 @@ final class ScanningViewModel {
             }
         }
 
-        // Start session
-        arSessionManager.startSession()
+        // Request camera permission before starting AR session
+        Task {
+            let granted = await DeviceCapabilities.requestCameraPermission()
+            guard granted else {
+                self.errorMessage = "Přístup ke kameře je vyžadován pro skenování. Povolte jej v Nastavení."
+                self.showError = true
+                return
+            }
 
-        // Set initial visualization
-        arSessionManager.setMeshVisualization(enabled: showMeshVisualization)
+            // Start session after permission granted
+            arSessionManager.startSession()
+
+            // Set initial visualization
+            arSessionManager.setMeshVisualization(enabled: showMeshVisualization)
+        }
     }
 
     // MARK: - Scanning Control
@@ -435,6 +445,31 @@ final class ScanningViewModel {
     func cancelScanning() {
         isScanning = false
         arSessionManager.stopSession()
+    }
+
+    // MARK: - Scene Phase Handling
+
+    /// Handle app lifecycle changes to prevent camera black screen
+    func handleScenePhaseChange(to newPhase: ScenePhase) {
+        guard !isMockMode else { return }
+
+        switch newPhase {
+        case .active:
+            // Resume AR session when app returns to foreground
+            let state = arSessionManager.sessionState
+            if state == .interrupted || state == .paused {
+                arSessionManager.resumeSession()
+                addDebugLog("AR session resumed (app active)", level: .info, tag: "AR")
+            }
+        case .inactive, .background:
+            // Pause AR session to prevent black screen on return
+            if arSessionManager.sessionState == .running {
+                arSessionManager.pauseSession()
+                addDebugLog("AR session paused (app backgrounded)", level: .info, tag: "AR")
+            }
+        @unknown default:
+            break
+        }
     }
 
     // MARK: - Frame Handling

@@ -34,6 +34,9 @@ protocol ScanningModeProtocol: AnyObject, Observable {
     /// Cancel the scanning session without saving
     func cancelScanning()
 
+    /// Handle app lifecycle changes (background/foreground) to prevent camera black screen
+    func handleScenePhaseChange(to phase: ScenePhase)
+
     // MARK: - View Builders
 
     /// The main content view specific to this scanning mode (AR view, camera feed, etc.)
@@ -78,6 +81,9 @@ extension ScanningModeProtocol {
     var hasResults: Bool {
         false
     }
+
+    /// Default: no-op scene phase handling (modes with AR sessions should override)
+    func handleScenePhaseChange(to phase: ScenePhase) {}
 }
 
 // MARK: - Type Erased Wrapper
@@ -94,6 +100,7 @@ final class AnyScanningMode: ScanningModeProtocol, Observable {
     private let _startScanning: () async -> Void
     private let _stopScanning: () async -> Void
     private let _cancelScanning: () -> Void
+    private let _handleScenePhaseChange: (ScenePhase) -> Void
     private let _hasResults: () -> Bool
 
     private let _makeMiddleContent: () -> AnyView
@@ -112,6 +119,7 @@ final class AnyScanningMode: ScanningModeProtocol, Observable {
         _startScanning = { await mode.startScanning() }
         _stopScanning = { await mode.stopScanning() }
         _cancelScanning = { mode.cancelScanning() }
+        _handleScenePhaseChange = { phase in mode.handleScenePhaseChange(to: phase) }
         _hasResults = { mode.hasResults }
 
         _makeMiddleContent = { AnyView(mode.makeMiddleContentView()) }
@@ -132,6 +140,7 @@ final class AnyScanningMode: ScanningModeProtocol, Observable {
     func startScanning() async { await _startScanning() }
     func stopScanning() async { await _stopScanning() }
     func cancelScanning() { _cancelScanning() }
+    func handleScenePhaseChange(to phase: ScenePhase) { _handleScenePhaseChange(phase) }
 
     func makeMiddleContentView() -> AnyView { _makeMiddleContent() }
     func makeStatsView() -> AnyView { _makeStats() }
