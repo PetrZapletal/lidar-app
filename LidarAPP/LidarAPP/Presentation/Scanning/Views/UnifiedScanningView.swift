@@ -230,88 +230,210 @@ struct LiDARUnifiedScanningView: View {
 
 // MARK: - LiDAR Control Bar
 
-/// Custom control bar for LiDAR mode with pause/resume and mesh toggle
+/// Custom control bar for LiDAR mode with state-dependent layout:
+/// - Ready: Center = record (start), no side buttons
+/// - Scanning: Left = mesh, Center = finish (stop), Right = pause
+/// - Paused: Left = mesh, Center = resume, Right = finish (stop)
 struct LiDARControlBar: View {
     let mode: LiDARScanningModeAdapter
     let onStop: () -> Void
     let onClose: () -> Void
     @State private var showMesh = false
 
+    private var isReady: Bool {
+        !mode.isScanning && !mode.isPaused
+    }
+
     var body: some View {
-        HStack(spacing: 40) {
-            // Mesh toggle button
-            ControlAccessoryButton(
-                icon: showMesh ? "cube.fill" : "cube",
-                label: "Mesh",
-                action: {
-                    showMesh.toggle()
-                    mode.toggleMeshVisualization()
-                },
-                isActive: showMesh
-            )
-            .frame(width: 50)
+        HStack(spacing: 30) {
+            if isReady {
+                // MARK: Ready State - only center start button
+                Spacer()
+                    .frame(width: 50)
 
-            // Main control button - pause/resume
-            Button(action: {
-                if mode.isScanning {
-                    mode.pauseScanning()
-                } else if mode.canStartScanning {
-                    Task {
-                        await mode.startScanning()
-                    }
-                }
-            }) {
-                ZStack {
-                    Circle()
-                        .stroke(Color.white, lineWidth: 4)
-                        .frame(width: 80, height: 80)
+                readyButton
 
-                    if mode.isScanning {
-                        // Pause icon when scanning
-                        Image(systemName: "pause.fill")
-                            .font(.system(size: 30))
-                            .foregroundStyle(.white)
-                            .frame(width: 65, height: 65)
-                            .background(Color.orange)
-                            .clipShape(Circle())
-                    } else if mode.canStartScanning {
-                        // Record icon when ready
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 60, height: 60)
-                    } else {
-                        // Disabled state
-                        Circle()
-                            .fill(Color.white.opacity(0.3))
-                            .frame(width: 60, height: 60)
-                    }
-                }
-            }
-            .disabled(!mode.canStartScanning && !mode.isScanning)
-            .opacity((!mode.canStartScanning && !mode.isScanning) ? 0.5 : 1)
-            .accessibilityLabel(mode.isScanning ? "Pozastavit skenování" : "Zahájit skenování")
+                Spacer()
+                    .frame(width: 50)
+            } else if mode.isScanning {
+                // MARK: Scanning State
+                // Left: Mesh toggle
+                meshToggleButton
 
-            // Stop/Close button
-            if mode.isScanning {
-                ControlAccessoryButton(
-                    icon: "stop.fill",
-                    label: "Stop",
-                    action: onStop
-                )
-                .frame(width: 50)
+                // Center: Finish scan (primary action)
+                finishButton
+
+                // Right: Pause
+                pauseButton
             } else {
-                ControlAccessoryButton(
-                    icon: "xmark",
-                    label: "Zavřít",
-                    action: onClose
-                )
-                .frame(width: 50)
+                // MARK: Paused State
+                // Left: Mesh toggle
+                meshToggleButton
+
+                // Center: Resume (primary action)
+                resumeButton
+
+                // Right: Finish/End scan
+                endButton
             }
         }
         .foregroundStyle(.white)
         .padding(.vertical, 20)
         .padding(.horizontal)
         .background(.ultraThinMaterial)
+    }
+
+    // MARK: - Ready State Button
+
+    /// Large red record button to start scanning
+    private var readyButton: some View {
+        Button(action: {
+            Task {
+                await mode.startScanning()
+            }
+        }) {
+            VStack(spacing: 6) {
+                ZStack {
+                    Circle()
+                        .stroke(Color.white, lineWidth: 4)
+                        .frame(width: 80, height: 80)
+
+                    if mode.canStartScanning {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 64, height: 64)
+                    } else {
+                        Circle()
+                            .fill(Color.white.opacity(0.3))
+                            .frame(width: 64, height: 64)
+                    }
+                }
+            }
+        }
+        .disabled(!mode.canStartScanning)
+        .opacity(mode.canStartScanning ? 1 : 0.5)
+        .accessibilityLabel("Zahájit skenování")
+    }
+
+    // MARK: - Scanning State Buttons
+
+    /// Large red stop button - primary action during scanning
+    private var finishButton: some View {
+        Button(action: onStop) {
+            VStack(spacing: 6) {
+                ZStack {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 70, height: 70)
+
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.white)
+                }
+                Text("Dokončit")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+        }
+        .accessibilityLabel("Dokončit skenování")
+    }
+
+    /// Orange pause button - side action during scanning
+    private var pauseButton: some View {
+        Button(action: {
+            mode.pauseScanning()
+        }) {
+            VStack(spacing: 4) {
+                ZStack {
+                    Circle()
+                        .fill(Color.orange)
+                        .frame(width: 50, height: 50)
+
+                    Image(systemName: "pause.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.white)
+                }
+                Text("Pauza")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+        }
+        .frame(width: 50)
+        .accessibilityLabel("Pozastavit skenování")
+    }
+
+    // MARK: - Paused State Buttons
+
+    /// Large green resume button - primary action when paused
+    private var resumeButton: some View {
+        Button(action: {
+            mode.resumeScanning()
+        }) {
+            VStack(spacing: 6) {
+                ZStack {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 70, height: 70)
+
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.white)
+                }
+                Text("Pokračovat")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+        }
+        .accessibilityLabel("Pokračovat ve skenování")
+    }
+
+    /// Small red stop button - secondary action when paused
+    private var endButton: some View {
+        Button(action: onStop) {
+            VStack(spacing: 4) {
+                ZStack {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 50, height: 50)
+
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.white)
+                }
+                Text("Ukončit")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+        }
+        .frame(width: 50)
+        .accessibilityLabel("Ukončit skenování")
+    }
+
+    // MARK: - Shared Buttons
+
+    /// Mesh visualization toggle - shown during scanning and paused states
+    private var meshToggleButton: some View {
+        Button(action: {
+            showMesh.toggle()
+            mode.toggleMeshVisualization()
+        }) {
+            VStack(spacing: 4) {
+                ZStack {
+                    Circle()
+                        .fill(showMesh ? Color.white.opacity(0.3) : Color.white.opacity(0.15))
+                        .frame(width: 50, height: 50)
+
+                    Image(systemName: showMesh ? "cube.fill" : "cube")
+                        .font(.system(size: 20))
+                        .foregroundStyle(showMesh ? .white : .white.opacity(0.7))
+                }
+                Text("Mřížka")
+                    .font(.system(size: 10))
+                    .foregroundStyle(showMesh ? .white.opacity(0.9) : .white.opacity(0.7))
+            }
+        }
+        .frame(width: 50)
+        .accessibilityLabel(showMesh ? "Skrýt mřížku" : "Zobrazit mřížku")
     }
 }
 

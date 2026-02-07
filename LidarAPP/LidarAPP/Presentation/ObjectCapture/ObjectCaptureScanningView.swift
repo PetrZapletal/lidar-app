@@ -1,6 +1,7 @@
 import SwiftUI
 import RealityKit
 import ARKit
+import AVFoundation
 import Combine
 
 // MARK: - Object Capture Scanning View
@@ -336,11 +337,25 @@ final class ObjectCaptureViewModel {
             return
         }
 
+        // Request camera permission before starting AR session
+        let cameraGranted = await DeviceCapabilities.requestCameraPermission()
+        guard cameraGranted else {
+            errorMessage = "Přístup ke kameře je vyžadován pro skenování objektů. Povolte jej v Nastavení."
+            showError = true
+            status = .failed("Přístup ke kameře zamítnut")
+            return
+        }
+
         // Real device: AR session is managed by ObjectCaptureARView
         // Status will be updated to .capturing by the AR session delegate
         // when tracking becomes normal
         status = .preparing
     }
+
+    /// Accumulated mesh data from ARMeshAnchors during capture
+    var capturedMeshes: [MeshData] = []
+    /// Accumulated camera trajectory
+    var capturedTrajectory: [simd_float4x4] = []
 
     func stopCapture() async {
         if shouldUseMockMode {
@@ -399,6 +414,51 @@ final class ObjectCaptureViewModel {
         // Create mock point cloud for testing (simulator only)
         if shouldUseMockMode {
             session.pointCloud = MockDataProvider.shared.generateObjectPointCloud()
+            return session
+        }
+
+        // Real device: build session from accumulated ARMeshAnchor data
+        // Add all captured meshes to the session
+        for mesh in capturedMeshes {
+            session.addMesh(mesh)
+        }
+
+        // Build point cloud from mesh vertices
+        if !capturedMeshes.isEmpty {
+            var allPoints: [simd_float3] = []
+            var allNormals: [simd_float3] = []
+
+            for mesh in capturedMeshes {
+                // Transform vertices to world space
+                let worldVerts = mesh.worldVertices
+                allPoints.append(contentsOf: worldVerts)
+                allNormals.append(contentsOf: mesh.normals)
+            }
+
+            // Subsample if too many points (memory management)
+            let maxPoints = DeviceCapabilities.recommendedMaxPoints
+            if allPoints.count > maxPoints {
+                let stride = allPoints.count / maxPoints
+                var sampledPoints: [simd_float3] = []
+                var sampledNormals: [simd_float3] = []
+                for i in Swift.stride(from: 0, to: allPoints.count, by: stride) {
+                    sampledPoints.append(allPoints[i])
+                    sampledNormals.append(allNormals[i])
+                }
+                allPoints = sampledPoints
+                allNormals = sampledNormals
+            }
+
+            session.pointCloud = PointCloud(
+                points: allPoints,
+                normals: allNormals,
+                metadata: PointCloudMetadata(source: .lidar)
+            )
+        }
+
+        // Add camera trajectory
+        for transform in capturedTrajectory {
+            session.addCameraPosition(transform)
         }
 
         return session
@@ -440,6 +500,15 @@ struct ObjectCaptureARView: UIViewRepresentable {
             .disableDepthOfField
         ]
 
+        // Only start AR session if camera permission is already granted
+        // (permission is requested in viewModel.startCapture() before this view appears)
+        let cameraStatus = AVCaptureDevice.authorizationStatus(for: .video)
+        guard cameraStatus == .authorized else {
+            // Camera not yet authorized - session will not start
+            // The view will show black until permission is granted and view is recreated
+            return arView
+        }
+
         // Configure AR session for object capture
         let configuration = ARWorldTrackingConfiguration()
 
@@ -466,6 +535,9 @@ struct ObjectCaptureARView: UIViewRepresentable {
         arView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
         arView.session.delegate = context.coordinator
 
+        // Store weak reference to ARView so we can extract final mesh data on stop
+        context.coordinator.arView = arView
+
         // NOTE: Scene understanding visualization disabled for object capture
         // to avoid overlaying the object being scanned.
         // The mesh is captured internally but not shown to user.
@@ -486,6 +558,12 @@ struct ObjectCaptureARView: UIViewRepresentable {
         private var frameCount = 0
         private var hasStartedCapturing = false
 
+        /// Weak reference to ARView for mesh extraction on stop
+        weak var arView: ARView?
+
+        /// Tracked mesh anchors - maps anchor identifier to latest MeshData
+        private var trackedMeshAnchors: [UUID: MeshData] = [:]
+
         // MARK: - Frame Throttling (Performance Optimization)
         /// Last time a frame was processed (for 30Hz throttling)
         private var lastFrameProcessTime: TimeInterval = 0
@@ -499,9 +577,78 @@ struct ObjectCaptureARView: UIViewRepresentable {
         private var lastImageCaptureTime: TimeInterval = 0
         /// Minimum interval between image captures (2Hz for quality images)
         private let minImageCaptureInterval: TimeInterval = 0.5
+        /// Last time mesh anchors were extracted
+        private var lastMeshExtractionTime: TimeInterval = 0
+        /// Minimum interval between mesh extractions (every 2 seconds to save CPU)
+        private let minMeshExtractionInterval: TimeInterval = 2.0
 
         init(viewModel: ObjectCaptureViewModel) {
             self.viewModel = viewModel
+        }
+
+        // MARK: - Mesh Extraction from ARMeshAnchor
+
+        /// Extract MeshData from an ARMeshAnchor
+        private nonisolated func extractMeshData(from meshAnchor: ARMeshAnchor) -> MeshData {
+            let geometry = meshAnchor.geometry
+
+            // Extract vertices
+            var vertices: [simd_float3] = []
+            let vertexBuffer = geometry.vertices
+            for i in 0..<vertexBuffer.count {
+                let vertexPointer = vertexBuffer.buffer.contents().advanced(by: vertexBuffer.offset + vertexBuffer.stride * i)
+                let vertex = vertexPointer.assumingMemoryBound(to: simd_float3.self).pointee
+                vertices.append(vertex)
+            }
+
+            // Extract normals
+            var normals: [simd_float3] = []
+            let normalBuffer = geometry.normals
+            for i in 0..<normalBuffer.count {
+                let normalPointer = normalBuffer.buffer.contents().advanced(by: normalBuffer.offset + normalBuffer.stride * i)
+                let normal = normalPointer.assumingMemoryBound(to: simd_float3.self).pointee
+                normals.append(normal)
+            }
+
+            // Extract face indices
+            var faces: [simd_uint3] = []
+            let faceBuffer = geometry.faces
+            let bytesPerIndex = faceBuffer.bytesPerIndex
+            for i in 0..<faceBuffer.count {
+                let facePointer = faceBuffer.buffer.contents().advanced(by: faceBuffer.indexCountPerPrimitive * bytesPerIndex * i)
+                var indices = simd_uint3(0, 0, 0)
+                if bytesPerIndex == 4 {
+                    // UInt32 indices
+                    let ptr = facePointer.assumingMemoryBound(to: UInt32.self)
+                    indices = simd_uint3(ptr[0], ptr[1], ptr[2])
+                } else {
+                    // UInt16 indices
+                    let ptr = facePointer.assumingMemoryBound(to: UInt16.self)
+                    indices = simd_uint3(UInt32(ptr[0]), UInt32(ptr[1]), UInt32(ptr[2]))
+                }
+                faces.append(indices)
+            }
+
+            // Extract classifications if available
+            var classifications: [UInt8]? = nil
+            if let classificationBuffer = geometry.classification {
+                var classValues: [UInt8] = []
+                for i in 0..<classificationBuffer.count {
+                    let classPointer = classificationBuffer.buffer.contents().advanced(by: classificationBuffer.offset + classificationBuffer.stride * i)
+                    let classValue = classPointer.assumingMemoryBound(to: UInt8.self).pointee
+                    classValues.append(classValue)
+                }
+                classifications = classValues
+            }
+
+            return MeshData(
+                anchorIdentifier: meshAnchor.identifier,
+                vertices: vertices,
+                normals: normals,
+                faces: faces,
+                classifications: classifications,
+                transform: meshAnchor.transform
+            )
         }
 
         nonisolated func session(_ session: ARSession, didUpdate frame: ARFrame) {
@@ -510,9 +657,28 @@ struct ObjectCaptureARView: UIViewRepresentable {
             guard currentTime - lastFrameProcessTime >= minFrameInterval else { return }
             lastFrameProcessTime = currentTime
 
+            // Extract mesh data from anchors periodically (not every frame - expensive)
+            let shouldExtractMesh = (currentTime - lastMeshExtractionTime) >= minMeshExtractionInterval
+            var newMeshes: [UUID: MeshData] = [:]
+
+            if shouldExtractMesh {
+                lastMeshExtractionTime = currentTime
+
+                // Extract mesh data from all ARMeshAnchors in the current frame
+                for anchor in frame.anchors {
+                    if let meshAnchor = anchor as? ARMeshAnchor {
+                        let meshData = extractMeshData(from: meshAnchor)
+                        newMeshes[meshAnchor.identifier] = meshData
+                    }
+                }
+            }
+
+            let cameraTransform = frame.camera.transform
+            let trackingState = frame.camera.trackingState
+
             Task { @MainActor in
                 // Auto-start capturing once AR session is running
-                if !hasStartedCapturing && frame.camera.trackingState == .normal {
+                if !hasStartedCapturing && trackingState == .normal {
                     hasStartedCapturing = true
                     viewModel.status = .capturing
                 }
@@ -521,8 +687,17 @@ struct ObjectCaptureARView: UIViewRepresentable {
 
                 frameCount += 1
 
+                // Update tracked meshes with newly extracted data
+                if shouldExtractMesh && !newMeshes.isEmpty {
+                    for (id, mesh) in newMeshes {
+                        trackedMeshAnchors[id] = mesh
+                    }
+                    // Push latest meshes to viewModel for session conversion
+                    viewModel.capturedMeshes = Array(trackedMeshAnchors.values)
+                }
+
                 // PERFORMANCE: Camera position debouncing - only capture if moved significantly
-                let currentPosition = simd_make_float3(frame.camera.transform.columns.3)
+                let currentPosition = simd_make_float3(cameraTransform.columns.3)
                 var hasMoved = true
                 if let lastPos = lastCameraPosition {
                     let distance = simd_distance(currentPosition, lastPos)
@@ -534,6 +709,9 @@ struct ObjectCaptureARView: UIViewRepresentable {
                 if hasMoved && timeSinceLastCapture >= minImageCaptureInterval {
                     lastCameraPosition = currentPosition
                     lastImageCaptureTime = currentTime
+
+                    // Record camera trajectory
+                    viewModel.capturedTrajectory.append(cameraTransform)
 
                     viewModel.imageCount += 1
                     viewModel.orbitProgress = min(Float(viewModel.imageCount) / 50.0, 1.0)
@@ -553,6 +731,39 @@ struct ObjectCaptureARView: UIViewRepresentable {
                         viewModel.guidanceText = "Výborné! Můžete dokončit"
                     }
                 }
+            }
+        }
+
+        nonisolated func session(_ session: ARSession, didAdd anchors: [ARAnchor]) {
+            // Extract mesh data from newly added mesh anchors
+            var newMeshes: [UUID: MeshData] = [:]
+            for anchor in anchors {
+                if let meshAnchor = anchor as? ARMeshAnchor {
+                    let meshData = extractMeshData(from: meshAnchor)
+                    newMeshes[meshAnchor.identifier] = meshData
+                }
+            }
+            guard !newMeshes.isEmpty else { return }
+
+            Task { @MainActor in
+                for (id, mesh) in newMeshes {
+                    trackedMeshAnchors[id] = mesh
+                }
+                viewModel.capturedMeshes = Array(trackedMeshAnchors.values)
+            }
+        }
+
+        nonisolated func session(_ session: ARSession, didRemove anchors: [ARAnchor]) {
+            let removedIds = anchors.compactMap { anchor -> UUID? in
+                (anchor as? ARMeshAnchor)?.identifier
+            }
+            guard !removedIds.isEmpty else { return }
+
+            Task { @MainActor in
+                for id in removedIds {
+                    trackedMeshAnchors.removeValue(forKey: id)
+                }
+                viewModel.capturedMeshes = Array(trackedMeshAnchors.values)
             }
         }
 

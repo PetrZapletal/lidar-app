@@ -252,11 +252,15 @@ struct RoomCaptureViewRepresentable: UIViewRepresentable {
     let viewModel: RoomPlanViewModel
 
     func makeUIView(context: Context) -> RoomCaptureView {
-        RoomPlanService.shared.createCaptureView()
+        // Creates the RoomCaptureView and stores it in the service.
+        // The view's built-in captureSession is used by the service for
+        // delegate callbacks, ensuring the camera feed is properly connected.
+        let view = RoomPlanService.shared.createCaptureView()
+        return view
     }
 
     func updateUIView(_ uiView: RoomCaptureView, context: Context) {
-        // Updates handled by the service
+        // Updates handled by the service via the view's captureSession
     }
 }
 

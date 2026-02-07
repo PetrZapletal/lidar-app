@@ -43,6 +43,10 @@ final class LiDARScanningModeAdapter: ScanningModeProtocol {
         viewModel.isScanning
     }
 
+    var isPaused: Bool {
+        viewModel.session.state == .paused
+    }
+
     var canStartScanning: Bool {
         viewModel.canStartScanning
     }
@@ -71,7 +75,7 @@ final class LiDARScanningModeAdapter: ScanningModeProtocol {
     }
 
     func stopScanning() async {
-        await viewModel.stopAndProcess()
+        viewModel.stopScanning()
         showResults = true
     }
 
@@ -83,6 +87,10 @@ final class LiDARScanningModeAdapter: ScanningModeProtocol {
 
     func pauseScanning() {
         viewModel.pauseScanning()
+    }
+
+    func resumeScanning() {
+        viewModel.resumeScanning()
     }
 
     func toggleMeshVisualization() {
@@ -283,69 +291,169 @@ struct LiDARResultsView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                // 3D Preview placeholder
-                ZStack {
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.secondarySystemBackground))
-                        .frame(height: 200)
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header
+                    Text("Vysledky skenovani")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                        .padding(.top, 8)
 
-                    Image(systemName: "cube.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.green.opacity(0.5))
-                }
-                .padding(.horizontal)
+                    // Stat cards grid
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12)
+                    ], spacing: 12) {
+                        LiDARStatCard(
+                            icon: "chart.bar.fill",
+                            iconColor: .blue,
+                            value: formatNumber(viewModel.pointCount),
+                            label: "Bodu"
+                        )
 
-                // Name field
-                TextField("Název skenu", text: $scanName)
-                    .textFieldStyle(.roundedBorder)
+                        LiDARStatCard(
+                            icon: "triangle.fill",
+                            iconColor: .orange,
+                            value: formatNumber(viewModel.meshFaceCount),
+                            label: "Trojuhelniku"
+                        )
+
+                        LiDARStatCard(
+                            icon: "clock.fill",
+                            iconColor: .purple,
+                            value: viewModel.session.formattedDuration,
+                            label: "Doba skenovani"
+                        )
+
+                        LiDARStatCard(
+                            icon: "star.fill",
+                            iconColor: qualityColor,
+                            value: qualityText,
+                            label: "Kvalita"
+                        )
+                    }
                     .padding(.horizontal)
 
-                // Statistics
-                VStack(spacing: 12) {
-                    HStack {
-                        LiDARStatRow(label: "Body", value: formatNumber(viewModel.pointCount))
-                        Spacer()
-                        LiDARStatRow(label: "Plochy", value: formatNumber(viewModel.meshFaceCount))
+                    // Area scanned (if available)
+                    if viewModel.session.areaScanned > 0 {
+                        LiDARWideStatCard(
+                            icon: "square.dashed",
+                            iconColor: .green,
+                            value: String(format: "%.1f m\u{00B2}", viewModel.session.areaScanned),
+                            label: "Plocha"
+                        )
+                        .padding(.horizontal)
                     }
 
-                    HStack {
-                        LiDARStatRow(label: "Délka", value: viewModel.session.formattedDuration)
-                        Spacer()
-                        LiDARStatRow(label: "Snímků", value: "\(viewModel.fusedFrameCount)")
+                    // Quality indicator bar
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Hustota bodu")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text(pointDensityText)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+
+                        GeometryReader { geometry in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color(.systemGray5))
+                                    .frame(height: 8)
+
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(qualityColor.gradient)
+                                    .frame(width: geometry.size.width * qualityProgress, height: 8)
+                            }
+                        }
+                        .frame(height: 8)
                     }
-                }
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .padding(.horizontal)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal)
 
-                Spacer()
+                    // Name field
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Nazev skenu")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        TextField("Nazev skenu", text: $scanName)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    .padding(.horizontal)
 
-                // Action buttons
-                VStack(spacing: 12) {
-                    Button(action: saveAndDismiss) {
-                        Text("Uložit")
+                    Spacer(minLength: 20)
+
+                    // Action buttons
+                    VStack(spacing: 12) {
+                        Button(action: saveAndDismiss) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "square.and.arrow.down")
+                                Text("Ulozit")
+                            }
                             .font(.headline)
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(.green.gradient)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
+                        }
 
-                    Button(action: onDismiss) {
-                        Text("Zahodit")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        Button(action: onDismiss) {
+                            Text("Zahodit")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    .padding(.horizontal)
+                    .padding(.bottom)
                 }
-                .padding()
             }
             .navigationTitle("LiDAR sken")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
+
+    // MARK: - Quality Helpers
+
+    private var qualityText: String {
+        switch viewModel.scanQuality {
+        case .poor: return "Slaba"
+        case .fair: return "Prijatelna"
+        case .good: return "Dobra"
+        case .excellent: return "Vynikajici"
+        }
+    }
+
+    private var qualityColor: Color {
+        viewModel.scanQuality.color
+    }
+
+    private var qualityProgress: CGFloat {
+        switch viewModel.scanQuality {
+        case .poor: return 0.2
+        case .fair: return 0.45
+        case .good: return 0.7
+        case .excellent: return 1.0
+        }
+    }
+
+    private var pointDensityText: String {
+        let area = viewModel.session.areaScanned
+        guard area > 0 else { return "N/A" }
+        let density = Float(viewModel.pointCount) / area
+        if density >= 1000 {
+            return String(format: "%.0f b/m\u{00B2}", density)
+        }
+        return String(format: "%.0f b/m\u{00B2}", density)
+    }
+
+    // MARK: - Actions
 
     private func saveAndDismiss() {
         let session = viewModel.session
@@ -369,14 +477,76 @@ struct LiDARResultsView: View {
     }
 
     private func formatNumber(_ number: Int) -> String {
-        if number >= 1_000_000 {
-            return String(format: "%.1fM", Double(number) / 1_000_000)
-        } else if number >= 1_000 {
-            return String(format: "%.0fK", Double(number) / 1_000)
-        }
-        return "\(number)"
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = " "
+        return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
     }
 }
+
+// MARK: - LiDAR Stat Card
+
+struct LiDARStatCard: View {
+    let icon: String
+    let iconColor: Color
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(iconColor)
+
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color(.secondarySystemBackground).opacity(0.8))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - LiDAR Wide Stat Card
+
+struct LiDARWideStatCard: View {
+    let icon: String
+    let iconColor: Color
+    let value: String
+    let label: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(iconColor)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.title3)
+                    .fontWeight(.bold)
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground).opacity(0.8))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - Legacy LiDAR Stat Row (kept for compatibility)
 
 struct LiDARStatRow: View {
     let label: String

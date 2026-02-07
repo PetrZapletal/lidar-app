@@ -1,5 +1,6 @@
 import Foundation
 import RealityKit
+import ARKit
 import Combine
 import simd
 
@@ -108,13 +109,24 @@ final class ObjectCaptureService: NSObject, ObjectCaptureServiceProtocol {
 
     // MARK: - Capture Control
 
+    /// Accumulated mesh data from real AR capture
+    private var capturedMeshData: [MeshData] = []
+
     func startCapture() async throws {
         guard Self.isSupported || MockDataProvider.isMockModeEnabled else {
             throw ObjectCaptureError.notSupported
         }
 
+        // Request camera permission before starting
+        let cameraGranted = await DeviceCapabilities.requestCameraPermission()
+        guard cameraGranted else {
+            statusSubject.send(.failed("Přístup ke kameře zamítnut"))
+            throw ObjectCaptureError.captureFailed
+        }
+
         statusSubject.send(.preparing)
         capturedImages = []
+        capturedMeshData = []
         imageCountSubject.send(0)
 
         // Create output directory
@@ -133,13 +145,53 @@ final class ObjectCaptureService: NSObject, ObjectCaptureServiceProtocol {
         // Wait for any pending operations
         try? await Task.sleep(nanoseconds: 500_000_000)
 
+        // Build point cloud and unified mesh from captured mesh data
+        var pointCloud: PointCloud? = nil
+        var unifiedMesh: MeshData? = nil
+        var boundingBox: (min: simd_float3, max: simd_float3)? = nil
+
+        if !capturedMeshData.isEmpty {
+            // Build point cloud from mesh vertices
+            var allPoints: [simd_float3] = []
+            var allNormals: [simd_float3] = []
+
+            for mesh in capturedMeshData {
+                allPoints.append(contentsOf: mesh.worldVertices)
+                allNormals.append(contentsOf: mesh.normals)
+            }
+
+            if !allPoints.isEmpty {
+                pointCloud = PointCloud(
+                    points: allPoints,
+                    normals: allNormals,
+                    metadata: PointCloudMetadata(source: .lidar)
+                )
+
+                // Compute bounding box
+                var minPt = allPoints[0]
+                var maxPt = allPoints[0]
+                for pt in allPoints {
+                    minPt = simd_min(minPt, pt)
+                    maxPt = simd_max(maxPt, pt)
+                }
+                boundingBox = (min: minPt, max: maxPt)
+            }
+
+            // Build unified mesh
+            let combined = CombinedMesh()
+            for mesh in capturedMeshData {
+                combined.addOrUpdate(mesh)
+            }
+            unifiedMesh = combined.toUnifiedMesh()
+        }
+
         // Create result
         let result = ObjectCaptureResult(
             modelURL: outputURL,
-            pointCloud: nil,
-            meshData: nil,
+            pointCloud: pointCloud,
+            meshData: unifiedMesh,
             imageCount: imageCountSubject.value,
-            boundingBox: nil
+            boundingBox: boundingBox
         )
 
         statusSubject.send(.completed(outputURL))
@@ -150,6 +202,7 @@ final class ObjectCaptureService: NSObject, ObjectCaptureServiceProtocol {
     func cancelCapture() {
         statusSubject.send(.idle)
         imageCountSubject.send(0)
+        capturedMeshData = []
     }
 
     /// Add a captured image to the session
@@ -162,14 +215,78 @@ final class ObjectCaptureService: NSObject, ObjectCaptureServiceProtocol {
         progressSubject.send(progress)
     }
 
+    /// Add captured mesh data from AR session (called by Coordinator)
+    func updateCapturedMeshData(_ meshes: [MeshData]) {
+        capturedMeshData = meshes
+    }
+
     // MARK: - Conversion
 
     func convertToScanSession() -> ScanSession {
+        return convertToScanSession(withMeshes: nil, trajectory: nil, imageCount: nil)
+    }
+
+    /// Convert captured data into a ScanSession, optionally using externally provided mesh data
+    func convertToScanSession(
+        withMeshes meshes: [MeshData]?,
+        trajectory: [simd_float4x4]?,
+        imageCount: Int?
+    ) -> ScanSession {
         let session = ScanSession(name: "Object Scan")
 
         // For mock mode, generate sample point cloud
         if MockDataProvider.isMockModeEnabled {
             session.pointCloud = MockDataProvider.shared.generateObjectPointCloud()
+            return session
+        }
+
+        // Use provided meshes or fall back to internally captured ones
+        let activeMeshes = meshes ?? capturedMeshData
+
+        // Real device: populate session from captured mesh data
+        if !activeMeshes.isEmpty {
+            // Add meshes to session
+            for mesh in activeMeshes {
+                session.addMesh(mesh)
+            }
+
+            // Build point cloud from mesh vertices
+            var allPoints: [simd_float3] = []
+            var allNormals: [simd_float3] = []
+
+            for mesh in activeMeshes {
+                allPoints.append(contentsOf: mesh.worldVertices)
+                allNormals.append(contentsOf: mesh.normals)
+            }
+
+            // Subsample if too many points
+            let maxPoints = DeviceCapabilities.recommendedMaxPoints
+            if allPoints.count > maxPoints {
+                let stride = allPoints.count / maxPoints
+                var sampledPoints: [simd_float3] = []
+                var sampledNormals: [simd_float3] = []
+                for i in Swift.stride(from: 0, to: allPoints.count, by: stride) {
+                    sampledPoints.append(allPoints[i])
+                    sampledNormals.append(allNormals[i])
+                }
+                allPoints = sampledPoints
+                allNormals = sampledNormals
+            }
+
+            if !allPoints.isEmpty {
+                session.pointCloud = PointCloud(
+                    points: allPoints,
+                    normals: allNormals,
+                    metadata: PointCloudMetadata(source: .lidar)
+                )
+            }
+        }
+
+        // Add camera trajectory if available
+        if let trajectory = trajectory {
+            for transform in trajectory {
+                session.addCameraPosition(transform)
+            }
         }
 
         return session

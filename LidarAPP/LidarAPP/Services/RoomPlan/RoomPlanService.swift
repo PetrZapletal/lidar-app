@@ -2,6 +2,7 @@ import Foundation
 import RoomPlan
 import simd
 import Combine
+import AVFoundation
 
 // MARK: - RoomPlan Service Protocol
 
@@ -61,10 +62,15 @@ final class RoomPlanService: NSObject, RoomPlanServiceProtocol {
 
     // MARK: - Properties
 
-    private var roomCaptureSession: RoomCaptureSession?
     private var capturedStructure: CapturedStructure?
     private var roomCaptureView: RoomCaptureView?
     private var lastCapturedRoom: CapturedRoom?
+
+    /// The active capture session, obtained from the RoomCaptureView's internal session.
+    /// This ensures the session driving the camera feed is the same one we receive delegate callbacks from.
+    private var activeCaptureSession: RoomCaptureSession? {
+        roomCaptureView?.captureSession
+    }
 
     private let roomsSubject = PassthroughSubject<[CapturedRoom], Never>()
     private let progressSubject = PassthroughSubject<Float, Never>()
@@ -103,20 +109,33 @@ final class RoomPlanService: NSObject, RoomPlanServiceProtocol {
             throw RoomPlanError.notSupported
         }
 
+        // Request camera permission before starting capture
+        let cameraGranted = await DeviceCapabilities.requestCameraPermission()
+        guard cameraGranted else {
+            throw RoomPlanError.cameraPermissionDenied
+        }
+
         statusSubject.send(.preparing)
 
-        roomCaptureSession = RoomCaptureSession()
-        roomCaptureSession?.delegate = self
+        // Use the RoomCaptureView's built-in captureSession so the camera feed
+        // displayed by the view is driven by the same session we receive delegate
+        // callbacks from. Creating a separate RoomCaptureSession would leave the
+        // view disconnected, resulting in a black screen.
+        guard let session = activeCaptureSession else {
+            throw RoomPlanError.captureFailed
+        }
+
+        session.delegate = self
 
         let config = RoomCaptureSession.Configuration()
-        roomCaptureSession?.run(configuration: config)
+        session.run(configuration: config)
 
         statusSubject.send(.capturing)
     }
 
     func stopCapture() async -> CapturedStructure? {
         statusSubject.send(.processing)
-        roomCaptureSession?.stop()
+        activeCaptureSession?.stop()
 
         // Wait for processing to complete
         try? await Task.sleep(nanoseconds: 500_000_000)
@@ -125,9 +144,9 @@ final class RoomPlanService: NSObject, RoomPlanServiceProtocol {
     }
 
     func cancelCapture() {
-        roomCaptureSession?.stop()
-        roomCaptureSession = nil
+        activeCaptureSession?.stop()
         capturedStructure = nil
+        roomCaptureView = nil
         statusSubject.send(.idle)
     }
 
@@ -288,8 +307,9 @@ final class RoomPlanService: NSObject, RoomPlanServiceProtocol {
 
     func createCaptureView() -> RoomCaptureView {
         let view = RoomCaptureView(frame: .zero)
-        // Note: In newer iOS versions, captureSession is managed internally by the view
-        // We configure the session separately and the view observes it
+        // Set the session delegate on the view's internal captureSession so that
+        // the camera feed and our delegate callbacks share the same session instance.
+        view.captureSession.delegate = self
         self.roomCaptureView = view
         return view
     }
@@ -347,15 +367,13 @@ extension RoomPlanService: RoomCaptureSessionDelegate {
     }
 }
 
-// Note: RoomCaptureViewDelegate is not used - we use RoomCaptureSessionDelegate instead
-// which provides all necessary callbacks for capturing room data
-
 // MARK: - Errors
 
 enum RoomPlanError: LocalizedError {
     case notSupported
     case captureFailed
     case exportFailed
+    case cameraPermissionDenied
     case processingFailed(String)
 
     var errorDescription: String? {
@@ -366,6 +384,8 @@ enum RoomPlanError: LocalizedError {
             return "Skenování místnosti selhalo"
         case .exportFailed:
             return "Export selhalo"
+        case .cameraPermissionDenied:
+            return "Přístup ke kameře je vyžadován. Povolte jej v Nastavení."
         case .processingFailed(let message):
             return "Zpracování selhalo: \(message)"
         }

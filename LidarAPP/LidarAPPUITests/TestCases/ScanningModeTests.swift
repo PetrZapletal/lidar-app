@@ -182,25 +182,26 @@ final class ScanningModeTests: BaseUITestCase {
         XCTAssertTrue(hasCapture, "Capture button should be visible")
     }
 
-    /// Test that mesh toggle is available in LiDAR mode.
+    /// Test that LiDAR mode shows correct controls in ready state.
+    /// Mesh toggle only appears during active scanning; in ready state the start button is shown.
     func testMeshToggleAvailableInLiDARMode() throws {
         // GIVEN: Open LiDAR scanning view
         let tabBar = TabBarPage(app: app)
         let selector = tabBar.tapCapture()
-        _ = selector.waitForDisplay() 
+        _ = selector.waitForDisplay()
 
         guard selector.isExteriorSupported else {
             throw XCTSkip("Exterior mode not supported")
         }
 
         let scanning = selector.selectExterior()
-        _ = scanning.waitForDisplay() 
+        _ = scanning.waitForDisplay()
 
-        // THEN: Mesh toggle should exist
-        let hasMeshToggle = scanning.meshToggle.exists ||
-                            app.buttons["Mesh"].exists ||
-                            app.buttons["cube"].exists
-        XCTAssertTrue(hasMeshToggle, "Mesh toggle should be available")
+        // THEN: In ready state, start button should be visible (mesh toggle appears only during scanning)
+        let hasStartButton = app.buttons["Zahájit skenování"].exists ||
+                             scanning.captureButton.exists ||
+                             app.buttons.containing(NSPredicate(format: "label CONTAINS 'skenovani'")).count > 0
+        XCTAssertTrue(hasStartButton, "Start scanning button should be visible in ready state")
     }
 
     /// Test that settings button is available in scanning view.
