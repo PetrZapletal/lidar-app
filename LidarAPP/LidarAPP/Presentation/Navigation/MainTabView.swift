@@ -1,276 +1,84 @@
 import SwiftUI
 
+/// Hlavní navigační view s tab barem
 struct MainTabView: View {
-    let authService: AuthService
-    let scanStore: ScanStore
-    @State private var selectedTab: Tab = .gallery
-    @State private var showScanning = false
-    @State private var showActiveScan = false
-    @State private var selectedScanMode: ScanMode = .exterior
-
-    enum Tab: Int {
-        case gallery
-        case capture
-        case profile
-    }
+    let services: ServiceContainer
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            TabView(selection: $selectedTab) {
-                GalleryView(scanStore: scanStore)
-                    .tag(Tab.gallery)
-                    .toolbar(.hidden, for: .tabBar)
-
-                Color.clear
-                    .tag(Tab.capture)
-                    .toolbar(.hidden, for: .tabBar)
-
-                ProfileTabView(authService: authService)
-                    .tag(Tab.profile)
-                    .toolbar(.hidden, for: .tabBar)
-            }
-
-            CustomTabBar(
-                selectedTab: $selectedTab,
-                onCaptureTap: {
-                    if DeviceCapabilities.hasLiDAR || MockDataProvider.isMockModeEnabled {
-                        showScanning = true
-                    }
+        TabView {
+            ScanPlaceholderView()
+                .tabItem {
+                    Label("Scan", systemImage: "viewfinder")
                 }
-            )
+
+            GalleryPlaceholderView()
+                .tabItem {
+                    Label("Gallery", systemImage: "photo.on.rectangle.angled")
+                }
+
+            SettingsPlaceholderView()
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
         }
-        .ignoresSafeArea(.keyboard)
-        .sheet(isPresented: $showScanning) {
-            ScanModeSelector { mode in
-                showScanning = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    selectedScanMode = mode
-                    showActiveScan = true
-                }
-            }
-            .presentationDetents([.height(400)])
-        }
-        .fullScreenCover(isPresented: $showActiveScan) {
-            switch selectedScanMode {
-            case .exterior:
-                LiDARUnifiedScanningView(scanMode: .exterior) { savedScan, session in
-                    scanStore.addScan(savedScan, session: session)
-                }
-            case .interior:
-                UnifiedScanningView(mode: RoomPlanScanningModeAdapter()) { savedScan, session in
-                    scanStore.addScan(savedScan, session: session)
-                }
-            case .object:
-                UnifiedScanningView(mode: ObjectCaptureScanningModeAdapter()) { savedScan, session in
-                    scanStore.addScan(savedScan, session: session)
-                }
-            }
+        .onAppear {
+            services.debugStream.trackViewAppeared("MainTabView")
         }
     }
 }
 
-// MARK: - Scan Mode Selector
+// MARK: - Sprint 0 Placeholders
 
-struct ScanModeSelector: View {
-    let onModeSelected: (ScanMode) -> Void
-    @Environment(\.dismiss) private var dismiss
-
+private struct ScanPlaceholderView: View {
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
-                Text("Vyberte režim skenování")
-                    .font(.headline)
-                    .padding(.top)
-
-                ScanModeCard(
-                    icon: ScanMode.exterior.icon,
-                    title: ScanMode.exterior.displayName,
-                    subtitle: ScanMode.exterior.subtitle,
-                    description: ScanMode.exterior.description,
-                    color: ScanMode.exterior.color,
-                    isSupported: DeviceCapabilities.hasLiDAR || MockDataProvider.isMockModeEnabled
-                ) {
-                    onModeSelected(.exterior)
-                }
-                .accessibilityIdentifier(AccessibilityIdentifiers.ScanModeSelector.exteriorCard)
-
-                ScanModeCard(
-                    icon: ScanMode.interior.icon,
-                    title: ScanMode.interior.displayName,
-                    subtitle: ScanMode.interior.subtitle,
-                    description: ScanMode.interior.description,
-                    color: ScanMode.interior.color,
-                    isSupported: RoomPlanService.shared.isSupported || MockDataProvider.isMockModeEnabled
-                ) {
-                    onModeSelected(.interior)
-                }
-                .accessibilityIdentifier(AccessibilityIdentifiers.ScanModeSelector.interiorCard)
-
-                ScanModeCard(
-                    icon: ScanMode.object.icon,
-                    title: ScanMode.object.displayName,
-                    subtitle: ScanMode.object.subtitle,
-                    description: ScanMode.object.description,
-                    color: ScanMode.object.color,
-                    isSupported: ObjectCaptureService.isSupported || MockDataProvider.isMockModeEnabled
-                ) {
-                    onModeSelected(.object)
-                }
-                .accessibilityIdentifier(AccessibilityIdentifiers.ScanModeSelector.objectCard)
-
-                Spacer()
-            }
-            .padding()
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Zrušit") { dismiss() }
-                        .accessibilityIdentifier(AccessibilityIdentifiers.ScanModeSelector.cancelButton)
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Scan Mode Card
-
-struct ScanModeCard: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    let description: String
-    let color: Color
-    var isSupported: Bool = true
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.system(size: 36))
-                    .foregroundStyle(color)
-                    .frame(width: 60)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(title)
-                            .font(.headline)
-                        if !isSupported {
-                            Text("Nepodporováno")
-                                .font(.caption2)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(.red.opacity(0.2))
-                                .foregroundStyle(.red)
-                                .clipShape(Capsule())
-                        }
-                    }
-                    Text(subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Text(description)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(2)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
+            VStack(spacing: 20) {
+                Image(systemName: "viewfinder")
+                    .font(.system(size: 64))
+                    .foregroundStyle(.secondary)
+                Text("Scanning")
+                    .font(.title2)
+                Text("Sprint 1: ARSessionService")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            .padding()
-            .background(Color(.secondarySystemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .navigationTitle("Scan")
         }
-        .disabled(!isSupported)
-        .opacity(isSupported ? 1 : 0.5)
-        .foregroundStyle(.primary)
     }
 }
 
-// MARK: - Custom Tab Bar
-
-struct CustomTabBar: View {
-    @Binding var selectedTab: MainTabView.Tab
-    let onCaptureTap: () -> Void
-
+private struct GalleryPlaceholderView: View {
     var body: some View {
-        HStack(spacing: 0) {
-            TabBarButton(
-                icon: "cube.fill",
-                title: "Galerie",
-                isSelected: selectedTab == .gallery
-            ) {
-                selectedTab = .gallery
-            }
-            .accessibilityIdentifier(AccessibilityIdentifiers.TabBar.galleryTab)
-
-            Spacer()
-
-            Button(action: onCaptureTap) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [.blue, .cyan],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 64, height: 64)
-                        .shadow(color: .blue.opacity(0.4), radius: 8, y: 4)
-
-                    Image(systemName: "viewfinder")
-                        .font(.title)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white)
-                }
-            }
-            .accessibilityIdentifier(AccessibilityIdentifiers.TabBar.captureButton)
-            .offset(y: -20)
-
-            Spacer()
-
-            TabBarButton(
-                icon: "person.fill",
-                title: "Profil",
-                isSelected: selectedTab == .profile
-            ) {
-                selectedTab = .profile
-            }
-            .accessibilityIdentifier(AccessibilityIdentifiers.TabBar.profileTab)
-        }
-        .padding(.horizontal, 40)
-        .padding(.top, 12)
-        .padding(.bottom, 24)
-        .background(
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
-        )
-    }
-}
-
-struct TabBarButton: View {
-    let icon: String
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image(systemName: "photo.on.rectangle.angled")
+                    .font(.system(size: 64))
+                    .foregroundStyle(.secondary)
+                Text("Gallery")
                     .font(.title2)
-                Text(title)
-                    .font(.caption2)
+                Text("Sprint 2: PersistenceService + Preview")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .foregroundStyle(isSelected ? .blue : .secondary)
+            .navigationTitle("Gallery")
         }
-        .frame(width: 60)
     }
 }
 
-#Preview {
-    MainTabView(authService: AuthService(), scanStore: ScanStore())
+private struct SettingsPlaceholderView: View {
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image(systemName: "gear")
+                    .font(.system(size: 64))
+                    .foregroundStyle(.secondary)
+                Text("Settings")
+                    .font(.title2)
+                Text("Sprint 5: SettingsView")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .navigationTitle("Settings")
+        }
+    }
 }

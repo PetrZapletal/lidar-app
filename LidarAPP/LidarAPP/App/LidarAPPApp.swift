@@ -3,10 +3,10 @@ import Sentry
 
 @main
 struct LidarAPPApp: App {
-    @State private var authService = AuthService()
-    @State private var scanStore = ScanStore()
+    @State private var services = ServiceContainer()
 
     init() {
+        // Initialize crash reporting (MetricKit)
         CrashReporter.shared.start()
 
         // Initialize Sentry for crash reporting and performance monitoring
@@ -26,22 +26,21 @@ struct LidarAPPApp: App {
             #endif
         }
 
+        // Auto-start debug streaming in debug builds
         #if DEBUG
         if DebugSettings.shared.rawDataModeEnabled {
             DebugSettings.shared.debugStreamEnabled = true
             DebugStreamService.shared.startStreaming()
-            print("Debug: Auto-started debug streaming (rawDataModeEnabled)")
+            debugLog("Auto-started debug streaming", category: .logCategoryNetwork)
         }
         #endif
+
+        infoLog("LidarAPP started - Sprint 0 skeleton", category: .logCategoryUI)
     }
 
     var body: some Scene {
         WindowGroup {
-            MainTabView(authService: authService, scanStore: scanStore)
-                .task {
-                    await authService.restoreSession()
-                    await scanStore.loadScans()
-                }
+            MainTabView(services: services)
         }
     }
 }
