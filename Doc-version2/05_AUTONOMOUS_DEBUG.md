@@ -2,7 +2,7 @@
 
 ## Přehled
 
-Projekt má **dvě debug pipeline** pro autonomní debugging bez Xcode GUI:
+Projekt má **tři debug pipeline** pro autonomní debugging bez Xcode GUI:
 
 ```
 Pipeline 1: Debug Event Stream (real-time telemetrie)
@@ -10,9 +10,13 @@ Pipeline 1: Debug Event Stream (real-time telemetrie)
 
 Pipeline 2: Raw Data Upload (binární data pro offline analýzu)
   iOS App → LRAW binary → Chunked Upload → Backend → Processing
+
+Pipeline 3: Sentry + MetricKit (crash reporting, performance, profiling)
+  iOS App → Sentry Cloud (automaticky)
+  iOS App → MetricKit → CrashReporter → vlastní Backend
 ```
 
-Obě pipeline jsou již implementovány a propojeny přes Tailscale VPN.
+Všechny tři pipeline jsou implementovány. Pipeline 1+2 přes Tailscale VPN, Pipeline 3 přes Sentry Cloud + vlastní backend.
 
 ---
 
@@ -385,6 +389,126 @@ charles-cli record --port 8888
 
 ---
 
+## Pipeline 3: Sentry + MetricKit (Crash Reporting & Performance)
+
+### Architektura
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        iOS App                               │
+│                                                              │
+│  LidarAPPApp.init()                                         │
+│  ├── CrashReporter.shared.start()   ← MetricKit subscriber │
+│  └── SentrySDK.start { options }    ← Sentry SDK init      │
+│                                                              │
+│  ┌────────────────────┐         ┌──────────────────────┐    │
+│  │    Sentry SDK       │         │   CrashReporter      │    │
+│  │  (automatický)      │         │   (MetricKit)        │    │
+│  │                     │         │                      │    │
+│  │ • Crash capture     │         │ • MXDiagnosticPayload│    │
+│  │ • Performance trace │         │ • MXMetricPayload    │    │
+│  │ • Session tracking  │         │ • Crash diagnostics  │    │
+│  │ • Failed requests   │         │ • Hang detection     │    │
+│  │ • Screenshots       │         │ • CPU exceptions     │    │
+│  │ • User interaction  │         │ • Disk write except.  │    │
+│  │ • Profiling (100%)  │         │ • App launch metrics │    │
+│  └─────────┬───────────┘         └──────────┬───────────┘    │
+│            │                                │                │
+└────────────┼────────────────────────────────┼────────────────┘
+             │                                │
+             ▼                                ▼
+  ┌──────────────────┐          ┌──────────────────────────┐
+  │   Sentry Cloud    │          │  Vlastní Debug Backend    │
+  │   (sentry.io)     │          │  POST /api/v1/debug/crashes│
+  │                   │          │                           │
+  │ • Dashboard       │          │ • JSON crash reports      │
+  │ • Alerts          │          │ • Stack traces            │
+  │ • Release health  │          │ • Device info             │
+  │ • Performance     │          │ • Uložení na disk         │
+  └──────────────────┘          └──────────────────────────┘
+```
+
+### Sentry SDK konfigurace
+
+Inicializace v `LidarAPPApp.swift`:
+
+```swift
+SentrySDK.start { options in
+    options.dsn = "https://...@o4510844790243328.ingest.de.sentry.io/..."
+    options.tracesSampleRate = 1.0          // 100% performance tracing
+    options.profilesSampleRate = 1.0        // 100% profiling
+    options.enableAutoSessionTracking = true
+    options.enableCaptureFailedRequests = true
+    options.attachScreenshot = true          // Screenshot při chybě
+    options.enableUserInteractionTracing = true
+    #if DEBUG
+    options.debug = true
+    options.environment = "debug"
+    #else
+    options.environment = "production"
+    #endif
+}
+```
+
+**Co Sentry automaticky zachytává:**
+- Crashes s full stack trace + screenshot
+- ANR/hang detekce
+- HTTP request failures
+- User interaction tracing (button taps, navigation)
+- Performance traces (app start, view load, network)
+- Session health (crash-free sessions/users)
+- Release tracking
+
+### CrashReporter (MetricKit)
+
+`Services/Diagnostics/CrashReporter.swift` - Apple MetricKit subscriber:
+
+| Funkce | Popis |
+|--------|-------|
+| `start()` | Registruje MXMetricManager subscriber |
+| `didReceive(_: [MXDiagnosticPayload])` | Přijímá crash diagnostiky (do 24h po crashi) |
+| `didReceive(_: [MXMetricPayload])` | Přijímá performance metriky |
+| `sendCrashToBackend()` | Forwarduje MetricKit crash na vlastní debug backend |
+| `exportDiagnosticsJSON()` | Export diagnostik do JSON |
+| `saveDiagnosticsToFile()` | Uloží na disk pro offline analýzu |
+
+**MetricKit payload typy:**
+- `crashDiagnostics` - termination reason, signal, exception type/code
+- `hangDiagnostics` - main thread hangs
+- `cpuExceptionDiagnostics` - nadměrné CPU využití
+- `diskWriteExceptionDiagnostics` - nadměrný I/O
+- `applicationLaunchMetrics` - time to first draw
+- `memoryMetrics` - peak memory usage
+
+### CLI přístup k crash datům
+
+```bash
+# Crash reports z vlastního backendu
+curl -sk "https://100.96.188.18:8444/api/v1/debug/crashes?limit=10" | python3 -m json.tool
+
+# Detail konkrétního crashe
+curl -sk "https://100.96.188.18:8444/api/v1/debug/crashes/{crash_id}" | python3 -m json.tool
+
+# Sentry - vyžaduje Sentry CLI + auth token
+sentry-cli events list -o {org} -p {project}
+```
+
+### Sentry vs vlastní backend - doplňují se
+
+| Funkce | Sentry | Vlastní backend |
+|--------|--------|-----------------|
+| Crash reporting | Automatický, real-time | MetricKit (do 24h delay) |
+| Performance tracing | Ano (traces, profiles) | PerformanceMonitor (real-time FPS/CPU/RAM) |
+| Screenshots | Ano (při chybě) | Ne |
+| User interaction | Ano | DebugStreamService (appState events) |
+| Release health | Ano | Ne |
+| Custom debug events | Ne | Ano (6 kategorií, real-time WS) |
+| Raw scan data | Ne | Ano (LRAW pipeline) |
+| 3D data inspection | Ne | Ano (point cloud preview, depth heatmap) |
+| Offline analýza | Sentry web dashboard | CLI curl + JSON |
+
+---
+
 ## Co je implementováno vs co chybí
 
 ### Implementováno (funguje)
@@ -396,9 +520,11 @@ charles-cli record --port 8888
 - [x] RawDataUploader (chunked, retry, exponential backoff)
 - [x] Backend debug endpoints (WS stream, batch, events, devices)
 - [x] Backend debug dashboard (HTML/WS)
-- [x] CrashReporter → backend
+- [x] CrashReporter (MetricKit) → vlastní backend
+- [x] Sentry SDK (crash reporting, performance tracing, profiling, screenshots)
 - [x] DebugLogOverlay (on-screen logs)
 - [x] SelfSignedCertDelegate (dev HTTPS)
+- [x] AppDiagnostics (diagnostický modul)
 
 ### Chybí / nutno doladit
 - [ ] Integrace DebugLogger do VŠECH services (většina stále používá `print()`)
