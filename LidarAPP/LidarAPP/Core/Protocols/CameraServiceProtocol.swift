@@ -24,17 +24,4 @@ protocol CameraServiceProtocol: AnyObject {
     func clearBuffer()
 }
 
-// MARK: - Placeholder (Sprint 0)
 
-@MainActor
-final class PlaceholderCameraService: CameraServiceProtocol {
-    var isCapturing = false
-    var capturedFrameCount = 0
-
-    func startCapture() {
-        debugLog("PlaceholderCameraService: startCapture not implemented", category: .logCategoryAR)
-    }
-    func stopCapture() {}
-    func getTextureFrames() -> [TextureFrame] { [] }
-    func clearBuffer() {}
-}

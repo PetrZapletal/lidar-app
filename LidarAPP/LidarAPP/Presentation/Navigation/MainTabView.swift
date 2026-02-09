@@ -3,22 +3,23 @@ import SwiftUI
 /// Hlavní navigační view s tab barem
 struct MainTabView: View {
     let services: ServiceContainer
+    @State private var showScanning = false
 
     var body: some View {
         TabView {
-            ScanPlaceholderView()
+            ScanTabView(services: services, showScanning: $showScanning)
                 .tabItem {
                     Label("Scan", systemImage: "viewfinder")
                 }
 
-            GalleryPlaceholderView()
+            GalleryView(services: services)
                 .tabItem {
-                    Label("Gallery", systemImage: "photo.on.rectangle.angled")
+                    Label("Galerie", systemImage: "photo.on.rectangle.angled")
                 }
 
-            SettingsPlaceholderView()
+            SettingsView(services: services)
                 .tabItem {
-                    Label("Settings", systemImage: "gear")
+                    Label("Nastavení", systemImage: "gear")
                 }
         }
         .onAppear {
@@ -27,58 +28,49 @@ struct MainTabView: View {
     }
 }
 
-// MARK: - Sprint 0 Placeholders
+// MARK: - Scan Tab (Sprint 1)
 
-private struct ScanPlaceholderView: View {
+private struct ScanTabView: View {
+    let services: ServiceContainer
+    @Binding var showScanning: Bool
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
+            VStack(spacing: 24) {
+                Spacer()
+
                 Image(systemName: "viewfinder")
-                    .font(.system(size: 64))
+                    .font(.system(size: 80))
+                    .foregroundStyle(.blue.gradient)
+
+                Text("LiDAR Scanner")
+                    .font(.title)
+                    .fontWeight(.bold)
+
+                Text("3D skenování prostoru pomocí LiDAR senzoru")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Text("Scanning")
-                    .font(.title2)
-                Text("Sprint 1: ARSessionService")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                Button(action: { showScanning = true }) {
+                    Label("Zahájit skenování", systemImage: "camera.viewfinder")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(.blue.gradient)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .padding(.horizontal, 40)
+
+                Spacer()
             }
             .navigationTitle("Scan")
+            .fullScreenCover(isPresented: $showScanning) {
+                ScanningView(services: services)
+            }
         }
     }
 }
 
-private struct GalleryPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Image(systemName: "photo.on.rectangle.angled")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.secondary)
-                Text("Gallery")
-                    .font(.title2)
-                Text("Sprint 2: PersistenceService + Preview")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .navigationTitle("Gallery")
-        }
-    }
-}
-
-private struct SettingsPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Image(systemName: "gear")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.secondary)
-                Text("Settings")
-                    .font(.title2)
-                Text("Sprint 5: SettingsView")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .navigationTitle("Settings")
-        }
-    }
-}

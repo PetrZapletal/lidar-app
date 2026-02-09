@@ -4,6 +4,7 @@ import Sentry
 @main
 struct LidarAPPApp: App {
     @State private var services = ServiceContainer()
+    @AppStorage("onboarding_completed") private var onboardingCompleted = false
 
     init() {
         // Initialize crash reporting (MetricKit)
@@ -35,12 +36,16 @@ struct LidarAPPApp: App {
         }
         #endif
 
-        infoLog("LidarAPP started - Sprint 0 skeleton", category: .logCategoryUI)
+        infoLog("LidarAPP started", category: .logCategoryUI)
     }
 
     var body: some Scene {
         WindowGroup {
-            MainTabView(services: services)
+            if onboardingCompleted {
+                MainTabView(services: services)
+            } else {
+                OnboardingView(services: services)
+            }
         }
     }
 }

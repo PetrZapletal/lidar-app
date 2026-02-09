@@ -41,24 +41,4 @@ enum HTTPMethod: String {
     case delete = "DELETE"
 }
 
-// MARK: - Placeholder (Sprint 0)
 
-@MainActor
-final class PlaceholderNetworkService: NetworkServiceProtocol {
-    var baseURL: URL? { nil }
-    var isConnected = false
-
-    func checkConnectivity() async -> Bool { false }
-
-    func request<T: Decodable>(endpoint: String, method: HTTPMethod, body: (any Encodable)?) async throws -> T {
-        throw NetworkError.notConnected
-    }
-
-    func uploadFile(endpoint: String, fileURL: URL, onProgress: @escaping (Float) -> Void) async throws -> Data {
-        throw NetworkError.notConnected
-    }
-
-    func downloadFile(endpoint: String, destinationURL: URL, onProgress: @escaping (Float) -> Void) async throws {
-        throw NetworkError.notConnected
-    }
-}

@@ -9,124 +9,115 @@
 /* Begin PBXBuildFile section */
 		010AE2DA81E4840301A3A7FF /* DebugSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5C982388D3288F6054BDFA3 /* DebugSettings.swift */; };
 		01A330C4EC9CA4CE482AE02E /* ProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57F227BE27D93BCB9B6B5498 /* ProfileTests.swift */; };
-		0255A922691FF9CDDE5629A7 /* MockDataProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD44B741DA11675287E212D2 /* MockDataProviderTests.swift */; };
-		057EBEC897942F5A7FEF3541 /* ScanningModeProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA9BA78F0A3140D83D1B7E82 /* ScanningModeProtocol.swift */; };
-		07CAB0073648274645BE6396 /* ChunkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE2A27D5662105D98F771D38 /* ChunkManager.swift */; };
-		1D11B826539D174A2643A825 /* ARPlacementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB169D1647AEF764664F4447 /* ARPlacementView.swift */; };
-		2186048F7D68EEF64451A0FE /* ModelDetailPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD3669DEE545DD1D8815D3F9 /* ModelDetailPage.swift */; };
+		02C33CB107B7413188C4CE2B /* VisualDebugProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CBE7198EC4F9A40EA0AA984 /* VisualDebugProtocol.swift */; };
+		03A10A44550C26E603D6FA9E /* MeshCorrectionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 998EDCD0D857D1437270B4A1 /* MeshCorrectionModel.swift */; };
+		075D0111C334A61766CFA2EA /* MeshStreamService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E896D05A2ABC50F7DEBB3D1B /* MeshStreamService.swift */; };
+		0C32EFD0E4BD4CEDEB1234C1 /* LiDARScanningModeAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCA8AE01124B6684B16640 /* LiDARScanningModeAdapter.swift */; };
+		10A27F41923AEDC44910F32E /* ServerSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B47ECDF8757BF403B36726 /* ServerSettingsView.swift */; };
+		1116DD7D63FBA90E888590EA /* UIStateSnapshotCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4223023A20C60FB3B1DA9695 /* UIStateSnapshotCapture.swift */; };
+		12B7C0AD89AC8FB181B7DCCD /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9992FE55254343CC80A8B0D /* EmptyStateView.swift */; };
+		16C4C3937497178E678D4166 /* ScanError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52AB76CE359919243F89B675 /* ScanError.swift */; };
+		1F57835D4D0CF006FCC29A18 /* RoomPlanScanningModeAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3F6114B89C14E93C1B0F18 /* RoomPlanScanningModeAdapter.swift */; };
 		27297C90F317126B406D55B8 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A93A891D1CF09FA95E32FE85 /* AccessibilityIdentifiers.swift */; };
-		27297C90F317126B406D55B9 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A93A891D1CF09FA95E32FE86 /* AccessibilityIdentifiers.swift */; };
-		2C520A5DCAFE51C942BF8501 /* ScanSessionPersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A91D9ACF2857EAC33EDF1A7 /* ScanSessionPersistence.swift */; };
-		2D04E05F79DA8612A575748D /* GaussianSplatRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36E859B348C609F3A03D3B01 /* GaussianSplatRenderer.swift */; };
-		30E271FAED29CAD435EDAC38 /* ScanningPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC09D7E917BDAA3550CDF2B0 /* ScanningPage.swift */; };
-		424589AF17D165A9A67F4291 /* GalleryPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A43125C7DAC12013487F1DA /* GalleryPage.swift */; };
+		32F34482F7C4CFDEDB718DC8 /* ModelDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B41E1C00DBEDA8140F5A750 /* ModelDetailView.swift */; };
+		3791A212F1E90346BD868AA6 /* DebugWebSocketService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 383CEA7A92C138A5FA3F4ABE /* DebugWebSocketService.swift */; };
+		3DD44C7925021F688866768F /* ExportServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EFA028D734DAA20FBADF419 /* ExportServiceProtocol.swift */; };
+		40F560F1A15BB7EA7560EB88 /* CloudProcessingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC95F2B0500115BE69DC330F /* CloudProcessingService.swift */; };
 		43A568D5A6E8F70BB1295C2B /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B14D5C8A30BBD59DA9A7AD77 /* CrashReporter.swift */; };
+		43B5C0E989D6010CF4893A51 /* ScanSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BBB959595DE11ED6A4FC12F /* ScanSyncManager.swift */; };
 		45200AB7E4E5C397CC8068AC /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57E3731C82F379B15733EABB /* Foundation.framework */; };
+		4602BCA73AEFEA71DB681125 /* GalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A78D16FB47B86C9A597AA7F6 /* GalleryView.swift */; };
+		4A67E29C53308E463B1C2BB0 /* DistanceCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F28C85177D8BB9F57BDAD52A /* DistanceCalculator.swift */; };
 		4F09B302736B9DDBF667FAB5 /* ScanMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB047F504FF925813E10C28 /* ScanMode.swift */; };
-		532CB3AE3321643AB85B6309 /* PointCloudTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EA8FD791196A3DA250C6F31 /* PointCloudTests.swift */; };
+		515AFC47D8077F84795360EE /* PreviewViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97A63782EE7A004E72816C8C /* PreviewViewModel.swift */; };
+		52CA5C4E658E5C344F0261C7 /* ModelPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9CF49F9B3EAFFC9136DDB80 /* ModelPreviewView.swift */; };
 		532F00628D76245E5862C4C9 /* ScanModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45D236188D400CF633D9B35E /* ScanModel.swift */; };
-		5678860F9472B66958E82F41 /* DepthAnythingV2SmallF16.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = 8CA1C3EF8D76618E8DC8B828 /* DepthAnythingV2SmallF16.mlpackage */; };
+		538881B7A1F98AC9DAC43595 /* ExportError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C540C85E1717DAE7E22C98E2 /* ExportError.swift */; };
+		548F07FED9DFE6E27C2D33D4 /* DepthAnythingV2SmallF16.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 8CA1C3EF8D76618E8DC8B828 /* DepthAnythingV2SmallF16.mlpackage */; };
+		5650227938F7C2AB4EF80CBA /* AreaCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52E2FE0B5270CAE23598A126 /* AreaCalculator.swift */; };
 		5A087FC8B3B964EB92749226 /* AppLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44A6A999909C200D2ED84C59 /* AppLaunchTests.swift */; };
 		5A937BFD2661DBCA30BDABB8 /* NavigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B886EFB6191A472E159B175 /* NavigationTests.swift */; };
-		630578A11AF6A41CEA5DADD8 /* GalleryExportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B9AC0BFEA34EDA816B1035 /* GalleryExportSheet.swift */; };
-		6674D17D77E7DE5D9968FFD1 /* GuidanceIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CB8CB691753BDEB2B16B41 /* GuidanceIndicator.swift */; };
+		6421D662FE32973FA9AF580F /* ScanningModeFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2557ECF5268B7F6C2F51110 /* ScanningModeFactory.swift */; };
+		664FC7902DA9D0C68C771661 /* AccessibilityModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236F91143DF43ACE1D6B966D /* AccessibilityModifiers.swift */; };
+		6A9580AC5E86E902A874235E /* DepthFusionProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395C1E3D605744E92CB034F6 /* DepthFusionProcessor.swift */; };
+		6AD8ABBC7EC9740422FD4A76 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A212270515286042571D91B8 /* NetworkService.swift */; };
 		6C8465C7B36A4BAE795CCC1C /* AuthenticationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F842AC4344B2178CBD8E70EB /* AuthenticationTests.swift */; };
 		6EAF6F61FF7DF94B089B6F12 /* PerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8409994984C6D6FDE0B9A28 /* PerformanceMonitor.swift */; };
-		7423D469D8B8F131ECC22AF2 /* ScanModeSelectorPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98D7368F61A5242D86C2F16 /* ScanModeSelectorPage.swift */; };
+		706BA9FD1FA3AE6286686A99 /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27A987CB53348C42D243E987 /* CameraService.swift */; };
 		74D8D973DAA3F6144F4026AA /* DebugLogOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 353B785CE088ADDD39669976 /* DebugLogOverlay.swift */; };
-		753F21E57CA110881F6DFA28 /* ScanSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79511D5C4D7B8275CEB3507C /* ScanSessionTests.swift */; };
+		75257091708D5AC04F1939DA /* ObjectCaptureScanningModeAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F939E3333A4367E0C0EF80 /* ObjectCaptureScanningModeAdapter.swift */; };
+		78BA6FD6C6111695CED5E84B /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1E3FAD9850985C28466F9E /* PersistenceService.swift */; };
 		7A86830645D9AADCC8CBF9CF /* CoverageAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A9438C9A4600487C16C34FD /* CoverageAnalyzer.swift */; };
-		7B981133AF8659512846EA64 /* LiDARScanningModeAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96C7293324F3BB8EF5E87614 /* LiDARScanningModeAdapter.swift */; };
+		7CD091B883A2F65E3DD04635 /* VisualDebugCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 330B533E4623A7B6524FCD1C /* VisualDebugCoordinator.swift */; };
+		7DF12F7F726C7456091D1931 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F13732ED9A3B925FCA80598 /* SettingsViewModel.swift */; };
+		7E8F7B12FEDD00ECBC817C56 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADFAF80B4C76A99F59F3CE6D /* OnboardingView.swift */; };
 		7F6C6EB3E181DCF7B45BE4DE /* XCTestExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B43B36D118D1B1B6F2EED1 /* XCTestExtensions.swift */; };
-		85C6BCC13273C92F60439356 /* BasePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEF36101BBCC5F34A0371A37 /* BasePage.swift */; };
-		8662B9E5E8A88EC0316B2D65 /* ExportPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BF18CFDD099FF2A7166EC03 /* ExportPage.swift */; };
+		85E0ED5258F6E882FEBD291D /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9A12F4AF8644B6632022040 /* AboutView.swift */; };
+		86AE80E691CC496904A363AE /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B9F4966BE26689B007DB1F1 /* ExportService.swift */; };
+		8942801BB25BECDD5D27DC4B /* DepthAnythingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 929BE9091957869FEE9BCA6C /* DepthAnythingModel.swift */; };
 		8A593F1790A6F0B12A809612 /* SharedTopBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D9C447B7A15F2D2DFE59403 /* SharedTopBar.swift */; };
 		8C670889578B2F01CA7824D8 /* CaptureButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D760D1732444BB1DA9D90FC /* CaptureButton.swift */; };
 		8D69BB7359A410D9B4F5C0B5 /* StatisticsGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DAC3AADB1078418CB736B5 /* StatisticsGrid.swift */; };
-		8E079881E1C135A87FC49CB6 /* ResumeSessionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4FCE63E1F6531AF3C1F4BE5 /* ResumeSessionSheet.swift */; };
 		8E12834F6C4FFF080871A766 /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2AC5B34455CB0E35428D5E5 /* DebugLogger.swift */; };
-		903D6E29E630CDD3B08EAE01 /* IntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9B0630A0C52DD87368DD0F /* IntegrationTests.swift */; };
 		90C4C51EA97DABA5D260E471 /* ScanningModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24670C7F3FDCED240539406 /* ScanningModeTests.swift */; };
-		947D1CF43292877BC3D6966C /* ObjectCaptureScanningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E5C5D0BF7ABD0F7E8005A95 /* ObjectCaptureScanningView.swift */; };
+		911F47827F0BD7EB07BDFB74 /* DebugSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 428766DAEB2453FE1D8196A8 /* DebugSettingsView.swift */; };
+		9152E8A9C987C1B5A9BA69BE /* PermissionRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DE33DDC47DE0A4C96B5F481 /* PermissionRequestView.swift */; };
+		9621571FB07B983BF34745F6 /* ScanningModeProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FFD11CAF5C0DE6C0FB8DC64 /* ScanningModeProtocol.swift */; };
 		98ABFA9738675BD168B73ADA /* RawDataUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6FFFB2166A5C6464A61A13 /* RawDataUploader.swift */; };
-		A0B7DCC81D1903DEE40FF344 /* RoomPlanScanningModeAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 804843AB44AF939F6810D2BE /* RoomPlanScanningModeAdapter.swift */; };
 		A10000001111111100000001 /* LidarAPPApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000001 /* LidarAPPApp.swift */; };
 		A10000001111111100000002 /* simd+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000002 /* simd+Extensions.swift */; };
 		A10000001111111100000003 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000003 /* KeychainService.swift */; };
-		A10000001111111100000004 /* DeviceCapabilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000004 /* DeviceCapabilities.swift */; };
 		A10000001111111100000005 /* MeshData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000005 /* MeshData.swift */; };
 		A10000001111111100000006 /* PointCloud.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000006 /* PointCloud.swift */; };
 		A10000001111111100000007 /* ScanSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000007 /* ScanSession.swift */; };
 		A10000001111111100000008 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000008 /* User.swift */; };
-		A10000001111111100000009 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000009 /* AuthViewModel.swift */; };
-		A10000001111111100000010 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000010 /* AuthView.swift */; };
-		A10000001111111100000011 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000011 /* ProfileView.swift */; };
-		A10000001111111100000012 /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000012 /* ExportService.swift */; };
-		A10000001111111100000013 /* PreviewViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000013 /* PreviewViewModel.swift */; };
-		A10000001111111100000014 /* ModelPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000014 /* ModelPreviewView.swift */; };
 		A10000001111111100000015 /* ScanningViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000015 /* ScanningViewModel.swift */; };
 		A10000001111111100000016 /* ScanningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000016 /* ScanningView.swift */; };
-		A10000001111111100000017 /* ARSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000017 /* ARSessionManager.swift */; };
 		A10000001111111100000018 /* DepthMapProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000018 /* DepthMapProcessor.swift */; };
 		A10000001111111100000019 /* MeshAnchorProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000019 /* MeshAnchorProcessor.swift */; };
 		A10000001111111100000020 /* PointCloudExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000020 /* PointCloudExtractor.swift */; };
-		A10000001111111100000021 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000021 /* AuthService.swift */; };
-		A10000001111111100000022 /* CameraFrameCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000022 /* CameraFrameCapture.swift */; };
 		A10000001111111100000023 /* FrameSynchronizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000023 /* FrameSynchronizer.swift */; };
-		A10000001111111100000024 /* MeshCorrectionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000024 /* MeshCorrectionModel.swift */; };
-		A10000001111111100000025 /* OnDeviceProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000025 /* OnDeviceProcessor.swift */; };
-		A10000001111111100000026 /* AreaCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000026 /* AreaCalculator.swift */; };
-		A10000001111111100000027 /* DistanceCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000027 /* DistanceCalculator.swift */; };
-		A10000001111111100000028 /* MeasurementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000028 /* MeasurementService.swift */; };
-		A10000001111111100000029 /* VolumeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000029 /* VolumeCalculator.swift */; };
-		A10000001111111100000030 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000030 /* APIClient.swift */; };
-		A10000001111111100000031 /* ChunkedUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000031 /* ChunkedUploader.swift */; };
-		A10000001111111100000032 /* WebSocketService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000032 /* WebSocketService.swift */; };
-		A10000001111111100000033 /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000033 /* CameraController.swift */; };
-		A10000001111111100000034 /* LiveMeshRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000034 /* LiveMeshRenderer.swift */; };
-		A10000001111111100000035 /* PointCloudRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000035 /* PointCloudRenderer.swift */; };
-		A10000001111111100000036 /* DepthAnythingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000036 /* DepthAnythingModel.swift */; };
-		A10000001111111100000037 /* DepthFusionProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000037 /* DepthFusionProcessor.swift */; };
-		A10000001111111100000038 /* HighResPointCloudExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000038 /* HighResPointCloudExtractor.swift */; };
-		A10000001111111100000039 /* ScanProcessingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000039 /* ScanProcessingService.swift */; };
-		A10000001111111100000040 /* ProcessingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000040 /* ProcessingProgressView.swift */; };
-		A10000001111111100000041 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000041 /* SettingsView.swift */; };
-		A10000001111111100000042 /* MockDataProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000042 /* MockDataProvider.swift */; };
-		A10000001111111100000043 /* MockARSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000043 /* MockARSessionManager.swift */; };
-		A10000001111111100000044 /* MockDataPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000044 /* MockDataPreviewView.swift */; };
-		A10000001111111100000045 /* RoomPlanScanningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000045 /* RoomPlanScanningView.swift */; };
-		A10000001111111100000046 /* RoomPlanService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000046 /* RoomPlanService.swift */; };
-		A10000001111111100000047 /* TextureMappingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000047 /* TextureMappingService.swift */; };
-		A10000001111111100000048 /* EdgeMLGeometryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000048 /* EdgeMLGeometryService.swift */; };
-		A10000001111111100000049 /* AIGeometryGenerationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000049 /* AIGeometryGenerationService.swift */; };
-		A10000001111111100000050 /* Enhanced3DViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000050 /* Enhanced3DViewer.swift */; };
-		A10000001111111100000051 /* InteractiveMeasurementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000051 /* InteractiveMeasurementView.swift */; };
-		A10000001111111100000052 /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000052 /* ExportView.swift */; };
 		A10000001111111100000100 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000001111111100000100 /* Assets.xcassets */; };
+		A6882B92B2E0E087E4D0D8C6 /* NetworkServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB55FBA058E172C161E40944 /* NetworkServiceProtocol.swift */; };
 		A68960C7C603AD2E9D13DF07 /* CoverageOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C9682E3D418CF4F375BDC3 /* CoverageOverlay.swift */; };
-		A6DBDB6D3EE2FEC707039154 /* StatusIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79C8B652158C0888D031D72C /* StatusIndicator.swift */; };
-		A7386D3DF68396063FE2E761 /* ScanStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4E5A1226378EA75F496E873 /* ScanStore.swift */; };
-		B3EDD54F79661BCB54AD0860 /* MeshDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BDFBB830E7A14BA4215BEA5 /* MeshDataTests.swift */; };
-		B884665FA05B2EAB51C685E7 /* UserStatusBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8138F127211E7BA9FBABC330 /* UserStatusBanner.swift */; };
-		C5248EE0CB98F8F5E134BF05 /* ObjectCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3965372E23C57EE85D5733B7 /* ObjectCaptureService.swift */; };
-		CCA1BBA6491507DBB185B625 /* GalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97AF0F67178FF40C299E24AB /* GalleryView.swift */; };
+		A7644E1EE57AAE2EBFB83EBD /* NetworkError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0894D590798AEA509795593 /* NetworkError.swift */; };
+		ABEFAD9B701457DA1EB7322A /* MeasurementViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 278612A847C59643DD9C04E0 /* MeasurementViewModel.swift */; };
+		ACA85E3F698B009B0BA1BC39 /* SyncQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB4B7F4C978C071338138D36 /* SyncQueue.swift */; };
+		AF3771F08E592C8438EFCBDB /* SnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4A8ECACB26FD9F19D35D2D /* SnapshotStore.swift */; };
+		B4DD1E5EE96C0DDE3935281B /* GalleryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E78277D371234B69F35F59B9 /* GalleryViewModel.swift */; };
+		B67BE675A5E96EC0E082A731 /* UIStateSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E3D2B68031357B784AEB5B /* UIStateSnapshot.swift */; };
+		B6F43BD571C5892D7E9071FD /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA26041F6C8B6AB7FB2AA00 /* AuthError.swift */; };
+		B82EC9C9990127D66C3B5F32 /* InteractiveMeasurementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F2D4B5B4DA7C7910DC4C1F2 /* InteractiveMeasurementView.swift */; };
+		BCE45F7BF06BE7B50CB8C1F6 /* CameraServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B43E0B2CB6E49933880D39CF /* CameraServiceProtocol.swift */; };
+		BD872DF16D726F6895906AFB /* OnDeviceProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F0CB396623EF06176AA272 /* OnDeviceProcessor.swift */; };
+		C1DCFBB3583383B9EB194AEE /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84539F8F36353EBC14AB6CF9 /* SettingsView.swift */; };
+		C6CC7C42167901AFCD97D75D /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66373804C49FEB2163FDF563 /* AuthService.swift */; };
+		C8C523BB4347472436CBF4A3 /* ARSessionServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B63B4B4DC4421916F1C177C2 /* ARSessionServiceProtocol.swift */; };
+		C96D2F2B93319894F7052240 /* ConnectionStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFC550533B88D2FAF4993DFD /* ConnectionStatusBadge.swift */; };
+		CBD7CB4816CC45A669634DE4 /* WebSocketService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F82F516CE2E40A52185393F9 /* WebSocketService.swift */; };
+		CFAA143781CB397381F39B97 /* ARSessionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE94EDF68411F7331EA44336 /* ARSessionService.swift */; };
 		D11DA08DF7355602E0A3BE45 /* SharedControlBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCAF89F401F786B7584C0FE /* SharedControlBar.swift */; };
 		D227659B5DDEC49FA518CECA /* SettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF9D39261EBA42E3BE2F49B8 /* SettingsTests.swift */; };
+		D43202B3022569C7E3B87CBB /* ScanModeCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D475D6708BF503F068A716 /* ScanModeCard.swift */; };
+		D65EF1F4F8B59675C1F6A651 /* ErrorStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE3D093F40E6D3701EB3A15 /* ErrorStateView.swift */; };
 		D7C09590EFBC32C03E5B197D /* DepthFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55A893DD7CBD3791E1FF8EAB /* DepthFrame.swift */; };
 		D877FCDB312B5EA6D510BA9B /* GalleryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97493818B8C84ADD37F4CED8 /* GalleryTests.swift */; };
 		D98FFFC40ED49BA558C1C624 /* BaseUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4402926C5DDABEEAE1DE4C91 /* BaseUITestCase.swift */; };
 		DB6A96DACB412D892D993E17 /* DebugStreamService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B24805449D3FA8F7B9D4F9CC /* DebugStreamService.swift */; };
 		DC3D011B9D0EAE0E4E496FD8 /* AppDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F441C2EEC6B2CA29A9BFD96C /* AppDiagnostics.swift */; };
 		DC9B4B82F247902AEA81F341 /* RawDataPackager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35E42A26EF170899EF768373 /* RawDataPackager.swift */; };
-		E49FA9F4981B81D394483752 /* AuthPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5181F662ADAC295AB0131496 /* AuthPage.swift */; };
-		EEDA56A2937B258998B4EDD8 /* UnifiedScanningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 188A8672FAF9BFA0B04150D5 /* UnifiedScanningView.swift */; };
-		EEDEFD112A187CDA387EA22C /* ObjectCaptureScanningModeAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F49A0C864D5DABD1E4AFFBF /* ObjectCaptureScanningModeAdapter.swift */; };
+		DDB57F4F152BFC9CF5B40D03 /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5CAD9B75291EB21FC6E3602 /* OnboardingViewModel.swift */; };
+		E41F4E06392639BB94E615E7 /* MeasurementServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36CDF08164AEC298ADBB8B15 /* MeasurementServiceProtocol.swift */; };
+		E47381CCF6D870ECFC5F19FD /* EdgeMLError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68993DA67717B81BBF198F5A /* EdgeMLError.swift */; };
+		E60615766BC5F269BD55B24C /* MeasurementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C174D393C0C65CC13A5CF3B /* MeasurementService.swift */; };
+		E83B0FFB892D614C92227720 /* VolumeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE227E9C19C3D1CFB36E7B9F /* VolumeCalculator.swift */; };
+		EAF7383ABBE297B1AEFC0E8C /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62FCF964FB8536BE541EA55 /* HapticManager.swift */; };
+		EEF884D520B1B7F1E6A4E849 /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E6D692F71516430517EDCD /* ServiceContainer.swift */; };
 		F0886099F3EA5703E53813DC /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A1CD1D59F280F2C16F4521 /* MainTabView.swift */; };
-		F0E7B4C71AA14E0B51FA3417 /* SettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C7357A5D80721A576745AA /* SettingsPage.swift */; };
-		F21E7CB961DD8CF7FE09983A /* ModelDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 387E5FEFE3613AC0C45DE390 /* ModelDetailView.swift */; };
-		F345D18254C59CFAE56D80FB /* ProfileTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356400F61049A9A22F3E0416 /* ProfileTabView.swift */; };
-		F58CE8D69258C01FF23CA299 /* ProfilePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9831BE6340751B5DF19EFAB5 /* ProfilePage.swift */; };
-		FB10F9E9D0137939E382A0F6 /* TabBarPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C0A3FD405968C0772979FA /* TabBarPage.swift */; };
+		F0A5C32777FD3900EC7C7F9D /* LoadingStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F293192741CC9CE4BDB64E51 /* LoadingStateView.swift */; };
+		FA8C9E9D42809CFD54964A20 /* RequestInterceptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625C23218A96C939F4DB5E93 /* RequestInterceptor.swift */; };
+		FBECD04CABF240DAB7E97E37 /* DebugGestureHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8F38075F5D3D2001D9A335 /* DebugGestureHandler.swift */; };
+		FC7F3FE76CD13FC09337166D /* PersistenceServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5CB40338DC000E7DCBCFDC /* PersistenceServiceProtocol.swift */; };
 		FDC0AEBDBB74E5C386FE1961 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57E3731C82F379B15733EABB /* Foundation.framework */; };
 /* End PBXBuildFile section */
 
@@ -149,132 +140,123 @@
 
 /* Begin PBXFileReference section */
 		0A9438C9A4600487C16C34FD /* CoverageAnalyzer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CoverageAnalyzer.swift; sourceTree = "<group>"; };
-		188A8672FAF9BFA0B04150D5 /* UnifiedScanningView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UnifiedScanningView.swift; path = LidarAPP/Presentation/Scanning/Views/UnifiedScanningView.swift; sourceTree = SOURCE_ROOT; };
+		0CBE7198EC4F9A40EA0AA984 /* VisualDebugProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VisualDebugProtocol.swift; sourceTree = "<group>"; };
+		11DCA8AE01124B6684B16640 /* LiDARScanningModeAdapter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LiDARScanningModeAdapter.swift; sourceTree = "<group>"; };
+		12E6D692F71516430517EDCD /* ServiceContainer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
 		1B886EFB6191A472E159B175 /* NavigationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NavigationTests.swift; sourceTree = "<group>"; };
+		1B9F4966BE26689B007DB1F1 /* ExportService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
+		1DE33DDC47DE0A4C96B5F481 /* PermissionRequestView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PermissionRequestView.swift; sourceTree = "<group>"; };
+		1F2D4B5B4DA7C7910DC4C1F2 /* InteractiveMeasurementView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InteractiveMeasurementView.swift; sourceTree = "<group>"; };
+		20D475D6708BF503F068A716 /* ScanModeCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanModeCard.swift; sourceTree = "<group>"; };
+		236F91143DF43ACE1D6B966D /* AccessibilityModifiers.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccessibilityModifiers.swift; sourceTree = "<group>"; };
+		278612A847C59643DD9C04E0 /* MeasurementViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MeasurementViewModel.swift; sourceTree = "<group>"; };
+		27A987CB53348C42D243E987 /* CameraService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
+		2B41E1C00DBEDA8140F5A750 /* ModelDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ModelDetailView.swift; sourceTree = "<group>"; };
+		2BBB959595DE11ED6A4FC12F /* ScanSyncManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanSyncManager.swift; sourceTree = "<group>"; };
+		330B533E4623A7B6524FCD1C /* VisualDebugCoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VisualDebugCoordinator.swift; sourceTree = "<group>"; };
 		353B785CE088ADDD39669976 /* DebugLogOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugLogOverlay.swift; sourceTree = "<group>"; };
-		356400F61049A9A22F3E0416 /* ProfileTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileTabView.swift; sourceTree = "<group>"; };
 		35E42A26EF170899EF768373 /* RawDataPackager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RawDataPackager.swift; sourceTree = "<group>"; };
-		36E859B348C609F3A03D3B01 /* GaussianSplatRenderer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GaussianSplatRenderer.swift; sourceTree = "<group>"; };
-		387E5FEFE3613AC0C45DE390 /* ModelDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDetailView.swift; sourceTree = "<group>"; };
-		3965372E23C57EE85D5733B7 /* ObjectCaptureService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ObjectCaptureService.swift; sourceTree = "<group>"; };
-		3E5C5D0BF7ABD0F7E8005A95 /* ObjectCaptureScanningView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ObjectCaptureScanningView.swift; sourceTree = "<group>"; };
-		3E9B0630A0C52DD87368DD0F /* IntegrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = IntegrationTests.swift; sourceTree = "<group>"; };
-		42C7357A5D80721A576745AA /* SettingsPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsPage.swift; sourceTree = "<group>"; };
+		36CDF08164AEC298ADBB8B15 /* MeasurementServiceProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MeasurementServiceProtocol.swift; sourceTree = "<group>"; };
+		383CEA7A92C138A5FA3F4ABE /* DebugWebSocketService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugWebSocketService.swift; sourceTree = "<group>"; };
+		395C1E3D605744E92CB034F6 /* DepthFusionProcessor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DepthFusionProcessor.swift; sourceTree = "<group>"; };
+		3FFD11CAF5C0DE6C0FB8DC64 /* ScanningModeProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanningModeProtocol.swift; sourceTree = "<group>"; };
+		4223023A20C60FB3B1DA9695 /* UIStateSnapshotCapture.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UIStateSnapshotCapture.swift; sourceTree = "<group>"; };
+		428766DAEB2453FE1D8196A8 /* DebugSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugSettingsView.swift; sourceTree = "<group>"; };
 		4402926C5DDABEEAE1DE4C91 /* BaseUITestCase.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BaseUITestCase.swift; sourceTree = "<group>"; };
 		44A6A999909C200D2ED84C59 /* AppLaunchTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppLaunchTests.swift; sourceTree = "<group>"; };
+		44F0CB396623EF06176AA272 /* OnDeviceProcessor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnDeviceProcessor.swift; sourceTree = "<group>"; };
 		45D236188D400CF633D9B35E /* ScanModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanModel.swift; sourceTree = "<group>"; };
+		4B4A8ECACB26FD9F19D35D2D /* SnapshotStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnapshotStore.swift; sourceTree = "<group>"; };
+		4C174D393C0C65CC13A5CF3B /* MeasurementService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MeasurementService.swift; sourceTree = "<group>"; };
 		50A1CD1D59F280F2C16F4521 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
-		5181F662ADAC295AB0131496 /* AuthPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthPage.swift; sourceTree = "<group>"; };
+		50B47ECDF8757BF403B36726 /* ServerSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ServerSettingsView.swift; sourceTree = "<group>"; };
+		52AB76CE359919243F89B675 /* ScanError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanError.swift; sourceTree = "<group>"; };
+		52E2FE0B5270CAE23598A126 /* AreaCalculator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AreaCalculator.swift; sourceTree = "<group>"; };
 		55A893DD7CBD3791E1FF8EAB /* DepthFrame.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DepthFrame.swift; sourceTree = "<group>"; };
 		57E3731C82F379B15733EABB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		57F227BE27D93BCB9B6B5498 /* ProfileTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileTests.swift; sourceTree = "<group>"; };
+		5B5CB40338DC000E7DCBCFDC /* PersistenceServiceProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PersistenceServiceProtocol.swift; sourceTree = "<group>"; };
 		5CF3B6FF5BA087904D386415 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		5F49A0C864D5DABD1E4AFFBF /* ObjectCaptureScanningModeAdapter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ObjectCaptureScanningModeAdapter.swift; path = LidarAPP/Presentation/ObjectCapture/ViewModels/ObjectCaptureScanningModeAdapter.swift; sourceTree = SOURCE_ROOT; };
+		5F13732ED9A3B925FCA80598 /* SettingsViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		625C23218A96C939F4DB5E93 /* RequestInterceptor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RequestInterceptor.swift; sourceTree = "<group>"; };
 		647DAA8ECD4E1E615F933F59 /* DepthAnythingV2SmallF16.mlpackage */ = {isa = PBXFileReference; includeInIndex = 1; path = DepthAnythingV2SmallF16.mlpackage; sourceTree = "<group>"; };
+		66373804C49FEB2163FDF563 /* AuthService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		68993DA67717B81BBF198F5A /* EdgeMLError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EdgeMLError.swift; sourceTree = "<group>"; };
 		6D760D1732444BB1DA9D90FC /* CaptureButton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CaptureButton.swift; path = Shared/CaptureButton.swift; sourceTree = "<group>"; };
 		71C9682E3D418CF4F375BDC3 /* CoverageOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CoverageOverlay.swift; sourceTree = "<group>"; };
-		79511D5C4D7B8275CEB3507C /* ScanSessionTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanSessionTests.swift; sourceTree = "<group>"; };
-		79C8B652158C0888D031D72C /* StatusIndicator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StatusIndicator.swift; path = Shared/StatusIndicator.swift; sourceTree = "<group>"; };
-		7A43125C7DAC12013487F1DA /* GalleryPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GalleryPage.swift; sourceTree = "<group>"; };
-		7EA8FD791196A3DA250C6F31 /* PointCloudTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PointCloudTests.swift; sourceTree = "<group>"; };
-		804843AB44AF939F6810D2BE /* RoomPlanScanningModeAdapter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RoomPlanScanningModeAdapter.swift; path = LidarAPP/Presentation/RoomPlan/ViewModels/RoomPlanScanningModeAdapter.swift; sourceTree = SOURCE_ROOT; };
-		8138F127211E7BA9FBABC330 /* UserStatusBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserStatusBanner.swift; sourceTree = "<group>"; };
-		8A91D9ACF2857EAC33EDF1A7 /* ScanSessionPersistence.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanSessionPersistence.swift; sourceTree = "<group>"; };
-		8BF18CFDD099FF2A7166EC03 /* ExportPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExportPage.swift; sourceTree = "<group>"; };
+		7D8F38075F5D3D2001D9A335 /* DebugGestureHandler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugGestureHandler.swift; sourceTree = "<group>"; };
+		84539F8F36353EBC14AB6CF9 /* SettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		8C3F6114B89C14E93C1B0F18 /* RoomPlanScanningModeAdapter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RoomPlanScanningModeAdapter.swift; sourceTree = "<group>"; };
 		8CA1C3EF8D76618E8DC8B828 /* DepthAnythingV2SmallF16.mlpackage */ = {isa = PBXFileReference; includeInIndex = 1; name = DepthAnythingV2SmallF16.mlpackage; path = LidarAPP/ML/DepthAnythingV2SmallF16.mlpackage; sourceTree = "<group>"; };
 		8D9C447B7A15F2D2DFE59403 /* SharedTopBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SharedTopBar.swift; path = Shared/SharedTopBar.swift; sourceTree = "<group>"; };
 		8DB047F504FF925813E10C28 /* ScanMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanMode.swift; sourceTree = "<group>"; };
-		96C7293324F3BB8EF5E87614 /* LiDARScanningModeAdapter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiDARScanningModeAdapter.swift; path = LidarAPP/Presentation/Scanning/ViewModels/LiDARScanningModeAdapter.swift; sourceTree = SOURCE_ROOT; };
+		8EFA028D734DAA20FBADF419 /* ExportServiceProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExportServiceProtocol.swift; sourceTree = "<group>"; };
+		929BE9091957869FEE9BCA6C /* DepthAnythingModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DepthAnythingModel.swift; sourceTree = "<group>"; };
 		97493818B8C84ADD37F4CED8 /* GalleryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GalleryTests.swift; sourceTree = "<group>"; };
 		97A4AD88E4E1438B95DC5AF1 /* LidarAPPTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LidarAPPTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		97AF0F67178FF40C299E24AB /* GalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryView.swift; sourceTree = "<group>"; };
-		9831BE6340751B5DF19EFAB5 /* ProfilePage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfilePage.swift; sourceTree = "<group>"; };
-		9BDFBB830E7A14BA4215BEA5 /* MeshDataTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MeshDataTests.swift; sourceTree = "<group>"; };
+		97A63782EE7A004E72816C8C /* PreviewViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PreviewViewModel.swift; sourceTree = "<group>"; };
+		998EDCD0D857D1437270B4A1 /* MeshCorrectionModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MeshCorrectionModel.swift; sourceTree = "<group>"; };
+		A0894D590798AEA509795593 /* NetworkError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkError.swift; sourceTree = "<group>"; };
 		A20000001111111100000001 /* LidarAPPApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LidarAPPApp.swift; sourceTree = "<group>"; };
 		A20000001111111100000002 /* simd+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "simd+Extensions.swift"; sourceTree = "<group>"; };
 		A20000001111111100000003 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
-		A20000001111111100000004 /* DeviceCapabilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceCapabilities.swift; sourceTree = "<group>"; };
 		A20000001111111100000005 /* MeshData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshData.swift; sourceTree = "<group>"; };
 		A20000001111111100000006 /* PointCloud.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointCloud.swift; sourceTree = "<group>"; };
 		A20000001111111100000007 /* ScanSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanSession.swift; sourceTree = "<group>"; };
 		A20000001111111100000008 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
-		A20000001111111100000009 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
-		A20000001111111100000010 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
-		A20000001111111100000011 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
-		A20000001111111100000012 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
-		A20000001111111100000013 /* PreviewViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewViewModel.swift; sourceTree = "<group>"; };
-		A20000001111111100000014 /* ModelPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelPreviewView.swift; sourceTree = "<group>"; };
 		A20000001111111100000015 /* ScanningViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanningViewModel.swift; sourceTree = "<group>"; };
 		A20000001111111100000016 /* ScanningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanningView.swift; sourceTree = "<group>"; };
-		A20000001111111100000017 /* ARSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARSessionManager.swift; sourceTree = "<group>"; };
 		A20000001111111100000018 /* DepthMapProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepthMapProcessor.swift; sourceTree = "<group>"; };
 		A20000001111111100000019 /* MeshAnchorProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshAnchorProcessor.swift; sourceTree = "<group>"; };
 		A20000001111111100000020 /* PointCloudExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointCloudExtractor.swift; sourceTree = "<group>"; };
-		A20000001111111100000021 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
-		A20000001111111100000022 /* CameraFrameCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraFrameCapture.swift; sourceTree = "<group>"; };
 		A20000001111111100000023 /* FrameSynchronizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameSynchronizer.swift; sourceTree = "<group>"; };
-		A20000001111111100000024 /* MeshCorrectionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshCorrectionModel.swift; sourceTree = "<group>"; };
-		A20000001111111100000025 /* OnDeviceProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceProcessor.swift; sourceTree = "<group>"; };
-		A20000001111111100000026 /* AreaCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaCalculator.swift; sourceTree = "<group>"; };
-		A20000001111111100000027 /* DistanceCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DistanceCalculator.swift; sourceTree = "<group>"; };
-		A20000001111111100000028 /* MeasurementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeasurementService.swift; sourceTree = "<group>"; };
-		A20000001111111100000029 /* VolumeCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeCalculator.swift; sourceTree = "<group>"; };
-		A20000001111111100000030 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
-		A20000001111111100000031 /* ChunkedUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChunkedUploader.swift; sourceTree = "<group>"; };
-		A20000001111111100000032 /* WebSocketService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketService.swift; sourceTree = "<group>"; };
-		A20000001111111100000033 /* CameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
-		A20000001111111100000034 /* LiveMeshRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveMeshRenderer.swift; sourceTree = "<group>"; };
-		A20000001111111100000035 /* PointCloudRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointCloudRenderer.swift; sourceTree = "<group>"; };
-		A20000001111111100000036 /* DepthAnythingModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepthAnythingModel.swift; sourceTree = "<group>"; };
-		A20000001111111100000037 /* DepthFusionProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepthFusionProcessor.swift; sourceTree = "<group>"; };
-		A20000001111111100000038 /* HighResPointCloudExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HighResPointCloudExtractor.swift; sourceTree = "<group>"; };
-		A20000001111111100000039 /* ScanProcessingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanProcessingService.swift; sourceTree = "<group>"; };
-		A20000001111111100000040 /* ProcessingProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingProgressView.swift; sourceTree = "<group>"; };
-		A20000001111111100000041 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		A20000001111111100000042 /* MockDataProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDataProvider.swift; sourceTree = "<group>"; };
-		A20000001111111100000043 /* MockARSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockARSessionManager.swift; sourceTree = "<group>"; };
-		A20000001111111100000044 /* MockDataPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDataPreviewView.swift; sourceTree = "<group>"; };
-		A20000001111111100000045 /* RoomPlanScanningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanScanningView.swift; sourceTree = "<group>"; };
-		A20000001111111100000046 /* RoomPlanService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPlanService.swift; sourceTree = "<group>"; };
-		A20000001111111100000047 /* TextureMappingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextureMappingService.swift; sourceTree = "<group>"; };
-		A20000001111111100000048 /* EdgeMLGeometryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeMLGeometryService.swift; sourceTree = "<group>"; };
-		A20000001111111100000049 /* AIGeometryGenerationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIGeometryGenerationService.swift; sourceTree = "<group>"; };
-		A20000001111111100000050 /* Enhanced3DViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Enhanced3DViewer.swift; sourceTree = "<group>"; };
-		A20000001111111100000051 /* InteractiveMeasurementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractiveMeasurementView.swift; sourceTree = "<group>"; };
-		A20000001111111100000052 /* ExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportView.swift; sourceTree = "<group>"; };
 		A20000001111111100000100 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A20000001111111100000101 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000001111111100000102 /* LidarAPP.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LidarAPP.entitlements; sourceTree = "<group>"; };
+		A212270515286042571D91B8 /* NetworkService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		A30000001111111100000001 /* LidarAPP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LidarAPP.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A4E5A1226378EA75F496E873 /* ScanStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanStore.swift; sourceTree = "<group>"; };
+		A5CAD9B75291EB21FC6E3602 /* OnboardingViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingViewModel.swift; sourceTree = "<group>"; };
+		A78D16FB47B86C9A597AA7F6 /* GalleryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GalleryView.swift; sourceTree = "<group>"; };
 		A93A891D1CF09FA95E32FE85 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
-		A93A891D1CF09FA95E32FE86 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
-		AA9BA78F0A3140D83D1B7E82 /* ScanningModeProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ScanningModeProtocol.swift; path = LidarAPP/Presentation/Scanning/Protocols/ScanningModeProtocol.swift; sourceTree = SOURCE_ROOT; };
+		A9992FE55254343CC80A8B0D /* EmptyStateView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
+		ADA26041F6C8B6AB7FB2AA00 /* AuthError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthError.swift; sourceTree = "<group>"; };
+		ADFAF80B4C76A99F59F3CE6D /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		B14D5C8A30BBD59DA9A7AD77 /* CrashReporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
 		B24805449D3FA8F7B9D4F9CC /* DebugStreamService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugStreamService.swift; sourceTree = "<group>"; };
-		B2B9AC0BFEA34EDA816B1035 /* GalleryExportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryExportSheet.swift; sourceTree = "<group>"; };
+		B43E0B2CB6E49933880D39CF /* CameraServiceProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CameraServiceProtocol.swift; sourceTree = "<group>"; };
+		B63B4B4DC4421916F1C177C2 /* ARSessionServiceProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ARSessionServiceProtocol.swift; sourceTree = "<group>"; };
 		B8DAC3AADB1078418CB736B5 /* StatisticsGrid.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StatisticsGrid.swift; path = Shared/StatisticsGrid.swift; sourceTree = "<group>"; };
-		BB169D1647AEF764664F4447 /* ARPlacementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARPlacementView.swift; sourceTree = "<group>"; };
 		BCCAF89F401F786B7584C0FE /* SharedControlBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SharedControlBar.swift; path = Shared/SharedControlBar.swift; sourceTree = "<group>"; };
 		BF9D39261EBA42E3BE2F49B8 /* SettingsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsTests.swift; sourceTree = "<group>"; };
+		C540C85E1717DAE7E22C98E2 /* ExportError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExportError.swift; sourceTree = "<group>"; };
 		C5B43B36D118D1B1B6F2EED1 /* XCTestExtensions.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = XCTestExtensions.swift; sourceTree = "<group>"; };
-		C98D7368F61A5242D86C2F16 /* ScanModeSelectorPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanModeSelectorPage.swift; sourceTree = "<group>"; };
+		C62FCF964FB8536BE541EA55 /* HapticManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		C8F939E3333A4367E0C0EF80 /* ObjectCaptureScanningModeAdapter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ObjectCaptureScanningModeAdapter.swift; sourceTree = "<group>"; };
+		C9CF49F9B3EAFFC9136DDB80 /* ModelPreviewView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ModelPreviewView.swift; sourceTree = "<group>"; };
 		CE6FFFB2166A5C6464A61A13 /* RawDataUploader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RawDataUploader.swift; sourceTree = "<group>"; };
+		D0E3D2B68031357B784AEB5B /* UIStateSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UIStateSnapshot.swift; sourceTree = "<group>"; };
 		D7C0238448AA71A3374ADCAF /* LidarAPPUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LidarAPPUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		D7CB8CB691753BDEB2B16B41 /* GuidanceIndicator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GuidanceIndicator.swift; sourceTree = "<group>"; };
 		D8409994984C6D6FDE0B9A28 /* PerformanceMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PerformanceMonitor.swift; sourceTree = "<group>"; };
-		DD44B741DA11675287E212D2 /* MockDataProviderTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MockDataProviderTests.swift; sourceTree = "<group>"; };
-		DEF36101BBCC5F34A0371A37 /* BasePage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BasePage.swift; sourceTree = "<group>"; };
-		E1C0A3FD405968C0772979FA /* TabBarPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TabBarPage.swift; sourceTree = "<group>"; };
+		D9A12F4AF8644B6632022040 /* AboutView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		DB4B7F4C978C071338138D36 /* SyncQueue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SyncQueue.swift; sourceTree = "<group>"; };
+		DC95F2B0500115BE69DC330F /* CloudProcessingService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CloudProcessingService.swift; sourceTree = "<group>"; };
+		DE227E9C19C3D1CFB36E7B9F /* VolumeCalculator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VolumeCalculator.swift; sourceTree = "<group>"; };
+		E2557ECF5268B7F6C2F51110 /* ScanningModeFactory.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanningModeFactory.swift; sourceTree = "<group>"; };
 		E2AC5B34455CB0E35428D5E5 /* DebugLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugLogger.swift; sourceTree = "<group>"; };
-		E4FCE63E1F6531AF3C1F4BE5 /* ResumeSessionSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ResumeSessionSheet.swift; sourceTree = "<group>"; };
 		E5C982388D3288F6054BDFA3 /* DebugSettings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugSettings.swift; sourceTree = "<group>"; };
-		EE2A27D5662105D98F771D38 /* ChunkManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChunkManager.swift; sourceTree = "<group>"; };
+		E78277D371234B69F35F59B9 /* GalleryViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GalleryViewModel.swift; sourceTree = "<group>"; };
+		E896D05A2ABC50F7DEBB3D1B /* MeshStreamService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MeshStreamService.swift; sourceTree = "<group>"; };
+		EB55FBA058E172C161E40944 /* NetworkServiceProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkServiceProtocol.swift; sourceTree = "<group>"; };
+		ED1E3FAD9850985C28466F9E /* PersistenceService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PersistenceService.swift; sourceTree = "<group>"; };
+		EE94EDF68411F7331EA44336 /* ARSessionService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ARSessionService.swift; sourceTree = "<group>"; };
 		F24670C7F3FDCED240539406 /* ScanningModeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanningModeTests.swift; sourceTree = "<group>"; };
+		F28C85177D8BB9F57BDAD52A /* DistanceCalculator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DistanceCalculator.swift; sourceTree = "<group>"; };
+		F293192741CC9CE4BDB64E51 /* LoadingStateView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LoadingStateView.swift; sourceTree = "<group>"; };
 		F441C2EEC6B2CA29A9BFD96C /* AppDiagnostics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDiagnostics.swift; sourceTree = "<group>"; };
+		F82F516CE2E40A52185393F9 /* WebSocketService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WebSocketService.swift; sourceTree = "<group>"; };
 		F842AC4344B2178CBD8E70EB /* AuthenticationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthenticationTests.swift; sourceTree = "<group>"; };
-		FC09D7E917BDAA3550CDF2B0 /* ScanningPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanningPage.swift; sourceTree = "<group>"; };
-		FD3669DEE545DD1D8815D3F9 /* ModelDetailPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ModelDetailPage.swift; sourceTree = "<group>"; };
+		FBE3D093F40E6D3701EB3A15 /* ErrorStateView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ErrorStateView.swift; sourceTree = "<group>"; };
+		FFC550533B88D2FAF4993DFD /* ConnectionStatusBadge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConnectionStatusBadge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -304,15 +286,47 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1299C3776E19530A5DE7CED0 /* Persistence */ = {
+		04AA3F8140D3271C42AE2DF8 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
-				EE2A27D5662105D98F771D38 /* ChunkManager.swift */,
-				8A91D9ACF2857EAC33EDF1A7 /* ScanSessionPersistence.swift */,
-				A4E5A1226378EA75F496E873 /* ScanStore.swift */,
+				BF2DD23258DAF7E01C0D4E64 /* ViewModels */,
+				F1DC018961FA61FC9F28D748 /* Views */,
 			);
-			name = Persistence;
-			path = Persistence;
+			name = Settings;
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		04DB1D9A2D5F2AF81F8D8120 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				278612A847C59643DD9C04E0 /* MeasurementViewModel.swift */,
+			);
+			name = ViewModels;
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		0FFD69D69CE14911CEEC6A5B /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				66373804C49FEB2163FDF563 /* AuthService.swift */,
+			);
+			name = Auth;
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		141DCEF9EBA3E2B1488C95A0 /* VisualDebug */ = {
+			isa = PBXGroup;
+			children = (
+				A705BCF36F8495BF692E3BC2 /* Activation */,
+				83D863DB34272E4705DF58FC /* Capture */,
+				6A4A71257F5A6361A1DC9869 /* Models */,
+				315ADBD39F72D99BE2549E44 /* Protocols */,
+				5C5A184A03F9772B5AD7DE42 /* Storage */,
+				AD6F8D787E946B17049FB7A4 /* Transport */,
+				330B533E4623A7B6524FCD1C /* VisualDebugCoordinator.swift */,
+			);
+			name = VisualDebug;
+			path = VisualDebug;
 			sourceTree = "<group>";
 		};
 		18560C765ADECF3FF5671819 /* TestCases */ = {
@@ -329,12 +343,26 @@
 			path = TestCases;
 			sourceTree = "<group>";
 		};
-		1F1618FAF0D0A9A114B380F1 /* Protocols */ = {
+		1E7A20EEBB83A7131468803C /* EdgeML */ = {
 			isa = PBXGroup;
 			children = (
-				AA9BA78F0A3140D83D1B7E82 /* ScanningModeProtocol.swift */,
+				929BE9091957869FEE9BCA6C /* DepthAnythingModel.swift */,
+				395C1E3D605744E92CB034F6 /* DepthFusionProcessor.swift */,
+				998EDCD0D857D1437270B4A1 /* MeshCorrectionModel.swift */,
+				44F0CB396623EF06176AA272 /* OnDeviceProcessor.swift */,
 			);
-			name = Protocols;
+			name = EdgeML;
+			path = EdgeML;
+			sourceTree = "<group>";
+		};
+		2029B64E4B9DCDC480477D62 /* Measurement */ = {
+			isa = PBXGroup;
+			children = (
+				04DB1D9A2D5F2AF81F8D8120 /* ViewModels */,
+				6592151FFEB48B4BDBF4829F /* Views */,
+			);
+			name = Measurement;
+			path = Measurement;
 			sourceTree = "<group>";
 		};
 		28552DFCE8B70AFF66CAD836 /* Frameworks */ = {
@@ -343,6 +371,18 @@
 				9CA4B03CB30C63779D27ED4F /* iOS */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		29A35956CF399A1DF9015C09 /* Measurement */ = {
+			isa = PBXGroup;
+			children = (
+				52E2FE0B5270CAE23598A126 /* AreaCalculator.swift */,
+				F28C85177D8BB9F57BDAD52A /* DistanceCalculator.swift */,
+				4C174D393C0C65CC13A5CF3B /* MeasurementService.swift */,
+				DE227E9C19C3D1CFB36E7B9F /* VolumeCalculator.swift */,
+			);
+			name = Measurement;
+			path = Measurement;
 			sourceTree = "<group>";
 		};
 		2E3773F514F1937E17792BC6 /* Debug */ = {
@@ -355,34 +395,28 @@
 				E2AC5B34455CB0E35428D5E5 /* DebugLogger.swift */,
 				D8409994984C6D6FDE0B9A28 /* PerformanceMonitor.swift */,
 				B24805449D3FA8F7B9D4F9CC /* DebugStreamService.swift */,
+				E896D05A2ABC50F7DEBB3D1B /* MeshStreamService.swift */,
 			);
 			name = Debug;
 			path = Debug;
 			sourceTree = "<group>";
 		};
-		402F434F871CA49B11721417 /* ObjectCapture */ = {
+		315ADBD39F72D99BE2549E44 /* Protocols */ = {
 			isa = PBXGroup;
 			children = (
-				3965372E23C57EE85D5733B7 /* ObjectCaptureService.swift */,
+				0CBE7198EC4F9A40EA0AA984 /* VisualDebugProtocol.swift */,
 			);
-			name = ObjectCapture;
-			path = ObjectCapture;
+			name = Protocols;
+			path = Protocols;
 			sourceTree = "<group>";
 		};
-		4BB0D4C066BD84EA101A205C /* Profile */ = {
+		4C8FF50BE01663751495FE5B /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				356400F61049A9A22F3E0416 /* ProfileTabView.swift */,
+				C9CF49F9B3EAFFC9136DDB80 /* ModelPreviewView.swift */,
 			);
-			path = Profile;
-			sourceTree = "<group>";
-		};
-		4E972A52798369A01AAE8DF1 /* ViewModels */ = {
-			isa = PBXGroup;
-			children = (
-				804843AB44AF939F6810D2BE /* RoomPlanScanningModeAdapter.swift */,
-			);
-			name = ViewModels;
+			name = Views;
+			path = Views;
 			sourceTree = "<group>";
 		};
 		50A217BCC85CD13F05C9CD98 /* Navigation */ = {
@@ -393,21 +427,79 @@
 			path = Navigation;
 			sourceTree = "<group>";
 		};
-		5D2A43CE1180A0C42E8E398F /* Pages */ = {
+		59767794916F56FC72AB3D10 /* Scanning */ = {
 			isa = PBXGroup;
 			children = (
-				DEF36101BBCC5F34A0371A37 /* BasePage.swift */,
-				E1C0A3FD405968C0772979FA /* TabBarPage.swift */,
-				7A43125C7DAC12013487F1DA /* GalleryPage.swift */,
-				9831BE6340751B5DF19EFAB5 /* ProfilePage.swift */,
-				C98D7368F61A5242D86C2F16 /* ScanModeSelectorPage.swift */,
-				FC09D7E917BDAA3550CDF2B0 /* ScanningPage.swift */,
-				FD3669DEE545DD1D8815D3F9 /* ModelDetailPage.swift */,
-				42C7357A5D80721A576745AA /* SettingsPage.swift */,
-				5181F662ADAC295AB0131496 /* AuthPage.swift */,
-				8BF18CFDD099FF2A7166EC03 /* ExportPage.swift */,
+				11DCA8AE01124B6684B16640 /* LiDARScanningModeAdapter.swift */,
+				8C3F6114B89C14E93C1B0F18 /* RoomPlanScanningModeAdapter.swift */,
+				C8F939E3333A4367E0C0EF80 /* ObjectCaptureScanningModeAdapter.swift */,
+				E2557ECF5268B7F6C2F51110 /* ScanningModeFactory.swift */,
 			);
-			path = Pages;
+			name = Scanning;
+			path = Scanning;
+			sourceTree = "<group>";
+		};
+		5C06CB6E8990F493290466AF /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A78D16FB47B86C9A597AA7F6 /* GalleryView.swift */,
+				2B41E1C00DBEDA8140F5A750 /* ModelDetailView.swift */,
+			);
+			name = Views;
+			path = Views;
+			sourceTree = "<group>";
+		};
+		5C5A184A03F9772B5AD7DE42 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				4B4A8ECACB26FD9F19D35D2D /* SnapshotStore.swift */,
+			);
+			name = Storage;
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		61B6678725B903DA34D6F0F4 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				F293192741CC9CE4BDB64E51 /* LoadingStateView.swift */,
+				FBE3D093F40E6D3701EB3A15 /* ErrorStateView.swift */,
+				A9992FE55254343CC80A8B0D /* EmptyStateView.swift */,
+				C62FCF964FB8536BE541EA55 /* HapticManager.swift */,
+				236F91143DF43ACE1D6B966D /* AccessibilityModifiers.swift */,
+				1DE33DDC47DE0A4C96B5F481 /* PermissionRequestView.swift */,
+				FFC550533B88D2FAF4993DFD /* ConnectionStatusBadge.swift */,
+				20D475D6708BF503F068A716 /* ScanModeCard.swift */,
+			);
+			name = Components;
+			path = Components;
+			sourceTree = "<group>";
+		};
+		6592151FFEB48B4BDBF4829F /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				1F2D4B5B4DA7C7910DC4C1F2 /* InteractiveMeasurementView.swift */,
+			);
+			name = Views;
+			path = Views;
+			sourceTree = "<group>";
+		};
+		6A4A71257F5A6361A1DC9869 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				D0E3D2B68031357B784AEB5B /* UIStateSnapshot.swift */,
+			);
+			name = Models;
+			path = Models;
+			sourceTree = "<group>";
+		};
+		78975B66D97CE1ABEE94084B /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				A2A93D3EC7AB6C14291683A7 /* ViewModels */,
+				DD8CB73CEF80BE23C6E881B2 /* Views */,
+			);
+			name = Onboarding;
+			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		78A51D74212EBF77E9384753 /* ML */ = {
@@ -417,6 +509,15 @@
 			);
 			name = ML;
 			path = ML;
+			sourceTree = "<group>";
+		};
+		79A60049F2F37C85762D4E4F /* Export */ = {
+			isa = PBXGroup;
+			children = (
+				1B9F4966BE26689B007DB1F1 /* ExportService.swift */,
+			);
+			name = Export;
+			path = Export;
 			sourceTree = "<group>";
 		};
 		7EF5E2C5AB0ECC4F1DA4A176 /* Utilities */ = {
@@ -433,7 +534,6 @@
 			isa = PBXGroup;
 			children = (
 				7EF5E2C5AB0ECC4F1DA4A176 /* Utilities */,
-				5D2A43CE1180A0C42E8E398F /* Pages */,
 				18560C765ADECF3FF5671819 /* TestCases */,
 				5CF3B6FF5BA087904D386415 /* Info.plist */,
 			);
@@ -441,35 +541,25 @@
 			path = LidarAPPUITests;
 			sourceTree = "<group>";
 		};
-		8F91C86436298B91654E0736 /* LidarAPPTests */ = {
+		83D863DB34272E4705DF58FC /* Capture */ = {
 			isa = PBXGroup;
 			children = (
-				3E9B0630A0C52DD87368DD0F /* IntegrationTests.swift */,
-				DD44B741DA11675287E212D2 /* MockDataProviderTests.swift */,
-				9BDFBB830E7A14BA4215BEA5 /* MeshDataTests.swift */,
-				79511D5C4D7B8275CEB3507C /* ScanSessionTests.swift */,
-				7EA8FD791196A3DA250C6F31 /* PointCloudTests.swift */,
+				4223023A20C60FB3B1DA9695 /* UIStateSnapshotCapture.swift */,
 			);
-			name = LidarAPPTests;
-			path = LidarAPPTests;
+			name = Capture;
+			path = Capture;
 			sourceTree = "<group>";
 		};
-		9A4995379AD1CAA5EB250D03 /* Components */ = {
+		88FF6328672B101E42A5A20D /* Network */ = {
 			isa = PBXGroup;
 			children = (
-				8138F127211E7BA9FBABC330 /* UserStatusBanner.swift */,
+				625C23218A96C939F4DB5E93 /* RequestInterceptor.swift */,
+				A212270515286042571D91B8 /* NetworkService.swift */,
+				F82F516CE2E40A52185393F9 /* WebSocketService.swift */,
+				DC95F2B0500115BE69DC330F /* CloudProcessingService.swift */,
 			);
-			path = Components;
-			sourceTree = "<group>";
-		};
-		9A8B409BFC0E87483512751A /* ObjectCapture */ = {
-			isa = PBXGroup;
-			children = (
-				3E5C5D0BF7ABD0F7E8005A95 /* ObjectCaptureScanningView.swift */,
-				B68836A20C97AAC5D78E6E9B /* ViewModels */,
-			);
-			name = ObjectCapture;
-			path = ObjectCapture;
+			name = Network;
+			path = Network;
 			sourceTree = "<group>";
 		};
 		9CA4B03CB30C63779D27ED4F /* iOS */ = {
@@ -480,13 +570,21 @@
 			name = iOS;
 			sourceTree = "<group>";
 		};
+		A2A93D3EC7AB6C14291683A7 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A5CAD9B75291EB21FC6E3602 /* OnboardingViewModel.swift */,
+			);
+			name = ViewModels;
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
 		A50000001111111100000001 = {
 			isa = PBXGroup;
 			children = (
 				A50000001111111100000002 /* LidarAPP */,
 				A50000001111111100000099 /* Products */,
 				28552DFCE8B70AFF66CAD836 /* Frameworks */,
-				8F91C86436298B91654E0736 /* LidarAPPTests */,
 				7F45C4E2229827BBA1C54FB0 /* LidarAPPUITests */,
 			);
 			sourceTree = "<group>";
@@ -517,9 +615,10 @@
 			isa = PBXGroup;
 			children = (
 				A50000001111111100000010 /* Extensions */,
-				A50000001111111100000034 /* Mock */,
 				A50000001111111100000011 /* Security */,
-				A50000001111111100000012 /* Utilities */,
+				B5539D761EAC7202617BA797 /* DI */,
+				D6DCE6E87922EA0C04B00B89 /* Errors */,
+				FEBC26B403857960E51C3043 /* Protocols */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -535,19 +634,14 @@
 		A50000001111111100000006 /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
-				A50000001111111100000014 /* Auth */,
-				A50000001111111100000015 /* Export */,
-				A50000001111111100000035 /* Measurement */,
-				A50000001111111100000016 /* Preview */,
-				A50000001111111100000032 /* Processing */,
-				A50000001111111100000036 /* RoomPlan */,
 				A50000001111111100000017 /* Scanning */,
-				A50000001111111100000033 /* Settings */,
-				9A8B409BFC0E87483512751A /* ObjectCapture */,
-				A7538A43E2CFC707D6910CE0 /* Gallery */,
 				50A217BCC85CD13F05C9CD98 /* Navigation */,
-				4BB0D4C066BD84EA101A205C /* Profile */,
-				9A4995379AD1CAA5EB250D03 /* Components */,
+				E2E38B8A9DAEC901DB1EC9C9 /* Preview */,
+				C92F0DA588DFD34AA2866CC3 /* Gallery */,
+				2029B64E4B9DCDC480477D62 /* Measurement */,
+				61B6678725B903DA34D6F0F4 /* Components */,
+				78975B66D97CE1ABEE94084B /* Onboarding */,
+				04AA3F8140D3271C42AE2DF8 /* Settings */,
 			);
 			path = Presentation;
 			sourceTree = "<group>";
@@ -555,20 +649,19 @@
 		A50000001111111100000007 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				A50000001111111100000037 /* AIGeometry */,
 				A50000001111111100000024 /* ARKit */,
-				A50000001111111100000025 /* Auth */,
 				A50000001111111100000026 /* Camera */,
-				A50000001111111100000027 /* EdgeML */,
-				A50000001111111100000028 /* Measurement */,
-				A50000001111111100000029 /* Network */,
-				A50000001111111100000031 /* Processing */,
-				A50000001111111100000030 /* Rendering */,
-				A50000001111111100000038 /* RoomPlan */,
-				1299C3776E19530A5DE7CED0 /* Persistence */,
-				402F434F871CA49B11721417 /* ObjectCapture */,
 				DC7CECFEAC9172562CDDA577 /* Diagnostics */,
 				2E3773F514F1937E17792BC6 /* Debug */,
+				141DCEF9EBA3E2B1488C95A0 /* VisualDebug */,
+				79A60049F2F37C85762D4E4F /* Export */,
+				DB823BD8E0D99AA1C86283DC /* Persistence */,
+				59767794916F56FC72AB3D10 /* Scanning */,
+				1E7A20EEBB83A7131468803C /* EdgeML */,
+				29A35956CF399A1DF9015C09 /* Measurement */,
+				88FF6328672B101E42A5A20D /* Network */,
+				0FFD69D69CE14911CEEC6A5B /* Auth */,
+				FDA14999D30CDA52F862E821 /* Sync */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -599,15 +692,6 @@
 			path = Security;
 			sourceTree = "<group>";
 		};
-		A50000001111111100000012 /* Utilities */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000004 /* DeviceCapabilities.swift */,
-				A93A891D1CF09FA95E32FE86 /* AccessibilityIdentifiers.swift */,
-			);
-			path = Utilities;
-			sourceTree = "<group>";
-		};
 		A50000001111111100000013 /* Entities */ = {
 			isa = PBXGroup;
 			children = (
@@ -621,82 +705,19 @@
 			path = Entities;
 			sourceTree = "<group>";
 		};
-		A50000001111111100000014 /* Auth */ = {
-			isa = PBXGroup;
-			children = (
-				A50000001111111100000018 /* ViewModels */,
-				A50000001111111100000019 /* Views */,
-			);
-			path = Auth;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000015 /* Export */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000012 /* ExportService.swift */,
-				A20000001111111100000052 /* ExportView.swift */,
-			);
-			path = Export;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000016 /* Preview */ = {
-			isa = PBXGroup;
-			children = (
-				A50000001111111100000020 /* ViewModels */,
-				A50000001111111100000021 /* Views */,
-			);
-			path = Preview;
-			sourceTree = "<group>";
-		};
 		A50000001111111100000017 /* Scanning */ = {
 			isa = PBXGroup;
 			children = (
 				A50000001111111100000022 /* ViewModels */,
 				A50000001111111100000023 /* Views */,
-				1F1618FAF0D0A9A114B380F1 /* Protocols */,
 			);
 			path = Scanning;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000018 /* ViewModels */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000009 /* AuthViewModel.swift */,
-			);
-			path = ViewModels;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000019 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000010 /* AuthView.swift */,
-				A20000001111111100000011 /* ProfileView.swift */,
-			);
-			path = Views;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000020 /* ViewModels */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000013 /* PreviewViewModel.swift */,
-			);
-			path = ViewModels;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000021 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000050 /* Enhanced3DViewer.swift */,
-				A20000001111111100000014 /* ModelPreviewView.swift */,
-			);
-			path = Views;
 			sourceTree = "<group>";
 		};
 		A50000001111111100000022 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
 				A20000001111111100000015 /* ScanningViewModel.swift */,
-				96C7293324F3BB8EF5E87614 /* LiDARScanningModeAdapter.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -706,11 +727,8 @@
 			children = (
 				A20000001111111100000016 /* ScanningView.swift */,
 				71C9682E3D418CF4F375BDC3 /* CoverageOverlay.swift */,
-				D7CB8CB691753BDEB2B16B41 /* GuidanceIndicator.swift */,
-				E4FCE63E1F6531AF3C1F4BE5 /* ResumeSessionSheet.swift */,
 				353B785CE088ADDD39669976 /* DebugLogOverlay.swift */,
 				A98A66E50CF09B204A8654DA /* Shared */,
-				188A8672FAF9BFA0B04150D5 /* UnifiedScanningView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -718,143 +736,22 @@
 		A50000001111111100000024 /* ARKit */ = {
 			isa = PBXGroup;
 			children = (
-				A20000001111111100000017 /* ARSessionManager.swift */,
 				A20000001111111100000018 /* DepthMapProcessor.swift */,
 				A20000001111111100000019 /* MeshAnchorProcessor.swift */,
 				A20000001111111100000020 /* PointCloudExtractor.swift */,
 				0A9438C9A4600487C16C34FD /* CoverageAnalyzer.swift */,
+				EE94EDF68411F7331EA44336 /* ARSessionService.swift */,
 			);
 			path = ARKit;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000025 /* Auth */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000021 /* AuthService.swift */,
-			);
-			path = Auth;
 			sourceTree = "<group>";
 		};
 		A50000001111111100000026 /* Camera */ = {
 			isa = PBXGroup;
 			children = (
-				A20000001111111100000022 /* CameraFrameCapture.swift */,
 				A20000001111111100000023 /* FrameSynchronizer.swift */,
+				27A987CB53348C42D243E987 /* CameraService.swift */,
 			);
 			path = Camera;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000027 /* EdgeML */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000036 /* DepthAnythingModel.swift */,
-				A20000001111111100000037 /* DepthFusionProcessor.swift */,
-				A20000001111111100000048 /* EdgeMLGeometryService.swift */,
-				A20000001111111100000038 /* HighResPointCloudExtractor.swift */,
-				A20000001111111100000024 /* MeshCorrectionModel.swift */,
-				A20000001111111100000025 /* OnDeviceProcessor.swift */,
-			);
-			path = EdgeML;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000028 /* Measurement */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000026 /* AreaCalculator.swift */,
-				A20000001111111100000027 /* DistanceCalculator.swift */,
-				A20000001111111100000028 /* MeasurementService.swift */,
-				A20000001111111100000029 /* VolumeCalculator.swift */,
-			);
-			path = Measurement;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000029 /* Network */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000030 /* APIClient.swift */,
-				A20000001111111100000031 /* ChunkedUploader.swift */,
-				A20000001111111100000032 /* WebSocketService.swift */,
-			);
-			path = Network;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000030 /* Rendering */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000033 /* CameraController.swift */,
-				A20000001111111100000034 /* LiveMeshRenderer.swift */,
-				A20000001111111100000035 /* PointCloudRenderer.swift */,
-				A20000001111111100000047 /* TextureMappingService.swift */,
-				36E859B348C609F3A03D3B01 /* GaussianSplatRenderer.swift */,
-			);
-			path = Rendering;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000031 /* Processing */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000039 /* ScanProcessingService.swift */,
-			);
-			path = Processing;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000032 /* Processing */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000040 /* ProcessingProgressView.swift */,
-			);
-			path = Processing;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000033 /* Settings */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000041 /* SettingsView.swift */,
-			);
-			path = Settings;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000034 /* Mock */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000042 /* MockDataProvider.swift */,
-				A20000001111111100000043 /* MockARSessionManager.swift */,
-				A20000001111111100000044 /* MockDataPreviewView.swift */,
-			);
-			path = Mock;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000035 /* Measurement */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000051 /* InteractiveMeasurementView.swift */,
-			);
-			path = Measurement;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000036 /* RoomPlan */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000045 /* RoomPlanScanningView.swift */,
-				4E972A52798369A01AAE8DF1 /* ViewModels */,
-			);
-			path = RoomPlan;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000037 /* AIGeometry */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000049 /* AIGeometryGenerationService.swift */,
-			);
-			path = AIGeometry;
-			sourceTree = "<group>";
-		};
-		A50000001111111100000038 /* RoomPlan */ = {
-			isa = PBXGroup;
-			children = (
-				A20000001111111100000046 /* RoomPlanService.swift */,
-			);
-			path = RoomPlan;
 			sourceTree = "<group>";
 		};
 		A50000001111111100000099 /* Products */ = {
@@ -867,15 +764,22 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A7538A43E2CFC707D6910CE0 /* Gallery */ = {
+		A655CE90BD8704FA471283F9 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				97AF0F67178FF40C299E24AB /* GalleryView.swift */,
-				387E5FEFE3613AC0C45DE390 /* ModelDetailView.swift */,
-				BB169D1647AEF764664F4447 /* ARPlacementView.swift */,
-				B2B9AC0BFEA34EDA816B1035 /* GalleryExportSheet.swift */,
+				E78277D371234B69F35F59B9 /* GalleryViewModel.swift */,
 			);
-			path = Gallery;
+			name = ViewModels;
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A705BCF36F8495BF692E3BC2 /* Activation */ = {
+			isa = PBXGroup;
+			children = (
+				7D8F38075F5D3D2001D9A335 /* DebugGestureHandler.swift */,
+			);
+			name = Activation;
+			path = Activation;
 			sourceTree = "<group>";
 		};
 		A98A66E50CF09B204A8654DA /* Shared */ = {
@@ -884,18 +788,68 @@
 				6D760D1732444BB1DA9D90FC /* CaptureButton.swift */,
 				8D9C447B7A15F2D2DFE59403 /* SharedTopBar.swift */,
 				B8DAC3AADB1078418CB736B5 /* StatisticsGrid.swift */,
-				79C8B652158C0888D031D72C /* StatusIndicator.swift */,
 				BCCAF89F401F786B7584C0FE /* SharedControlBar.swift */,
 			);
 			name = Shared;
 			sourceTree = "<group>";
 		};
-		B68836A20C97AAC5D78E6E9B /* ViewModels */ = {
+		AD6F8D787E946B17049FB7A4 /* Transport */ = {
 			isa = PBXGroup;
 			children = (
-				5F49A0C864D5DABD1E4AFFBF /* ObjectCaptureScanningModeAdapter.swift */,
+				383CEA7A92C138A5FA3F4ABE /* DebugWebSocketService.swift */,
+			);
+			name = Transport;
+			path = Transport;
+			sourceTree = "<group>";
+		};
+		B5539D761EAC7202617BA797 /* DI */ = {
+			isa = PBXGroup;
+			children = (
+				12E6D692F71516430517EDCD /* ServiceContainer.swift */,
+			);
+			name = DI;
+			path = DI;
+			sourceTree = "<group>";
+		};
+		BF2DD23258DAF7E01C0D4E64 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				5F13732ED9A3B925FCA80598 /* SettingsViewModel.swift */,
 			);
 			name = ViewModels;
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		C92F0DA588DFD34AA2866CC3 /* Gallery */ = {
+			isa = PBXGroup;
+			children = (
+				A655CE90BD8704FA471283F9 /* ViewModels */,
+				5C06CB6E8990F493290466AF /* Views */,
+			);
+			name = Gallery;
+			path = Gallery;
+			sourceTree = "<group>";
+		};
+		D6DCE6E87922EA0C04B00B89 /* Errors */ = {
+			isa = PBXGroup;
+			children = (
+				ADA26041F6C8B6AB7FB2AA00 /* AuthError.swift */,
+				C540C85E1717DAE7E22C98E2 /* ExportError.swift */,
+				A0894D590798AEA509795593 /* NetworkError.swift */,
+				52AB76CE359919243F89B675 /* ScanError.swift */,
+				68993DA67717B81BBF198F5A /* EdgeMLError.swift */,
+			);
+			name = Errors;
+			path = Errors;
+			sourceTree = "<group>";
+		};
+		DB823BD8E0D99AA1C86283DC /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				ED1E3FAD9850985C28466F9E /* PersistenceService.swift */,
+			);
+			name = Persistence;
+			path = Persistence;
 			sourceTree = "<group>";
 		};
 		DC7CECFEAC9172562CDDA577 /* Diagnostics */ = {
@@ -906,6 +860,71 @@
 			);
 			name = Diagnostics;
 			path = Diagnostics;
+			sourceTree = "<group>";
+		};
+		DD8CB73CEF80BE23C6E881B2 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				ADFAF80B4C76A99F59F3CE6D /* OnboardingView.swift */,
+			);
+			name = Views;
+			path = Views;
+			sourceTree = "<group>";
+		};
+		DEACBC0F8D0A00C739FE5A22 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				97A63782EE7A004E72816C8C /* PreviewViewModel.swift */,
+			);
+			name = ViewModels;
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		E2E38B8A9DAEC901DB1EC9C9 /* Preview */ = {
+			isa = PBXGroup;
+			children = (
+				DEACBC0F8D0A00C739FE5A22 /* ViewModels */,
+				4C8FF50BE01663751495FE5B /* Views */,
+			);
+			name = Preview;
+			path = Preview;
+			sourceTree = "<group>";
+		};
+		F1DC018961FA61FC9F28D748 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				84539F8F36353EBC14AB6CF9 /* SettingsView.swift */,
+				50B47ECDF8757BF403B36726 /* ServerSettingsView.swift */,
+				428766DAEB2453FE1D8196A8 /* DebugSettingsView.swift */,
+				D9A12F4AF8644B6632022040 /* AboutView.swift */,
+			);
+			name = Views;
+			path = Views;
+			sourceTree = "<group>";
+		};
+		FDA14999D30CDA52F862E821 /* Sync */ = {
+			isa = PBXGroup;
+			children = (
+				2BBB959595DE11ED6A4FC12F /* ScanSyncManager.swift */,
+				DB4B7F4C978C071338138D36 /* SyncQueue.swift */,
+			);
+			name = Sync;
+			path = Sync;
+			sourceTree = "<group>";
+		};
+		FEBC26B403857960E51C3043 /* Protocols */ = {
+			isa = PBXGroup;
+			children = (
+				B63B4B4DC4421916F1C177C2 /* ARSessionServiceProtocol.swift */,
+				B43E0B2CB6E49933880D39CF /* CameraServiceProtocol.swift */,
+				8EFA028D734DAA20FBADF419 /* ExportServiceProtocol.swift */,
+				36CDF08164AEC298ADBB8B15 /* MeasurementServiceProtocol.swift */,
+				EB55FBA058E172C161E40944 /* NetworkServiceProtocol.swift */,
+				5B5CB40338DC000E7DCBCFDC /* PersistenceServiceProtocol.swift */,
+				3FFD11CAF5C0DE6C0FB8DC64 /* ScanningModeProtocol.swift */,
+			);
+			name = Protocols;
+			path = Protocols;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1014,7 +1033,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000001111111100000100 /* Assets.xcassets in Resources */,
-				5678860F9472B66958E82F41 /* DepthAnythingV2SmallF16.mlpackage in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1039,11 +1057,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				903D6E29E630CDD3B08EAE01 /* IntegrationTests.swift in Sources */,
-				0255A922691FF9CDDE5629A7 /* MockDataProviderTests.swift in Sources */,
-				B3EDD54F79661BCB54AD0860 /* MeshDataTests.swift in Sources */,
-				753F21E57CA110881F6DFA28 /* ScanSessionTests.swift in Sources */,
-				532CB3AE3321643AB85B6309 /* PointCloudTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1054,16 +1067,6 @@
 				27297C90F317126B406D55B8 /* AccessibilityIdentifiers.swift in Sources */,
 				7F6C6EB3E181DCF7B45BE4DE /* XCTestExtensions.swift in Sources */,
 				D98FFFC40ED49BA558C1C624 /* BaseUITestCase.swift in Sources */,
-				85C6BCC13273C92F60439356 /* BasePage.swift in Sources */,
-				FB10F9E9D0137939E382A0F6 /* TabBarPage.swift in Sources */,
-				424589AF17D165A9A67F4291 /* GalleryPage.swift in Sources */,
-				F58CE8D69258C01FF23CA299 /* ProfilePage.swift in Sources */,
-				7423D469D8B8F131ECC22AF2 /* ScanModeSelectorPage.swift in Sources */,
-				30E271FAED29CAD435EDAC38 /* ScanningPage.swift in Sources */,
-				2186048F7D68EEF64451A0FE /* ModelDetailPage.swift in Sources */,
-				F0E7B4C71AA14E0B51FA3417 /* SettingsPage.swift in Sources */,
-				E49FA9F4981B81D394483752 /* AuthPage.swift in Sources */,
-				8662B9E5E8A88EC0316B2D65 /* ExportPage.swift in Sources */,
 				5A087FC8B3B964EB92749226 /* AppLaunchTests.swift in Sources */,
 				5A937BFD2661DBCA30BDABB8 /* NavigationTests.swift in Sources */,
 				D877FCDB312B5EA6D510BA9B /* GalleryTests.swift in Sources */,
@@ -1079,77 +1082,23 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000001111111100000001 /* LidarAPPApp.swift in Sources */,
-				27297C90F317126B406D55B9 /* AccessibilityIdentifiers.swift in Sources */,
-				B884665FA05B2EAB51C685E7 /* UserStatusBanner.swift in Sources */,
-				F345D18254C59CFAE56D80FB /* ProfileTabView.swift in Sources */,
-				630578A11AF6A41CEA5DADD8 /* GalleryExportSheet.swift in Sources */,
-				1D11B826539D174A2643A825 /* ARPlacementView.swift in Sources */,
-				F21E7CB961DD8CF7FE09983A /* ModelDetailView.swift in Sources */,
-				CCA1BBA6491507DBB185B625 /* GalleryView.swift in Sources */,
 				F0886099F3EA5703E53813DC /* MainTabView.swift in Sources */,
-				A7386D3DF68396063FE2E761 /* ScanStore.swift in Sources */,
 				4F09B302736B9DDBF667FAB5 /* ScanMode.swift in Sources */,
 				532F00628D76245E5862C4C9 /* ScanModel.swift in Sources */,
 				A10000001111111100000002 /* simd+Extensions.swift in Sources */,
 				A10000001111111100000003 /* KeychainService.swift in Sources */,
-				A10000001111111100000004 /* DeviceCapabilities.swift in Sources */,
 				A10000001111111100000005 /* MeshData.swift in Sources */,
 				A10000001111111100000006 /* PointCloud.swift in Sources */,
 				A10000001111111100000007 /* ScanSession.swift in Sources */,
 				A10000001111111100000008 /* User.swift in Sources */,
-				A10000001111111100000009 /* AuthViewModel.swift in Sources */,
-				A10000001111111100000010 /* AuthView.swift in Sources */,
-				A10000001111111100000011 /* ProfileView.swift in Sources */,
-				A10000001111111100000012 /* ExportService.swift in Sources */,
-				A10000001111111100000013 /* PreviewViewModel.swift in Sources */,
-				A10000001111111100000014 /* ModelPreviewView.swift in Sources */,
 				A10000001111111100000015 /* ScanningViewModel.swift in Sources */,
 				A10000001111111100000016 /* ScanningView.swift in Sources */,
-				A10000001111111100000017 /* ARSessionManager.swift in Sources */,
 				A10000001111111100000018 /* DepthMapProcessor.swift in Sources */,
 				A10000001111111100000019 /* MeshAnchorProcessor.swift in Sources */,
 				A10000001111111100000020 /* PointCloudExtractor.swift in Sources */,
-				A10000001111111100000021 /* AuthService.swift in Sources */,
-				A10000001111111100000022 /* CameraFrameCapture.swift in Sources */,
 				A10000001111111100000023 /* FrameSynchronizer.swift in Sources */,
-				A10000001111111100000024 /* MeshCorrectionModel.swift in Sources */,
-				A10000001111111100000025 /* OnDeviceProcessor.swift in Sources */,
-				A10000001111111100000036 /* DepthAnythingModel.swift in Sources */,
-				A10000001111111100000037 /* DepthFusionProcessor.swift in Sources */,
-				A10000001111111100000038 /* HighResPointCloudExtractor.swift in Sources */,
-				A10000001111111100000039 /* ScanProcessingService.swift in Sources */,
-				A10000001111111100000040 /* ProcessingProgressView.swift in Sources */,
-				A10000001111111100000041 /* SettingsView.swift in Sources */,
-				A10000001111111100000026 /* AreaCalculator.swift in Sources */,
-				A10000001111111100000027 /* DistanceCalculator.swift in Sources */,
-				A10000001111111100000028 /* MeasurementService.swift in Sources */,
-				A10000001111111100000029 /* VolumeCalculator.swift in Sources */,
-				A10000001111111100000030 /* APIClient.swift in Sources */,
-				A10000001111111100000031 /* ChunkedUploader.swift in Sources */,
-				A10000001111111100000032 /* WebSocketService.swift in Sources */,
-				A10000001111111100000033 /* CameraController.swift in Sources */,
-				A10000001111111100000034 /* LiveMeshRenderer.swift in Sources */,
-				A10000001111111100000035 /* PointCloudRenderer.swift in Sources */,
-				A10000001111111100000042 /* MockDataProvider.swift in Sources */,
-				A10000001111111100000043 /* MockARSessionManager.swift in Sources */,
-				A10000001111111100000044 /* MockDataPreviewView.swift in Sources */,
-				A10000001111111100000045 /* RoomPlanScanningView.swift in Sources */,
-				A10000001111111100000046 /* RoomPlanService.swift in Sources */,
-				A10000001111111100000047 /* TextureMappingService.swift in Sources */,
-				A10000001111111100000048 /* EdgeMLGeometryService.swift in Sources */,
-				A10000001111111100000049 /* AIGeometryGenerationService.swift in Sources */,
-				A10000001111111100000050 /* Enhanced3DViewer.swift in Sources */,
-				A10000001111111100000051 /* InteractiveMeasurementView.swift in Sources */,
-				A10000001111111100000052 /* ExportView.swift in Sources */,
-				2D04E05F79DA8612A575748D /* GaussianSplatRenderer.swift in Sources */,
 				7A86830645D9AADCC8CBF9CF /* CoverageAnalyzer.swift in Sources */,
 				A68960C7C603AD2E9D13DF07 /* CoverageOverlay.swift in Sources */,
-				6674D17D77E7DE5D9968FFD1 /* GuidanceIndicator.swift in Sources */,
-				8E079881E1C135A87FC49CB6 /* ResumeSessionSheet.swift in Sources */,
-				07CAB0073648274645BE6396 /* ChunkManager.swift in Sources */,
-				2C520A5DCAFE51C942BF8501 /* ScanSessionPersistence.swift in Sources */,
-				C5248EE0CB98F8F5E134BF05 /* ObjectCaptureService.swift in Sources */,
-				947D1CF43292877BC3D6966C /* ObjectCaptureScanningView.swift in Sources */,
 				43A568D5A6E8F70BB1295C2B /* CrashReporter.swift in Sources */,
 				DC3D011B9D0EAE0E4E496FD8 /* AppDiagnostics.swift in Sources */,
 				010AE2DA81E4840301A3A7FF /* DebugSettings.swift in Sources */,
@@ -1163,13 +1112,74 @@
 				8C670889578B2F01CA7824D8 /* CaptureButton.swift in Sources */,
 				8A593F1790A6F0B12A809612 /* SharedTopBar.swift in Sources */,
 				8D69BB7359A410D9B4F5C0B5 /* StatisticsGrid.swift in Sources */,
-				A6DBDB6D3EE2FEC707039154 /* StatusIndicator.swift in Sources */,
 				D11DA08DF7355602E0A3BE45 /* SharedControlBar.swift in Sources */,
-				057EBEC897942F5A7FEF3541 /* ScanningModeProtocol.swift in Sources */,
-				7B981133AF8659512846EA64 /* LiDARScanningModeAdapter.swift in Sources */,
-				EEDA56A2937B258998B4EDD8 /* UnifiedScanningView.swift in Sources */,
-				A0B7DCC81D1903DEE40FF344 /* RoomPlanScanningModeAdapter.swift in Sources */,
-				EEDEFD112A187CDA387EA22C /* ObjectCaptureScanningModeAdapter.swift in Sources */,
+				CFAA143781CB397381F39B97 /* ARSessionService.swift in Sources */,
+				706BA9FD1FA3AE6286686A99 /* CameraService.swift in Sources */,
+				EEF884D520B1B7F1E6A4E849 /* ServiceContainer.swift in Sources */,
+				B6F43BD571C5892D7E9071FD /* AuthError.swift in Sources */,
+				538881B7A1F98AC9DAC43595 /* ExportError.swift in Sources */,
+				A7644E1EE57AAE2EBFB83EBD /* NetworkError.swift in Sources */,
+				16C4C3937497178E678D4166 /* ScanError.swift in Sources */,
+				C8C523BB4347472436CBF4A3 /* ARSessionServiceProtocol.swift in Sources */,
+				BCE45F7BF06BE7B50CB8C1F6 /* CameraServiceProtocol.swift in Sources */,
+				3DD44C7925021F688866768F /* ExportServiceProtocol.swift in Sources */,
+				E41F4E06392639BB94E615E7 /* MeasurementServiceProtocol.swift in Sources */,
+				A6882B92B2E0E087E4D0D8C6 /* NetworkServiceProtocol.swift in Sources */,
+				FC7F3FE76CD13FC09337166D /* PersistenceServiceProtocol.swift in Sources */,
+				075D0111C334A61766CFA2EA /* MeshStreamService.swift in Sources */,
+				FBECD04CABF240DAB7E97E37 /* DebugGestureHandler.swift in Sources */,
+				1116DD7D63FBA90E888590EA /* UIStateSnapshotCapture.swift in Sources */,
+				B67BE675A5E96EC0E082A731 /* UIStateSnapshot.swift in Sources */,
+				02C33CB107B7413188C4CE2B /* VisualDebugProtocol.swift in Sources */,
+				AF3771F08E592C8438EFCBDB /* SnapshotStore.swift in Sources */,
+				3791A212F1E90346BD868AA6 /* DebugWebSocketService.swift in Sources */,
+				7CD091B883A2F65E3DD04635 /* VisualDebugCoordinator.swift in Sources */,
+				86AE80E691CC496904A363AE /* ExportService.swift in Sources */,
+				78BA6FD6C6111695CED5E84B /* PersistenceService.swift in Sources */,
+				515AFC47D8077F84795360EE /* PreviewViewModel.swift in Sources */,
+				52CA5C4E658E5C344F0261C7 /* ModelPreviewView.swift in Sources */,
+				B4DD1E5EE96C0DDE3935281B /* GalleryViewModel.swift in Sources */,
+				4602BCA73AEFEA71DB681125 /* GalleryView.swift in Sources */,
+				32F34482F7C4CFDEDB718DC8 /* ModelDetailView.swift in Sources */,
+				9621571FB07B983BF34745F6 /* ScanningModeProtocol.swift in Sources */,
+				0C32EFD0E4BD4CEDEB1234C1 /* LiDARScanningModeAdapter.swift in Sources */,
+				1F57835D4D0CF006FCC29A18 /* RoomPlanScanningModeAdapter.swift in Sources */,
+				75257091708D5AC04F1939DA /* ObjectCaptureScanningModeAdapter.swift in Sources */,
+				6421D662FE32973FA9AF580F /* ScanningModeFactory.swift in Sources */,
+				E47381CCF6D870ECFC5F19FD /* EdgeMLError.swift in Sources */,
+				ABEFAD9B701457DA1EB7322A /* MeasurementViewModel.swift in Sources */,
+				B82EC9C9990127D66C3B5F32 /* InteractiveMeasurementView.swift in Sources */,
+				8942801BB25BECDD5D27DC4B /* DepthAnythingModel.swift in Sources */,
+				6A9580AC5E86E902A874235E /* DepthFusionProcessor.swift in Sources */,
+				03A10A44550C26E603D6FA9E /* MeshCorrectionModel.swift in Sources */,
+				BD872DF16D726F6895906AFB /* OnDeviceProcessor.swift in Sources */,
+				5650227938F7C2AB4EF80CBA /* AreaCalculator.swift in Sources */,
+				4A67E29C53308E463B1C2BB0 /* DistanceCalculator.swift in Sources */,
+				E60615766BC5F269BD55B24C /* MeasurementService.swift in Sources */,
+				E83B0FFB892D614C92227720 /* VolumeCalculator.swift in Sources */,
+				548F07FED9DFE6E27C2D33D4 /* DepthAnythingV2SmallF16.mlpackage in Sources */,
+				FA8C9E9D42809CFD54964A20 /* RequestInterceptor.swift in Sources */,
+				6AD8ABBC7EC9740422FD4A76 /* NetworkService.swift in Sources */,
+				CBD7CB4816CC45A669634DE4 /* WebSocketService.swift in Sources */,
+				40F560F1A15BB7EA7560EB88 /* CloudProcessingService.swift in Sources */,
+				F0A5C32777FD3900EC7C7F9D /* LoadingStateView.swift in Sources */,
+				D65EF1F4F8B59675C1F6A651 /* ErrorStateView.swift in Sources */,
+				12B7C0AD89AC8FB181B7DCCD /* EmptyStateView.swift in Sources */,
+				EAF7383ABBE297B1AEFC0E8C /* HapticManager.swift in Sources */,
+				664FC7902DA9D0C68C771661 /* AccessibilityModifiers.swift in Sources */,
+				9152E8A9C987C1B5A9BA69BE /* PermissionRequestView.swift in Sources */,
+				C96D2F2B93319894F7052240 /* ConnectionStatusBadge.swift in Sources */,
+				D43202B3022569C7E3B87CBB /* ScanModeCard.swift in Sources */,
+				DDB57F4F152BFC9CF5B40D03 /* OnboardingViewModel.swift in Sources */,
+				7E8F7B12FEDD00ECBC817C56 /* OnboardingView.swift in Sources */,
+				7DF12F7F726C7456091D1931 /* SettingsViewModel.swift in Sources */,
+				C1DCFBB3583383B9EB194AEE /* SettingsView.swift in Sources */,
+				10A27F41923AEDC44910F32E /* ServerSettingsView.swift in Sources */,
+				911F47827F0BD7EB07BDFB74 /* DebugSettingsView.swift in Sources */,
+				85E0ED5258F6E882FEBD291D /* AboutView.swift in Sources */,
+				C6CC7C42167901AFCD97D75D /* AuthService.swift in Sources */,
+				43B5C0E989D6010CF4893A51 /* ScanSyncManager.swift in Sources */,
+				ACA85E3F698B009B0BA1BC39 /* SyncQueue.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

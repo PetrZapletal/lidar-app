@@ -40,13 +40,16 @@ final class ServiceContainer {
         self.performanceMonitor = PerformanceMonitor.shared
         self.crashReporter = CrashReporter.shared
 
-        // Feature services - will be replaced with real implementations in Sprint 1+
-        self.arSession = PlaceholderARSessionService()
-        self.camera = PlaceholderCameraService()
-        self.export = PlaceholderExportService()
-        self.network = PlaceholderNetworkService()
-        self.persistence = PlaceholderPersistenceService()
-        self.measurement = PlaceholderMeasurementService()
+        // Sprint 1: Real AR and Camera services
+        self.arSession = ARSessionService()
+        self.camera = CameraService()
+        // Sprint 2: Real Export and Persistence services
+        self.export = ExportService()
+        // Sprint 4: Real Network service
+        self.network = NetworkService()
+        self.persistence = PersistenceService()
+        // Sprint 3: Real Measurement service
+        self.measurement = MeasurementService()
     }
 
     // MARK: - Testing Init
@@ -56,12 +59,12 @@ final class ServiceContainer {
         debugStream: DebugStreamService = .shared,
         performanceMonitor: PerformanceMonitor = .shared,
         crashReporter: CrashReporter = .shared,
-        arSession: any ARSessionServiceProtocol = PlaceholderARSessionService(),
-        camera: any CameraServiceProtocol = PlaceholderCameraService(),
-        export: any ExportServiceProtocol = PlaceholderExportService(),
-        network: any NetworkServiceProtocol = PlaceholderNetworkService(),
-        persistence: any PersistenceServiceProtocol = PlaceholderPersistenceService(),
-        measurement: any MeasurementServiceProtocol = PlaceholderMeasurementService()
+        arSession: any ARSessionServiceProtocol = ARSessionService(),
+        camera: any CameraServiceProtocol = CameraService(),
+        export: any ExportServiceProtocol = ExportService(),
+        network: any NetworkServiceProtocol = NetworkService(),
+        persistence: any PersistenceServiceProtocol = PersistenceService(),
+        measurement: any MeasurementServiceProtocol = MeasurementService()
     ) {
         self.logger = logger
         self.debugStream = debugStream

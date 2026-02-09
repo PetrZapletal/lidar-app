@@ -16,17 +16,4 @@ protocol PersistenceServiceProtocol: AnyObject {
     func scanFileURL(id: UUID, format: ExportFormat) -> URL?
 }
 
-// MARK: - Placeholder (Sprint 0)
 
-@MainActor
-final class PlaceholderPersistenceService: PersistenceServiceProtocol {
-    func saveScan(_ scan: ScanModel) async throws {
-        debugLog("PlaceholderPersistenceService: saveScan not implemented", category: .logCategoryStorage)
-    }
-
-    func loadScans() async throws -> [ScanModel] { [] }
-
-    func deleteScan(id: UUID) async throws {}
-
-    func scanFileURL(id: UUID, format: ExportFormat) -> URL? { nil }
-}

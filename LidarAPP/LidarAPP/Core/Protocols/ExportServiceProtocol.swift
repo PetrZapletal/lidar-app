@@ -41,17 +41,4 @@ protocol ExportServiceProtocol: AnyObject {
     var supportedFormats: [ExportFormat] { get }
 }
 
-// MARK: - Placeholder (Sprint 0)
 
-@MainActor
-final class PlaceholderExportService: ExportServiceProtocol {
-    var supportedFormats: [ExportFormat] { [.obj] }
-
-    func export(meshData: MeshData, format: ExportFormat, name: String) async throws -> URL {
-        throw ExportError.formatNotSupported(format)
-    }
-
-    func exportPointCloud(_ pointCloud: PointCloud, name: String) async throws -> URL {
-        throw ExportError.noData
-    }
-}

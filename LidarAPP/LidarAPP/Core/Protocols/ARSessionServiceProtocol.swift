@@ -42,25 +42,4 @@ protocol ARSessionServiceProtocol: AnyObject {
     func getCurrentFrame() -> ARFrame?
 }
 
-// MARK: - Placeholder (Sprint 0)
 
-@MainActor
-final class PlaceholderARSessionService: ARSessionServiceProtocol {
-    var isScanning = false
-    var trackingState: ARCamera.TrackingState? = nil
-    var meshAnchorCount = 0
-    var totalVertexCount = 0
-    var totalFaceCount = 0
-    var meshAnchorsPublisher: AnyPublisher<[ARMeshAnchor], Never> {
-        Empty().eraseToAnyPublisher()
-    }
-
-    func startSession(mode: ScanMode) throws {
-        debugLog("PlaceholderARSessionService: startSession not implemented", category: .logCategoryAR)
-    }
-    func pauseSession() {}
-    func resumeSession() {}
-    func stopSession() {}
-    func getMeshAnchors() -> [ARMeshAnchor] { [] }
-    func getCurrentFrame() -> ARFrame? { nil }
-}
